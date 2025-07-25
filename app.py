@@ -268,8 +268,8 @@ def create_charts(df: pd.DataFrame):
 def main():
     st.set_page_config(page_title="MomentKeeper", page_icon="🦖", layout="wide")
 
-    st.title("🦖🍼 MomentKeeper - Organisateur de Photos")
-    st.markdown("Organisez automatiquement vos photos par mois depuis la naissance")
+    st.title("🦖 MomentKeeper - Du Chaos à la Chronologie")
+    st.markdown("Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo")
 
     # Initialiser la session state
     if "dossier_path" not in st.session_state:
