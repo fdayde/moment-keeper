@@ -1180,7 +1180,7 @@ def main():
         """
         <div class="trex-footer">
             <p>Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur</p>
-            <p><strong>🦖 MomentKeeper v1.0</strong> - Organisateur T-Rex Pastel</p>
+            <p><strong>🦖 MomentKeeper v1.0</strong></p>
             <p><em>"Du Chaos à la Chronologie, une photo à la fois"</em></p>
         </div>
     """,
