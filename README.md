@@ -156,12 +156,18 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 # Install development dependencies
 pip install -r requirements-dev.txt
 
-# Run code formatting
+# Install pre-commit hooks (recommended)
+pre-commit install
+
+# Run code formatting manually
 black src tests
 isort src tests
 
-# Run linting
+# Run linting manually
 ruff check src tests
+
+# Run all pre-commit hooks manually
+pre-commit run --all-files
 
 # Run tests (when implemented)
 pytest

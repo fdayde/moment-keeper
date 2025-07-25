@@ -83,6 +83,7 @@ python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
 - **isort** : Tri des imports
 - **ruff** : Linting rapide
 - **pytest** : Tests unitaires
+- **pre-commit** : Hooks automatiques avant commit
 
 ## 🔄 Workflow Utilisateur
 
@@ -141,12 +142,18 @@ python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
 # Installation
 pip install -r requirements-dev.txt
 
-# Formatage
+# Configuration pre-commit (recommandé)
+pre-commit install
+
+# Formatage manuel
 black src tests
 isort src tests
 
-# Linting
+# Linting manuel
 ruff check src tests
+
+# Vérification pre-commit
+pre-commit run --all-files
 
 # Interface web
 streamlit run app.py
