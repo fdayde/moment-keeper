@@ -13,6 +13,264 @@ import streamlit as st
 
 from src.moment_keeper.organizer import OrganisateurPhotos
 
+# 🎨 Palette couleurs T-Rex Pastel
+PRIMARY = "#E8F4F8"  # Bleu pastel doux (ciel préhistorique)
+SECONDARY = "#F9F2E7"  # Beige/crème chaleureux (sable ancien)
+ACCENT = "#D4C5B9"  # Taupe rosé (terre préhistorique)
+SUCCESS = "#C8E6C9"  # Vert pastel (T-Rex amical)
+WARNING = "#FFE0B2"  # Orange pastel
+ERROR = "#FFCDD2"  # Rose pastel
+TEXT_DARK = "#2C3E50"  # Bleu marine doux
+TEXT_LIGHT = "#7F8C8D"  # Gris élégant
+
+# 🎮 T-Rex Achievements
+TREX_ACHIEVEMENTS = {
+    "🦖 Baby T-Rex": "Première photo organisée",
+    "🦖 T-Rex Adolescent": "100 photos organisées",
+    "🦖 T-Rex Adulte": "1000 photos organisées",
+    "🦖 T-Rex Légendaire": "365 jours consécutifs",
+    "🦖 Roi des T-Rex": "5000 photos organisées",
+    "🦖 T-Rex Flamboyant": "10000 photos organisées",
+}
+
+# 🎨 CSS Custom T-Rex Pastel
+TREX_CSS = f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Variables CSS pour cohérence */
+:root {{
+    --primary: {PRIMARY};
+    --secondary: {SECONDARY};
+    --accent: {ACCENT};
+    --success: {SUCCESS};
+    --warning: {WARNING};
+    --error: {ERROR};
+    --text-dark: {TEXT_DARK};
+    --text-light: {TEXT_LIGHT};
+}}
+
+/* Styles globaux */
+.main {{
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, {PRIMARY} 0%, {SECONDARY} 100%);
+    min-height: 100vh;
+}}
+
+/* Header principal T-Rex */
+.main-header {{
+    font-family: 'Poppins', sans-serif;
+    color: {TEXT_DARK};
+    text-align: center;
+    padding: 2rem 0;
+    background: linear-gradient(135deg, {PRIMARY} 0%, {SECONDARY} 100%);
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}}
+
+.main-header h1 {{
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: {TEXT_DARK};
+}}
+
+.main-header p {{
+    font-size: 1.1rem;
+    color: {TEXT_LIGHT};
+    margin: 0;
+}}
+
+/* Cards métriques */
+.metric-card {{
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-left: 4px solid {ACCENT};
+    margin: 0.5rem 0;
+    transition: transform 0.2s ease;
+}}
+
+.metric-card:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}}
+
+/* Bulles d'insights */
+.insight-bubble {{
+    background: {SECONDARY};
+    padding: 1rem 1.5rem;
+    border-radius: 20px;
+    margin: 0.5rem 0;
+    border: 1px solid {PRIMARY};
+    font-family: 'Poppins', sans-serif;
+    position: relative;
+}}
+
+.insight-bubble::before {{
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: -5px;
+    width: 10px;
+    height: 10px;
+    background: {SECONDARY};
+    border: 1px solid {PRIMARY};
+    border-bottom: none;
+    border-right: none;
+    transform: rotate(45deg);
+}}
+
+/* Messages T-Rex */
+.trex-message {{
+    background: linear-gradient(135deg, {SUCCESS} 0%, {PRIMARY} 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    border-left: 4px solid {ACCENT};
+    margin: 1rem 0;
+    font-weight: 500;
+}}
+
+.trex-success {{
+    background: linear-gradient(135deg, {SUCCESS} 0%, {PRIMARY} 100%);
+    border-left-color: #4CAF50;
+}}
+
+.trex-warning {{
+    background: linear-gradient(135deg, {WARNING} 0%, {PRIMARY} 100%);
+    border-left-color: #FF9800;
+}}
+
+.trex-error {{
+    background: linear-gradient(135deg, {ERROR} 0%, {PRIMARY} 100%);
+    border-left-color: #F44336;
+}}
+
+/* Sidebar style */
+.css-1d391kg {{
+    background: linear-gradient(180deg, {SECONDARY} 0%, {PRIMARY} 100%);
+}}
+
+/* Onglets personnalisés */
+.stTabs [data-baseweb="tab-list"] {{
+    gap: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 15px;
+    padding: 0.5rem;
+}}
+
+.stTabs [data-baseweb="tab"] {{
+    height: 50px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 10px;
+    color: {TEXT_DARK};
+    font-weight: 500;
+    border: none;
+    transition: all 0.3s ease;
+}}
+
+.stTabs [aria-selected="true"] {{
+    background: linear-gradient(135deg, {ACCENT} 0%, {PRIMARY} 100%);
+    color: {TEXT_DARK};
+    font-weight: 600;
+}}
+
+/* Footer T-Rex */
+.trex-footer {{
+    text-align: center;
+    padding: 2rem 0;
+    background: {SECONDARY};
+    border-radius: 15px;
+    margin-top: 2rem;
+    color: {TEXT_LIGHT};
+    font-size: 0.9rem;
+}}
+
+/* Buttons personnalisés */
+.stButton > button {{
+    background: linear-gradient(135deg, {ACCENT} 0%, {PRIMARY} 100%);
+    color: {TEXT_DARK};
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}}
+
+.stButton > button:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}}
+
+/* Métriques Streamlit personnalisées */
+[data-testid="metric-container"] {{
+    background: white;
+    border: 1px solid {PRIMARY};
+    padding: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}}
+
+/* Forcer le texte sombre dans les zones pastels */
+.insight-bubble,
+.insight-bubble p,
+.insight-bubble span,
+.insight-bubble div {{
+    color: {TEXT_DARK} !important;
+}}
+
+.metric-card,
+.metric-card p,
+.metric-card span,
+.metric-card div,
+.metric-card h1,
+.metric-card h2,
+.metric-card h3 {{
+    color: {TEXT_DARK} !important;
+}}
+
+.main-header,
+.main-header h1,
+.main-header p {{
+    color: {TEXT_DARK} !important;
+}}
+
+.trex-message,
+.trex-message p,
+.trex-message span,
+.trex-message div {{
+    color: {TEXT_DARK} !important;
+}}
+
+/* Cibler les éléments Streamlit dans les zones pastels */
+.insight-bubble .stMarkdown,
+.insight-bubble .stText,
+.metric-card .stMarkdown,
+.metric-card .stText,
+.trex-message .stMarkdown,
+.trex-message .stText {{
+    color: {TEXT_DARK} !important;
+}}
+
+/* Zone de contenu principale plus claire */
+.main .block-container {{
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-top: 1rem;
+}}
+
+/* Forcer le texte sombre sur tous les contenus markdown dans les zones pastels */
+.main .block-container .stMarkdown p,
+.main .block-container .stMarkdown div,
+.main .block-container .stMarkdown span,
+.main .block-container .stText {{
+    color: {TEXT_DARK} !important;
+}}
+</style>
+"""
+
 
 def selectionner_dossier():
     """Ouvre une fenêtre de sélection de dossier."""
@@ -27,7 +285,7 @@ def selectionner_dossier():
 
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
-    """Extrait les données des photos en réutilisant les méthodes existantes."""
+    """Extrait les données des photos."""
     photos_data = []
     extensions = {".jpg", ".jpeg", ".png"}
 
@@ -369,22 +627,25 @@ def generate_temporal_comparisons(
             tendance = (valeurs[2] - valeurs[0]) / 2  # Pente moyenne
             if tendance > 8:
                 comparisons.append(
-                    "📈 Tendance récente : Vous photographiez de plus en plus votre bébé"
+                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖"
                 )
             elif tendance < -8:
                 comparisons.append(
-                    "📉 Tendance récente : Moins de photos - normal quand bébé grandit!"
+                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!"
                 )
 
     return comparisons
 
 
 def create_charts(df: pd.DataFrame):
-    """Crée tous les graphiques pour l'onglet Analytics."""
+    """Crée tous les graphiques pour l'onglet Analytics avec palette T-Rex Pastel."""
     charts = {}
 
     if df.empty:
         return charts
+
+    # 🎨 Configuration T-Rex Pastel pour Plotly
+    trex_colors = [PRIMARY, ACCENT, SUCCESS, WARNING, SECONDARY]
 
     # 1. Graphique en barres : Photos par mois d'âge
     photos_par_mois = df.groupby("age_mois").size().reset_index(name="nb_photos")
@@ -392,14 +653,19 @@ def create_charts(df: pd.DataFrame):
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title="📊 Nombre de photos par mois d'âge",
-        labels={"age_mois": "Âge (mois)", "nb_photos": "Nombre de photos"},
+        title="🦖 Évolution des photos par mois d'âge",
+        labels={"age_mois": "Âge du T-Rex (mois)", "nb_photos": "Nombre de photos"},
         color="nb_photos",
-        color_continuous_scale="Viridis",
+        color_continuous_scale=[[0, SUCCESS], [0.5, PRIMARY], [1, ACCENT]],
     )
-    fig_barres.update_layout(showlegend=False)
-    fig_barres.update_xaxes(title="Âge du bébé (mois)")
-    fig_barres.update_yaxes(title="Nombre de photos")
+    fig_barres.update_layout(
+        showlegend=False,
+        font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    fig_barres.update_xaxes(title="Âge du bébé (mois)", gridcolor=PRIMARY)
+    fig_barres.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
     charts["barres"] = fig_barres
 
     # 2. Timeline : Évolution hebdomadaire
@@ -412,11 +678,18 @@ def create_charts(df: pd.DataFrame):
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title="📈 Évolution hebdomadaire du nombre de photos",
+        title="🦖 Timeline : Activité hebdomadaire",
         labels={"semaine_annee": "Semaine", "nb_photos": "Nombre de photos"},
+        color_discrete_sequence=[ACCENT],
     )
-    fig_timeline.update_xaxes(tickangle=45, title="Semaine")
-    fig_timeline.update_yaxes(title="Nombre de photos")
+    fig_timeline.update_layout(
+        font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+    )
+    fig_timeline.update_xaxes(tickangle=45, title="Semaine", gridcolor=PRIMARY)
+    fig_timeline.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
+    fig_timeline.update_traces(line_width=3)
     charts["timeline"] = fig_timeline
 
     # 3. Heatmap : Répartition par jour de la semaine
@@ -435,23 +708,29 @@ def create_charts(df: pd.DataFrame):
         df.groupby("jour_semaine").size().reindex(jours_ordre, fill_value=0)
     )
 
+    # Créer une colorscale T-Rex pastel custom
+    trex_colorscale = [[0.0, SUCCESS], [0.5, PRIMARY], [1.0, ACCENT]]
+
     fig_heatmap = go.Figure(
         data=go.Heatmap(
             z=[photos_par_jour.values],
             x=jours_fr,
-            y=["Photos"],
-            colorscale="Viridis",
+            y=["🦖 Activité"],
+            colorscale=trex_colorscale,
             showscale=True,
             text=[photos_par_jour.values],
             texttemplate="%{text}",
-            textfont={"size": 14},
+            textfont={"size": 14, "color": TEXT_DARK},
         )
     )
     fig_heatmap.update_layout(
-        title="🗓️ Répartition des photos par jour de la semaine",
+        title="🦖 Heatmap : Jours favoris",
         xaxis_title="Jour de la semaine",
         yaxis_title="",
         height=200,
+        font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
     )
     charts["heatmap"] = fig_heatmap
 
@@ -459,11 +738,27 @@ def create_charts(df: pd.DataFrame):
 
 
 def main():
-    st.set_page_config(page_title="MomentKeeper", page_icon="🦖", layout="wide")
+    # 🦖 Configuration T-Rex Pastel
+    st.set_page_config(
+        page_title="🦖 MomentKeeper",
+        page_icon="🦖",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
 
-    st.title("🦖 MomentKeeper - Du Chaos à la Chronologie")
+    # 🎨 Appliquer le CSS custom
+    st.markdown(TREX_CSS, unsafe_allow_html=True)
+
+    # 🦖 Header principal avec style T-Rex
     st.markdown(
-        "Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo"
+        """
+        <div class="main-header">
+            <h1>🦖 MomentKeeper</h1>
+            <p><strong>Du Chaos à la Chronologie</strong></p>
+            <p>Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo</p>
+        </div>
+    """,
+        unsafe_allow_html=True,
     )
 
     # Initialiser la session state
@@ -565,19 +860,29 @@ def main():
             )
 
             tab1, tab2, tab3, tab4 = st.tabs(
-                ["📋 Simulation", "🚀 Organisation", "📊 Analytics", "💡 Insights"]
+                [
+                    "🔍 Simulation",
+                    "🗂️ Organisation",
+                    "📊 Analytics",
+                    "🦖 Insights",  # T-Rex pour les découvertes
+                ]
             )
 
             with tab1:
-                st.header("Simulation de l'organisation")
+                st.markdown(
+                    '<div class="trex-message">🦖 <strong>Simulation de l\'organisation</strong><br>Prévisualisez sans déplacer vos fichiers !</div>',
+                    unsafe_allow_html=True,
+                )
 
-                if st.button("🔍 Analyser les photos"):
-                    with st.spinner("Analyse en cours..."):
+                if st.button("🦖 Analyser les photos"):
+                    with st.spinner("🦖 Analyse vos photos..."):
                         repartition, erreurs = organiseur.simuler_organisation()
 
                     if repartition:
-                        st.success(
-                            f"✅ {sum(len(f) for f in repartition.values())} photos analysées"
+                        total_photos = sum(len(f) for f in repartition.values())
+                        st.markdown(
+                            f'<div class="trex-success">🦖 Rawr de satisfaction ! {total_photos} photos analysées et prêtes à être organisées !</div>',
+                            unsafe_allow_html=True,
                         )
 
                         for dossier, fichiers in sorted(repartition.items()):
@@ -617,21 +922,28 @@ def main():
                             st.warning(erreur)
 
             with tab2:
-                st.header("Organisation réelle")
-                st.warning("⚠️ Cette action déplacera réellement vos fichiers!")
+                st.markdown(
+                    '<div class="trex-message">🗂️ <strong>Organisation réelle</strong><br>Temps de passer à l\'action !</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    '<div class="trex-warning">🦖 Attention petits bras ! Cette action déplacera réellement vos fichiers.</div>',
+                    unsafe_allow_html=True,
+                )
 
                 col1, col2 = st.columns(2)
                 with col1:
                     confirmer = st.checkbox("Je confirme vouloir organiser mes photos")
 
                 with col2:
-                    if st.button("🚀 Organiser", disabled=not confirmer):
-                        with st.spinner("Organisation en cours..."):
+                    if st.button("🦖 Organiser", disabled=not confirmer):
+                        with st.spinner("🦖 Petits bras en action..."):
                             nb_fichiers, erreurs = organiseur.organiser()
 
                         if nb_fichiers > 0:
-                            st.success(
-                                f"✅ {nb_fichiers} photos organisées avec succès!"
+                            st.markdown(
+                                f'<div class="trex-success">🦖 Rawr de victoire ! {nb_fichiers} photos parfaitement organisées !</div>',
+                                unsafe_allow_html=True,
                             )
 
                         if erreurs:
@@ -640,10 +952,13 @@ def main():
                                 st.error(erreur)
 
             with tab3:
-                st.header("📊 Analytics - Métriques et Graphiques")
+                st.markdown(
+                    '<div class="trex-message">📊 <strong>Analytics</strong><br>🦖 Découvrez les statistiques de votre petit explorateur !</div>',
+                    unsafe_allow_html=True,
+                )
 
                 # Extraire les données des photos
-                with st.spinner("Analyse des photos en cours..."):
+                with st.spinner("🦖 Calcul des statistiques en cours..."):
                     df_photos = extract_photo_data(organiseur)
                     metrics = calculate_metrics(df_photos)
 
@@ -654,27 +969,64 @@ def main():
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        st.metric("📸 Photos totales", metrics["total_photos"])
                         st.metric(
-                            "📅 Dernière photo",
+                            "🦖 Photos gardées",
+                            metrics["total_photos"],
+                            delta=(
+                                "Petits souvenirs précieux !"
+                                if metrics["total_photos"] > 0
+                                else None
+                            ),
+                        )
+                        st.metric(
+                            "📅 Dernière capture",
                             (
                                 metrics["derniere_photo"].strftime("%d/%m/%Y")
                                 if metrics["derniere_photo"]
                                 else "N/A"
                             ),
+                            delta="Récente !" if metrics["derniere_photo"] else None,
                         )
 
                     with col2:
                         st.metric(
-                            "🗓️ Période couverte", f"{metrics['periode_couverte']} mois"
+                            "🗓️ Croissance",
+                            f"{metrics['periode_couverte']} mois",
+                            delta=(
+                                "Ça grandit vite !"
+                                if metrics["periode_couverte"] > 6
+                                else None
+                            ),
                         )
-                        st.metric("🏆 Jour record", f"{metrics['jour_record']} photos")
+                        st.metric(
+                            "🏆 Record quotidien",
+                            f"{metrics['jour_record']} photos",
+                            delta=(
+                                "Mode rafale !"
+                                if metrics["jour_record"] >= 10
+                                else None
+                            ),
+                        )
 
                     with col3:
                         st.metric(
-                            "📈 Moyenne/mois", f"{metrics['moyenne_par_mois']:.1f}"
+                            "📈 Rythme",
+                            f"{metrics['moyenne_par_mois']:.1f}/mois",
+                            delta=(
+                                "Régulier !"
+                                if metrics["moyenne_par_mois"] >= 20
+                                else "On peut faire mieux"
+                            ),
                         )
-                        st.metric("⏱️ Plus long gap", f"{metrics['max_gap']} jours")
+                        st.metric(
+                            "⏱️ Plus long silence",
+                            f"{metrics['max_gap']} jours",
+                            delta=(
+                                "T-Rex endormi ?"
+                                if metrics["max_gap"] >= 7
+                                else "Bien suivi !"
+                            ),
+                        )
 
                     st.divider()
 
@@ -712,11 +1064,14 @@ def main():
                                     )
 
             with tab4:
-                st.header("💡 Insights - Découvertes et Messages")
+                st.markdown(
+                    '<div class="trex-message">🦖 <strong>Insights</strong><br>Découvertes sur vos habitudes photo !</div>',
+                    unsafe_allow_html=True,
+                )
 
                 # Réutiliser les données déjà extraites si possible
                 if "df_photos" not in locals():
-                    with st.spinner("Analyse des photos en cours..."):
+                    with st.spinner("🦖 Fouille dans vos données..."):
                         df_photos = extract_photo_data(organiseur)
                         metrics = calculate_metrics(df_photos)
 
@@ -726,9 +1081,12 @@ def main():
                 )
 
                 if insights:
-                    st.subheader("🎯 Découvertes principales")
+                    st.markdown("### 🎯 Découvertes")
                     for insight in insights:
-                        st.info(insight)
+                        st.markdown(
+                            f'<div class="insight-bubble">{insight}</div>',
+                            unsafe_allow_html=True,
+                        )
 
                     st.divider()
 
@@ -798,6 +1156,18 @@ def main():
             st.error("❌ Le dossier racine spécifié n'existe pas")
         else:
             st.info("👈 Configurez le dossier racine dans la barre latérale")
+
+    # 🦖 Footer T-Rex avec personnalité
+    st.markdown(
+        """
+        <div class="trex-footer">
+            <p>Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur</p>
+            <p><strong>🦖 MomentKeeper v1.0</strong> - Organisateur T-Rex Pastel</p>
+            <p><em>"Du Chaos à la Chronologie, une photo à la fois"</em></p>
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":
