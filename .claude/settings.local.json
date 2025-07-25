@@ -1,0 +1,9 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)"
+    ],
+    "deny": []
+  }
+}
