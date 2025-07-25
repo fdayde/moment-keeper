@@ -23,6 +23,13 @@ ERROR = "#FFCDD2"  # Rose pastel
 TEXT_DARK = "#2C3E50"  # Bleu marine doux
 TEXT_LIGHT = "#7F8C8D"  # Gris élégant
 
+# 🎨 Couleurs pastels additionnelles pour graphiques
+CHART_PURPLE = "#E1D5E7"  # Violet pastel
+CHART_MINT = "#D5F4E6"    # Menthe pastel
+CHART_PEACH = "#FFE5D9"   # Pêche pastel
+CHART_LAVENDER = "#E6E6FA" # Lavande pastel
+CHART_CORAL = "#FFB3BA"   # Corail pastel
+
 # 🎮 T-Rex Achievements
 TREX_ACHIEVEMENTS = {
     "🦖 Baby T-Rex": "Première photo organisée",
@@ -644,10 +651,10 @@ def create_charts(df: pd.DataFrame):
     if df.empty:
         return charts
 
-    # 🎨 Configuration T-Rex Pastel pour Plotly
-    trex_colors = [PRIMARY, ACCENT, SUCCESS, WARNING, SECONDARY]
+    # 🎨 Configuration T-Rex Pastel pour Plotly avec couleurs différenciées
+    trex_colors = [SUCCESS, CHART_MINT, PRIMARY, CHART_PEACH, WARNING, CHART_PURPLE, CHART_LAVENDER, CHART_CORAL]
 
-    # 1. Graphique en barres : Photos par mois d'âge
+    # 1. Graphique en barres : Photos par mois d'âge avec dégradé amélioré
     photos_par_mois = df.groupby("age_mois").size().reset_index(name="nb_photos")
     fig_barres = px.bar(
         photos_par_mois,
@@ -656,7 +663,7 @@ def create_charts(df: pd.DataFrame):
         title="🦖 Évolution des photos par mois d'âge",
         labels={"age_mois": "Âge du T-Rex (mois)", "nb_photos": "Nombre de photos"},
         color="nb_photos",
-        color_continuous_scale=[[0, SUCCESS], [0.5, PRIMARY], [1, ACCENT]],
+        color_continuous_scale=[[0, SUCCESS], [0.3, CHART_MINT], [0.6, PRIMARY], [1, CHART_PURPLE]],
     )
     fig_barres.update_layout(
         showlegend=False,
@@ -680,7 +687,7 @@ def create_charts(df: pd.DataFrame):
         y="nb_photos",
         title="🦖 Timeline : Activité hebdomadaire",
         labels={"semaine_annee": "Semaine", "nb_photos": "Nombre de photos"},
-        color_discrete_sequence=[ACCENT],
+        color_discrete_sequence=[CHART_PURPLE],
     )
     fig_timeline.update_layout(
         font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
@@ -689,7 +696,11 @@ def create_charts(df: pd.DataFrame):
     )
     fig_timeline.update_xaxes(tickangle=45, title="Semaine", gridcolor=PRIMARY)
     fig_timeline.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
-    fig_timeline.update_traces(line_width=3)
+    fig_timeline.update_traces(
+        line_width=4,
+        line_color=CHART_PURPLE,
+        marker=dict(size=8, color=CHART_CORAL, line=dict(width=2, color=TEXT_DARK))
+    )
     charts["timeline"] = fig_timeline
 
     # 3. Heatmap : Répartition par jour de la semaine
@@ -708,8 +719,15 @@ def create_charts(df: pd.DataFrame):
         df.groupby("jour_semaine").size().reindex(jours_ordre, fill_value=0)
     )
 
-    # Créer une colorscale T-Rex pastel custom
-    trex_colorscale = [[0.0, SUCCESS], [0.5, PRIMARY], [1.0, ACCENT]]
+    # Créer une colorscale T-Rex pastel custom avec meilleur contraste
+    trex_colorscale = [
+        [0.0, "#F0F8FF"],      # Blanc cassé pour zéro
+        [0.2, CHART_MINT],     # Menthe pour faible activité
+        [0.4, SUCCESS],        # Vert pastel pour activité modérée
+        [0.6, CHART_PEACH],    # Pêche pour bonne activité
+        [0.8, WARNING],        # Orange pour forte activité
+        [1.0, CHART_CORAL]     # Corail pour activité maximale
+    ]
 
     fig_heatmap = go.Figure(
         data=go.Heatmap(
@@ -720,7 +738,7 @@ def create_charts(df: pd.DataFrame):
             showscale=True,
             text=[photos_par_jour.values],
             texttemplate="%{text}",
-            textfont={"size": 14, "color": TEXT_DARK},
+            textfont={"size": 14, "color": TEXT_DARK, "family": "Poppins"},
         )
     )
     fig_heatmap.update_layout(
