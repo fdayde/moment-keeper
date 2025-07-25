@@ -29,6 +29,7 @@ CHART_MINT = "#D5F4E6"    # Menthe pastel
 CHART_PEACH = "#FFE5D9"   # Pêche pastel
 CHART_LAVENDER = "#E6E6FA" # Lavande pastel
 CHART_CORAL = "#FFB3BA"   # Corail pastel
+DARK_RED_PASTEL = "#F8BBD9" # Rouge pastel plus foncé
 
 # 🎮 T-Rex Achievements
 TREX_ACHIEVEMENTS = {
@@ -146,8 +147,8 @@ TREX_CSS = f"""
 }}
 
 .trex-warning {{
-    background: linear-gradient(135deg, {WARNING} 0%, {PRIMARY} 100%);
-    border-left-color: #FF9800;
+    background: linear-gradient(135deg, {DARK_RED_PASTEL} 0%, {PRIMARY} 100%);
+    border-left-color: #E91E63;
 }}
 
 .trex-error {{
