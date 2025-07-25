@@ -118,7 +118,9 @@ def find_gaps(
     return gaps
 
 
-def generate_insights(df: pd.DataFrame, metrics: Dict) -> List[str]:
+def generate_insights(
+    df: pd.DataFrame, metrics: Dict, date_naissance: datetime
+) -> List[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
 
@@ -138,8 +140,12 @@ def generate_insights(df: pd.DataFrame, metrics: Dict) -> List[str]:
     if not photos_par_mois.empty:
         mois_champion = photos_par_mois.idxmax()
         nb_photos_champion = photos_par_mois.max()
+
+        # Convertir l'âge en nom de mois calendaire
+        mois_nom = age_to_month_name(mois_champion, date_naissance)
+
         insights.append(
-            f"🏆 Période record : {mois_champion}-{mois_champion+1} mois avec {nb_photos_champion} photos!"
+            f"🏆 Période record : {mois_champion}-{mois_champion+1} mois ({mois_nom}) avec {nb_photos_champion} photos!"
         )
 
     # Analyse des jours de la semaine
@@ -153,11 +159,21 @@ def generate_insights(df: pd.DataFrame, metrics: Dict) -> List[str]:
 
     # Record de photos en une journée
     if metrics["jour_record"] >= 10:
+        # Trouver la date du record
+        photos_par_jour = df.groupby(df["date"].dt.date).size()
+        date_record = photos_par_jour.idxmax()
+
         insights.append(
-            f"📸 Mode rafale activé ! Record : {metrics['jour_record']} photos en une journée!"
+            f"📸 Mode rafale activé ! Record : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
         )
     elif metrics["jour_record"] >= 5:
-        insights.append(f"📷 Journée productive : {metrics['jour_record']} photos!")
+        # Trouver la date du record
+        photos_par_jour = df.groupby(df["date"].dt.date).size()
+        date_record = photos_par_jour.idxmax()
+
+        insights.append(
+            f"📷 Journée productive : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
+        )
 
     # Analyse des gaps
     gaps = find_gaps(df)
@@ -183,7 +199,184 @@ def generate_insights(df: pd.DataFrame, metrics: Dict) -> List[str]:
             f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!"
         )
 
+    # 2. Détection de moments spéciaux 🎉 (sans doublons avec jour_record)
+    special_moments = detect_special_moments(df, metrics["jour_record"])
+    insights.extend(special_moments)
+
+    # 3. Comparaisons temporelles 📊 (sans doublons avec analyse weekends existante)
+    temporal_comparisons = generate_temporal_comparisons(df, date_naissance)
+    insights.extend(temporal_comparisons)
+
     return insights
+
+
+def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[str]:
+    """Détecte les moments spéciaux basés sur les pics de photos (évite doublons avec jour_record)."""
+    special_insights = []
+
+    if df.empty:
+        return special_insights
+
+    # Analyser les pics de photos par jour (éviter doublon avec jour_record déjà traité)
+    photos_par_jour = df.groupby(df["date"].dt.date).size()
+    moyenne_quotidienne = photos_par_jour.mean()
+    seuil_pic = max(moyenne_quotidienne * 2, 8)  # Seuil adaptatif
+
+    pics = photos_par_jour[photos_par_jour >= seuil_pic]
+
+    if len(pics) > 1:  # Plusieurs événements spéciaux détectés
+        # Afficher quelques dates d'exemple (max 3)
+        dates_exemples = sorted(pics.index)[:3]
+        dates_str = ", ".join([d.strftime("%d/%m") for d in dates_exemples])
+        if len(pics) > 3:
+            dates_str += "..."
+
+        special_insights.append(
+            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
+        )
+
+        # Suggestions d'événements selon les pics avec date du pic maximum
+        pic_max = pics.max()
+        date_pic_max = pics.idxmax()
+
+        if pic_max >= 25:
+            special_insights.append(
+                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
+            )
+        elif pic_max >= 15:
+            special_insights.append(
+                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
+            )
+
+    # Détection de séries de photos (plusieurs jours consécutifs avec beaucoup de photos)
+    dates_pics = sorted(pics.index)
+    if len(dates_pics) >= 2:
+        for i in range(1, len(dates_pics)):
+            if (dates_pics[i] - dates_pics[i - 1]).days <= 3:  # 3 jours max
+                date_debut = dates_pics[i - 1]
+                date_fin = dates_pics[i]
+                special_insights.append(
+                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
+                )
+                break  # Une seule fois
+
+    return special_insights
+
+
+def age_to_month_name(age_mois: int, date_naissance: datetime) -> str:
+    """Convertit un âge en mois vers le nom du mois calendaire correspondant."""
+    mois_cible = date_naissance + timedelta(
+        days=age_mois * 30.44
+    )  # 30.44 jours par mois en moyenne
+    mois_noms = [
+        "Janvier",
+        "Février",
+        "Mars",
+        "Avril",
+        "Mai",
+        "Juin",
+        "Juillet",
+        "Août",
+        "Septembre",
+        "Octobre",
+        "Novembre",
+        "Décembre",
+    ]
+    return mois_noms[mois_cible.month - 1]
+
+
+def generate_temporal_comparisons(
+    df: pd.DataFrame, date_naissance: datetime
+) -> List[str]:
+    """Génère des comparaisons temporelles (évite doublons avec analyse weekends existante)."""
+    comparisons = []
+
+    if df.empty:
+        return comparisons
+
+    # 1. Comparaisons mois par mois (évolution)
+    photos_par_mois = df.groupby("age_mois").size()
+
+    if len(photos_par_mois) >= 2:
+        # Évolution entre premier et dernier mois
+        premier_mois = photos_par_mois.index.min()
+        dernier_mois = photos_par_mois.index.max()
+
+        if dernier_mois - premier_mois >= 2:  # Au moins 2 mois d'écart
+            photos_premier = photos_par_mois.loc[premier_mois]
+            photos_dernier = photos_par_mois.loc[dernier_mois]
+
+            premier_nom = age_to_month_name(premier_mois, date_naissance)
+            dernier_nom = age_to_month_name(dernier_mois, date_naissance)
+
+            if photos_premier > 0:
+                evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
+                if evolution > 50:
+                    comparisons.append(
+                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                    )
+                elif evolution < -40:
+                    comparisons.append(
+                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                    )
+
+        # Comparaison des 2 mois les plus contrastés
+        if len(photos_par_mois) >= 3:
+            mois_min = photos_par_mois.idxmin()
+            mois_max = photos_par_mois.idxmax()
+            photos_min = photos_par_mois.min()
+            photos_max = photos_par_mois.max()
+
+            mois_min_nom = age_to_month_name(mois_min, date_naissance)
+            mois_max_nom = age_to_month_name(mois_max, date_naissance)
+
+            if photos_min > 0 and mois_min != mois_max:
+                ratio = photos_max / photos_min
+                if ratio >= 2:
+                    comparisons.append(
+                        f"📊 Contraste : {mois_max_nom} vs {mois_min_nom} = {ratio:.1f}x plus de photos"
+                    )
+
+    # 2. Comparaison week-end vs semaine avec RATIOS PRÉCIS (complément de l'existant)
+    photos_weekends = df[df["jour_semaine"].isin(["Saturday", "Sunday"])].shape[0]
+    photos_semaine = df[~df["jour_semaine"].isin(["Saturday", "Sunday"])].shape[0]
+
+    if photos_weekends > 0 and photos_semaine > 0:
+        # Ratio par jour (weekend = 2 jours, semaine = 5 jours)
+        ratio_weekend_par_jour = photos_weekends / 2
+        ratio_semaine_par_jour = photos_semaine / 5
+
+        if ratio_semaine_par_jour > 0:
+            multiplicateur = ratio_weekend_par_jour / ratio_semaine_par_jour
+
+            # Seulement si très marqué (éviter doublon avec message existant)
+            if multiplicateur >= 3:
+                comparisons.append(
+                    f"🎯 Weekend intense : {multiplicateur:.1f}x plus de photos par jour le weekend"
+                )
+            elif multiplicateur <= 0.4:
+                comparisons.append(
+                    f"💼 Semaine active : {1/multiplicateur:.1f}x plus de photos par jour en semaine"
+                )
+
+    # 3. Tendance sur les derniers mois
+    if len(photos_par_mois) >= 3:
+        derniers_3_mois = photos_par_mois.tail(3)
+
+        # Calculer la tendance (régression simple)
+        valeurs = list(derniers_3_mois.values)
+        if len(valeurs) == 3:
+            tendance = (valeurs[2] - valeurs[0]) / 2  # Pente moyenne
+            if tendance > 8:
+                comparisons.append(
+                    "📈 Tendance récente : Vous photographiez de plus en plus votre bébé"
+                )
+            elif tendance < -8:
+                comparisons.append(
+                    "📉 Tendance récente : Moins de photos - normal quand bébé grandit!"
+                )
+
+    return comparisons
 
 
 def create_charts(df: pd.DataFrame):
@@ -269,7 +462,9 @@ def main():
     st.set_page_config(page_title="MomentKeeper", page_icon="🦖", layout="wide")
 
     st.title("🦖 MomentKeeper - Du Chaos à la Chronologie")
-    st.markdown("Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo")
+    st.markdown(
+        "Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo"
+    )
 
     # Initialiser la session state
     if "dossier_path" not in st.session_state:
@@ -526,7 +721,9 @@ def main():
                         metrics = calculate_metrics(df_photos)
 
                 # Messages d'insights
-                insights = generate_insights(df_photos, metrics)
+                insights = generate_insights(
+                    df_photos, metrics, organiseur.date_naissance
+                )
 
                 if insights:
                     st.subheader("🎯 Découvertes principales")
