@@ -295,13 +295,12 @@ def selectionner_dossier():
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     """Extrait les données des photos."""
     photos_data = []
-    extensions = {".jpg", ".jpeg", ".png"}
-
+    
     # Parcourir tous les dossiers du projet (source + dossiers mensuels)
     for dossier in organiseur.dossier_racine.iterdir():
         if dossier.is_dir():
             for fichier in dossier.iterdir():
-                if fichier.is_file() and fichier.suffix.lower() in extensions:
+                if fichier.is_file() and fichier.suffix.lower() in organiseur.extensions_actives:
                     # Réutiliser la méthode existante pour extraire la date
                     date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
 
@@ -312,6 +311,7 @@ def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
                         photos_data.append(
                             {
                                 "fichier": fichier.name,
+                                "type": organiseur.get_file_type(fichier),
                                 "date": date_photo,
                                 "age_mois": age_mois,
                                 "dossier": dossier.name,
@@ -324,11 +324,12 @@ def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     return pd.DataFrame(photos_data)
 
 
-def calculate_metrics(df: pd.DataFrame) -> Dict:
+def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
     """Calcule toutes les métriques pour l'onglet Analytics."""
     if df.empty:
         return {
             "total_photos": 0,
+            "total_videos": 0,
             "periode_couverte": 0,
             "moyenne_par_mois": 0,
             "derniere_photo": None,
@@ -336,10 +337,18 @@ def calculate_metrics(df: pd.DataFrame) -> Dict:
             "max_gap": 0,
         }
 
-    # Métriques de base
-    total_photos = len(df)
+    # Métriques de base avec distinction photo/vidéo si nécessaire
+    if type_fichiers == "📸🎬 Photos et Vidéos" and 'type' in df.columns:
+        total_photos = len(df[df['type'] == 'photo'])
+        total_videos = len(df[df['type'] == 'video'])
+        total_fichiers = total_photos + total_videos
+    else:
+        total_fichiers = len(df)
+        total_photos = total_fichiers if type_fichiers and "Photos" in type_fichiers else 0
+        total_videos = total_fichiers if type_fichiers and "Vidéos" in type_fichiers else 0
+    
     periode_couverte = df["age_mois"].max() + 1 if not df.empty else 0
-    moyenne_par_mois = total_photos / periode_couverte if periode_couverte > 0 else 0
+    moyenne_par_mois = total_fichiers / periode_couverte if periode_couverte > 0 else 0
 
     # Date de la dernière photo
     derniere_photo = df["date"].max()
@@ -358,6 +367,8 @@ def calculate_metrics(df: pd.DataFrame) -> Dict:
 
     return {
         "total_photos": total_photos,
+        "total_videos": total_videos,
+        "total_fichiers": total_fichiers,
         "periode_couverte": periode_couverte,
         "moyenne_par_mois": moyenne_par_mois,
         "derniere_photo": derniere_photo,
@@ -385,7 +396,7 @@ def find_gaps(
 
 
 def generate_insights(
-    df: pd.DataFrame, metrics: Dict, date_naissance: datetime
+    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None
 ) -> List[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
@@ -393,13 +404,35 @@ def generate_insights(
     if df.empty:
         return ["Aucune photo analysée pour le moment 📸"]
 
-    # Messages encourageants
-    if metrics["total_photos"] > 100:
-        insights.append(
-            f"🎉 Magnifique collection de {metrics['total_photos']} photos!"
-        )
-    elif metrics["total_photos"] > 50:
-        insights.append(f"📸 Belle collection de {metrics['total_photos']} photos!")
+    # Messages encourageants adaptés au type
+    if type_fichiers == "📸🎬 Photos et Vidéos":
+        total = metrics.get("total_fichiers", 0)
+        if total > 100:
+            insights.append(
+                f"🎉 Magnifique collection de {metrics['total_photos']} 📸 photos et {metrics['total_videos']} 🎬 vidéos!"
+            )
+        
+        # Ratio photos/vidéos
+        if metrics["total_videos"] > 0:
+            ratio = metrics["total_photos"] / metrics["total_videos"]
+            if ratio > 5:
+                insights.append("📸 Vous préférez clairement les photos aux vidéos!")
+            elif ratio < 0.2:
+                insights.append("🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo")
+            elif 0.8 < ratio < 1.2:
+                insights.append("⚖️ Équilibre parfait entre photos et vidéos!")
+    else:
+        # Messages pour un seul type
+        total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
+        type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
+        type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
+        
+        if total > 100:
+            insights.append(
+                f"🎉 Magnifique collection de {total} {type_nom}!"
+            )
+        elif total > 50:
+            insights.append(f"{type_emoji} Belle collection de {total} {type_nom}!")
 
     # Analyse des mois les plus photographiés
     photos_par_mois = df.groupby("age_mois").size()
@@ -787,7 +820,7 @@ def main():
     with st.sidebar:
         st.header("Configuration")
 
-        st.subheader("📁 Dossier racine")
+        st.subheader("📁 Dossier principal")
         col1, col2 = st.columns([1, 3])
         with col1:
             if st.button("📁", help="Parcourir", key="browse_root"):
@@ -798,23 +831,24 @@ def main():
 
         with col2:
             dossier_racine = st.text_input(
-                "Dossier racine du projet",
+                "Dossier principal du projet",
                 placeholder="C:/Users/Nom/ProjetPhotos",
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
+                help="Dossier qui contiendra les sous-dossiers par mois"
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
                 st.session_state.dossier_path = dossier_racine
 
-        st.subheader("📸 Sous-dossier photos")
+        st.subheader("📂 Dossier source")
         col3, col4 = st.columns([1, 3])
         with col3:
             if st.button("📁", help="Parcourir sous-dossier", key="browse_sub"):
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
-                        # Extraire seulement le nom du sous-dossier relatif au dossier racine
+                        # Extraire seulement le nom du sous-dossier relatif au dossier principal
                         try:
                             chemin_relatif = Path(dossier_selectionne).relative_to(
                                 Path(dossier_racine)
@@ -823,10 +857,10 @@ def main():
                             st.rerun()
                         except ValueError:
                             st.error(
-                                "Le dossier sélectionné doit être dans le dossier racine"
+                                "Le dossier sélectionné doit être dans le dossier principal"
                             )
                 else:
-                    st.error("Sélectionnez d'abord le dossier racine")
+                    st.error("Sélectionnez d'abord le dossier principal")
 
         with col4:
             # Initialiser la session state pour le sous-dossier
@@ -834,9 +868,9 @@ def main():
                 st.session_state.sous_dossier_photos = "photos"
 
             sous_dossier_photos = st.text_input(
-                "Nom du sous-dossier contenant les photos",
+                "Nom du dossier source",
                 value=st.session_state.sous_dossier_photos,
-                help="Nom du dossier dans le dossier racine qui contient les photos à organiser",
+                help="Dossier contenant les fichiers non triés",
                 label_visibility="collapsed",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
@@ -849,6 +883,23 @@ def main():
             max_value=datetime.now().date(),
         )
 
+        st.subheader("📹 Type de fichiers")
+        
+        # Checkboxes pour photos et vidéos
+        photos_selected = st.checkbox("📸 Photos", value=True)
+        videos_selected = st.checkbox("🎬 Vidéos", value=True)
+        
+        # Déterminer le type de fichiers basé sur les checkboxes
+        if photos_selected and videos_selected:
+            type_fichiers = "📸🎬 Photos et Vidéos"
+        elif photos_selected:
+            type_fichiers = "📸 Photos uniquement"
+        elif videos_selected:
+            type_fichiers = "🎬 Vidéos uniquement"
+        else:
+            type_fichiers = None
+            st.warning("⚠️ Veuillez sélectionner au moins un type de fichier")
+
         if st.button(
             "🔄 Réinitialiser", help="Remet toutes les photos dans le dossier photos"
         ):
@@ -857,6 +908,7 @@ def main():
                     Path(dossier_racine),
                     sous_dossier_photos,
                     datetime.combine(date_naissance, datetime.min.time()),
+                    type_fichiers
                 )
                 nb_fichiers, erreurs = organiseur.reinitialiser()
 
@@ -872,13 +924,17 @@ def main():
     if dossier_racine and Path(dossier_racine).exists():
         dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
         if dossier_photos_complet.exists():
-            organiseur = OrganisateurPhotos(
-                Path(dossier_racine),
-                sous_dossier_photos,
-                datetime.combine(date_naissance, datetime.min.time()),
-            )
+            if type_fichiers is None:
+                st.error("❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)")
+            else:
+                organiseur = OrganisateurPhotos(
+                    Path(dossier_racine),
+                    sous_dossier_photos,
+                    datetime.combine(date_naissance, datetime.min.time()),
+                    type_fichiers
+                )
 
-            tab1, tab2, tab3, tab4 = st.tabs(
+                tab1, tab2, tab3, tab4 = st.tabs(
                 [
                     "🔍 Simulation",
                     "🗂️ Organisation",
@@ -899,17 +955,52 @@ def main():
 
                     if repartition:
                         total_photos = sum(len(f) for f in repartition.values())
+                        
+                        if type_fichiers == "📸🎬 Photos et Vidéos":
+                            # Compter photos et vidéos séparément
+                            total_photos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "photo"]) for fichiers in repartition.values())
+                            total_videos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "video"]) for fichiers in repartition.values())
+                            message = f"🦖 Rawr de satisfaction ! {total_photos_count} 📸 photos et {total_videos_count} 🎬 vidéos analysées !"
+                        elif "Photos" in type_fichiers:
+                            message = f"🦖 Rawr de satisfaction ! {total_photos} photos analysées et prêtes à être organisées !"
+                        else:
+                            message = f"🦖 Rawr de satisfaction ! {total_photos} vidéos analysées et prêtes à être organisées !"
+                        
                         st.markdown(
-                            f'<div class="trex-success">🦖 Rawr de satisfaction ! {total_photos} photos analysées et prêtes à être organisées !</div>',
+                            f'<div class="trex-success">{message}</div>',
                             unsafe_allow_html=True,
                         )
 
                         for dossier, fichiers in sorted(repartition.items()):
-                            with st.expander(f"📁 {dossier} ({len(fichiers)} photos)"):
-                                for fichier in fichiers[:10]:
-                                    st.text(f"  📸 {fichier.name}")
-                                if len(fichiers) > 10:
-                                    st.text(f"  ... et {len(fichiers) - 10} autres")
+                            if type_fichiers == "📸🎬 Photos et Vidéos":
+                                # Séparer photos et vidéos
+                                photos = [f for f in fichiers if organiseur.get_file_type(f) == "photo"]
+                                videos = [f for f in fichiers if organiseur.get_file_type(f) == "video"]
+                                
+                                with st.expander(f"📁 {dossier} ({len(photos)} 📸 + {len(videos)} 🎬)"):
+                                    if photos:
+                                        st.write("📸 **Photos:**")
+                                        for photo in photos[:5]:
+                                            st.text(f"  📸 {photo.name}")
+                                        if len(photos) > 5:
+                                            st.text(f"  ... et {len(photos) - 5} autres photos")
+                                    
+                                    if videos:
+                                        st.write("🎬 **Vidéos:**")
+                                        for video in videos[:5]:
+                                            st.text(f"  🎬 {video.name}")
+                                        if len(videos) > 5:
+                                            st.text(f"  ... et {len(videos) - 5} autres vidéos")
+                            else:
+                                # Affichage normal pour un seul type
+                                type_emoji = "📸" if "Photos" in type_fichiers else "🎬"
+                                type_nom = "photos" if "Photos" in type_fichiers else "vidéos"
+                                
+                                with st.expander(f"📁 {dossier} ({len(fichiers)} {type_nom})"):
+                                    for fichier in fichiers[:10]:
+                                        st.text(f"  {type_emoji} {fichier.name}")
+                                    if len(fichiers) > 10:
+                                        st.text(f"  ... et {len(fichiers) - 10} autres")
                     else:
                         st.info("ℹ️ Aucune photo trouvée à organiser")
 
@@ -952,7 +1043,8 @@ def main():
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    confirmer = st.checkbox("Je confirme vouloir organiser mes photos")
+                    type_text = "photos" if "Photos" in type_fichiers else "vidéos" if "Vidéos" in type_fichiers else "fichiers"
+                    confirmer = st.checkbox(f"Je confirme vouloir organiser mes {type_text}")
 
                 with col2:
                     if st.button("🦖 Organiser", disabled=not confirmer):
@@ -960,8 +1052,17 @@ def main():
                             nb_fichiers, erreurs = organiseur.organiser()
 
                         if nb_fichiers > 0:
+                            if type_fichiers == "📸🎬 Photos et Vidéos":
+                                # Pour une estimation rapide, on peut faire une analyse après coup
+                                # Mais pour simplifier, on affiche juste le total
+                                message = f"🦖 Rawr de victoire ! {nb_fichiers} fichiers parfaitement organisés !"
+                            elif "Photos" in type_fichiers:
+                                message = f"🦖 Rawr de victoire ! {nb_fichiers} photos parfaitement organisées !"
+                            else:
+                                message = f"🦖 Rawr de victoire ! {nb_fichiers} vidéos parfaitement organisées !"
+                            
                             st.markdown(
-                                f'<div class="trex-success">🦖 Rawr de victoire ! {nb_fichiers} photos parfaitement organisées !</div>',
+                                f'<div class="trex-success">{message}</div>',
                                 unsafe_allow_html=True,
                             )
 
@@ -979,7 +1080,7 @@ def main():
                 # Extraire les données des photos
                 with st.spinner("🦖 Calcul des statistiques en cours..."):
                     df_photos = extract_photo_data(organiseur)
-                    metrics = calculate_metrics(df_photos)
+                    metrics = calculate_metrics(df_photos, type_fichiers)
 
                 if df_photos.empty:
                     st.info("ℹ️ Aucune photo trouvée pour l'analyse")
@@ -988,15 +1089,27 @@ def main():
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        st.metric(
-                            "🦖 Photos gardées",
-                            metrics["total_photos"],
-                            delta=(
-                                "Petits souvenirs précieux !"
-                                if metrics["total_photos"] > 0
-                                else None
-                            ),
-                        )
+                        if type_fichiers == "📸🎬 Photos et Vidéos":
+                            st.metric(
+                                "📸 Photos",
+                                metrics["total_photos"],
+                                delta=(
+                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    if metrics["total_fichiers"] > 0
+                                    else None
+                                ),
+                            )
+                        else:
+                            label = "📸 Photos gardées" if "Photos" in type_fichiers else "🎬 Vidéos gardées"
+                            st.metric(
+                                label,
+                                metrics["total_fichiers"],
+                                delta=(
+                                    "Souvenirs précieux !"
+                                    if metrics["total_fichiers"] > 0
+                                    else None
+                                ),
+                            )
                         st.metric(
                             "📅 Dernière capture",
                             (
@@ -1008,15 +1121,26 @@ def main():
                         )
 
                     with col2:
-                        st.metric(
-                            "🗓️ Croissance",
-                            f"{metrics['periode_couverte']} mois",
-                            delta=(
-                                "Ça grandit vite !"
-                                if metrics["periode_couverte"] > 6
-                                else None
-                            ),
-                        )
+                        if type_fichiers == "📸🎬 Photos et Vidéos":
+                            st.metric(
+                                "🎬 Vidéos",
+                                metrics["total_videos"],
+                                delta=(
+                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    if metrics["total_fichiers"] > 0
+                                    else None
+                                ),
+                            )
+                        else:
+                            st.metric(
+                                "🗓️ Croissance",
+                                f"{metrics['periode_couverte']} mois",
+                                delta=(
+                                    "Ça grandit vite !"
+                                    if metrics["periode_couverte"] > 6
+                                    else None
+                                ),
+                            )
                         st.metric(
                             "🏆 Record quotidien",
                             f"{metrics['jour_record']} photos",
@@ -1092,11 +1216,11 @@ def main():
                 if "df_photos" not in locals():
                     with st.spinner("🦖 Fouille dans vos données..."):
                         df_photos = extract_photo_data(organiseur)
-                        metrics = calculate_metrics(df_photos)
+                        metrics = calculate_metrics(df_photos, type_fichiers)
 
                 # Messages d'insights
                 insights = generate_insights(
-                    df_photos, metrics, organiseur.date_naissance
+                    df_photos, metrics, organiseur.date_naissance, type_fichiers
                 )
 
                 if insights:
@@ -1164,17 +1288,17 @@ def main():
                             st.write(
                                 "• Les petits moments comptent autant que les grands!"
                             )
-                else:
-                    st.info("Analysez d'abord vos photos pour voir les insights!")
+                    else:
+                        st.info("Analysez d'abord vos photos pour voir les insights!")
         else:
             st.error(
                 f"❌ Le dossier photos '{sous_dossier_photos}' n'existe pas dans {dossier_racine}"
             )
     else:
         if dossier_racine:
-            st.error("❌ Le dossier racine spécifié n'existe pas")
+            st.error("❌ Le dossier principal spécifié n'existe pas")
         else:
-            st.info("👈 Configurez le dossier racine dans la barre latérale")
+            st.info("👈 Configurez le dossier principal dans la barre latérale")
 
     # 🦖 Footer T-Rex avec personnalité
     st.markdown(
