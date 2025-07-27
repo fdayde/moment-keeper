@@ -456,7 +456,10 @@ def generate_insights(
         if metrics["total_videos"] > 0:
             ratio = metrics["total_photos"] / metrics["total_videos"]
             if ratio > 5:
-                insights.append("📸 Vous préférez clairement les photos aux vidéos!")
+                insights.append(
+                    "📸 Vous préférez clairement les photos aux vidéos!" if tr.language == "fr" 
+                    else "📸 You clearly prefer photos to videos!"
+                )
             elif ratio < 0.2:
                 insights.append("🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo")
             elif 0.8 < ratio < 1.2:
@@ -492,7 +495,10 @@ def generate_insights(
     if not photos_par_jour_semaine.empty:
         jour_favori = photos_par_jour_semaine.idxmax()
         if jour_favori in ["Saturday", "Sunday"]:
-            insights.append("📅 Vous capturez bien les week-ends en famille!")
+            insights.append(
+                "📅 Vous capturez bien les week-ends en famille!" if tr.language == "fr" 
+                else "📅 You capture family weekends well!"
+            )
         elif jour_favori == "Sunday":
             insights.append("🌅 Champion du dimanche!")
 
@@ -535,11 +541,12 @@ def generate_insights(
     if metrics["moyenne_par_mois"] > 0:
         projection_annuelle = metrics["moyenne_par_mois"] * 12
         insights.append(
-            f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!"
+            f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!" if tr.language == "fr"
+            else f"📈 At this rate, you'll have ~{int(projection_annuelle)} photos per year!"
         )
 
     # 2. Détection de moments spéciaux 🎉 (sans doublons avec jour_record)
-    special_moments = detect_special_moments(df, metrics["jour_record"])
+    special_moments = detect_special_moments(df, metrics["jour_record"], tr)
     insights.extend(special_moments)
 
     # 3. Comparaisons temporelles 📊 (sans doublons avec analyse weekends existante)
@@ -549,7 +556,7 @@ def generate_insights(
     return insights
 
 
-def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[str]:
+def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr) -> List[str]:
     """Détecte les moments spéciaux basés sur les pics de photos (évite doublons avec jour_record)."""
     special_insights = []
 
@@ -571,7 +578,8 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
             dates_str += "..."
 
         special_insights.append(
-            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
+            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})" if tr.language == "fr"
+            else f"🎉 {len(pics)} special events detected ({dates_str})"
         )
 
         # Suggestions d'événements selon les pics avec date du pic maximum
@@ -580,11 +588,13 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
 
         if pic_max >= 25:
             special_insights.append(
-                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
+                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?" if tr.language == "fr"
+                else f"🎊 Major event on {date_pic_max.strftime('%d/%m/%Y')} - First vacation? Family visit?"
             )
         elif pic_max >= 15:
             special_insights.append(
-                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
+                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?" if tr.language == "fr"
+                else f"🎈 Great day on {date_pic_max.strftime('%d/%m/%Y')} - Family outing? First birthday?"
             )
 
     # Détection de séries de photos (plusieurs jours consécutifs avec beaucoup de photos)
@@ -595,7 +605,8 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
                 date_debut = dates_pics[i - 1]
                 date_fin = dates_pics[i]
                 special_insights.append(
-                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
+                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?" if tr.language == "fr"
+                    else f"🏖️ Intensive period {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacation or event?"
                 )
                 break  # Une seule fois
 
@@ -661,7 +672,8 @@ def generate_temporal_comparisons(
                     )
                 elif evolution < -40:
                     comparisons.append(
-                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        else f"📉 Evolution: {evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
 
         # Comparaison des 2 mois les plus contrastés
@@ -723,7 +735,7 @@ def generate_temporal_comparisons(
     return comparisons
 
 
-def create_charts(df: pd.DataFrame):
+def create_charts(df: pd.DataFrame, tr):
     """Crée tous les graphiques pour l'onglet Analytics avec palette T-Rex Pastel."""
     charts = {}
 
@@ -739,8 +751,11 @@ def create_charts(df: pd.DataFrame):
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title="🦖 Évolution des photos par mois d'âge",
-        labels={"age_mois": "Âge du T-Rex (mois)", "nb_photos": "Nombre de photos"},
+        title="🦖 Évolution des photos par mois d'âge" if tr.language == "fr" else "🦖 Photo evolution by age in months",
+        labels={
+            "age_mois": "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)",
+            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+        },
         color="nb_photos",
         color_continuous_scale=[[0, SUCCESS], [0.3, CHART_MINT], [0.6, PRIMARY], [1, CHART_PURPLE]],
     )
@@ -750,8 +765,14 @@ def create_charts(df: pd.DataFrame):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig_barres.update_xaxes(title="Âge du bébé (mois)", gridcolor=PRIMARY)
-    fig_barres.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
+    fig_barres.update_xaxes(
+        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)", 
+        gridcolor=PRIMARY
+    )
+    fig_barres.update_yaxes(
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
+        gridcolor=PRIMARY
+    )
     charts["barres"] = fig_barres
 
     # 2. Timeline : Évolution hebdomadaire
@@ -764,8 +785,11 @@ def create_charts(df: pd.DataFrame):
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title="🦖 Timeline : Activité hebdomadaire",
-        labels={"semaine_annee": "Semaine", "nb_photos": "Nombre de photos"},
+        title="🦖 Timeline : Activité hebdomadaire" if tr.language == "fr" else "🦖 Timeline: Weekly activity",
+        labels={
+            "semaine_annee": "Semaine" if tr.language == "fr" else "Week",
+            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+        },
         color_discrete_sequence=[CHART_PURPLE],
     )
     fig_timeline.update_layout(
@@ -773,8 +797,15 @@ def create_charts(df: pd.DataFrame):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig_timeline.update_xaxes(tickangle=45, title="Semaine", gridcolor=PRIMARY)
-    fig_timeline.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
+    fig_timeline.update_xaxes(
+        tickangle=45, 
+        title="Semaine" if tr.language == "fr" else "Week", 
+        gridcolor=PRIMARY
+    )
+    fig_timeline.update_yaxes(
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
+        gridcolor=PRIMARY
+    )
     fig_timeline.update_traces(
         line_width=4,
         line_color=CHART_PURPLE,
@@ -821,8 +852,8 @@ def create_charts(df: pd.DataFrame):
         )
     )
     fig_heatmap.update_layout(
-        title="🦖 Heatmap : Jours favoris",
-        xaxis_title="Jour de la semaine",
+        title="🦖 Heatmap : Jours favoris" if tr.language == "fr" else "🦖 Heatmap: Favorite days",
+        xaxis_title="Jour de la semaine" if tr.language == "fr" else "Day of the week",
         yaxis_title="",
         height=200,
         font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
@@ -1249,7 +1280,7 @@ def main():
                     st.divider()
 
                     # Graphiques
-                    charts = create_charts(df_photos)
+                    charts = create_charts(df_photos, tr)
 
                     if charts:
                         # Graphique en barres
