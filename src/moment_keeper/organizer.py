@@ -2,23 +2,30 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 
 from .path_manager import PathManager
 from .photo_copier import PhotoCopier
+
+# Extensions supportées
+EXTENSIONS_PHOTOS = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
+EXTENSIONS_VIDEOS = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv"}
 
 
 class OrganisateurPhotos:
     """Organisateur principal des photos par mois."""
 
     def __init__(
-        self, dossier_racine: Path, sous_dossier_photos: str, date_naissance: datetime
+        self, dossier_racine: Path, sous_dossier_photos: str, date_naissance: datetime,
+        type_fichiers: str = "📸🎬 Photos et Vidéos"
     ):
         self.dossier_racine = Path(dossier_racine)
         self.dossier_source = self.dossier_racine / sous_dossier_photos
         self.date_naissance = date_naissance
         self.path_manager = PathManager(self.dossier_racine)
         self.copieur = PhotoCopier()
+        self.type_fichiers = type_fichiers
+        self.extensions_actives = self._get_extensions_actives()
 
     def extraire_date_nom_fichier(self, nom_fichier: str) -> Optional[datetime]:
         """Extrait la date du nom de fichier au format YYYYMMDD."""
@@ -45,6 +52,24 @@ class OrganisateurPhotos:
     def obtenir_nom_dossier_mois(self, age_mois: int) -> str:
         """Retourne le nom du dossier pour un âge donné."""
         return f"{age_mois}-{age_mois + 1}months"
+    
+    def _get_extensions_actives(self) -> Set[str]:
+        """Retourne les extensions actives selon le type de fichiers sélectionné."""
+        if self.type_fichiers == "📸 Photos uniquement":
+            return EXTENSIONS_PHOTOS
+        elif self.type_fichiers == "🎬 Vidéos uniquement":
+            return EXTENSIONS_VIDEOS
+        else:  # 📸🎬 Photos et Vidéos
+            return EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
+    
+    def get_file_type(self, filepath: Path) -> str:
+        """Retourne 'photo' ou 'video' selon l'extension."""
+        extension = filepath.suffix.lower()
+        if extension in EXTENSIONS_PHOTOS:
+            return "photo"
+        elif extension in EXTENSIONS_VIDEOS:
+            return "video"
+        return "unknown"
 
     def analyser_photos(self) -> Dict[str, List[Path]]:
         """Analyse les photos et retourne la répartition par dossier."""
@@ -52,11 +77,7 @@ class OrganisateurPhotos:
         fichiers_ignores = []
 
         for fichier in self.dossier_source.iterdir():
-            if fichier.is_file() and fichier.suffix.lower() in [
-                ".jpg",
-                ".jpeg",
-                ".png",
-            ]:
+            if fichier.is_file() and fichier.suffix.lower() in self.extensions_actives:
                 date_photo = self.extraire_date_nom_fichier(fichier.name)
 
                 if date_photo and date_photo >= self.date_naissance:
