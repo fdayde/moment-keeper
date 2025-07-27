@@ -429,20 +429,27 @@ def find_gaps(
 
 
 def generate_insights(
-    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None
+    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None, tr=None
 ) -> List[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
 
     if df.empty:
+        if tr:
+            return [tr.t("analyze_first")]
         return ["Aucune photo analysée pour le moment 📸"]
+    
+    # Protection contre tr None
+    if not tr:
+        from src.moment_keeper.translations import Translator
+        tr = Translator("fr")
 
     # Messages encourageants adaptés au type
     if type_fichiers == "📸🎬 Photos et Vidéos":
         total = metrics.get("total_fichiers", 0)
         if total > 100:
             insights.append(
-                f"🎉 Magnifique collection de {metrics['total_photos']} 📸 photos et {metrics['total_videos']} 🎬 vidéos!"
+                tr.t("magnificent_collection_mixed", photos=metrics['total_photos'], videos=metrics['total_videos'])
             )
         
         # Ratio photos/vidéos
@@ -462,7 +469,7 @@ def generate_insights(
         
         if total > 100:
             insights.append(
-                f"🎉 Magnifique collection de {total} {type_nom}!"
+                tr.t("magnificent_collection", total=total, type=type_nom)
             )
         elif total > 50:
             insights.append(f"{type_emoji} Belle collection de {total} {type_nom}!")
@@ -477,7 +484,7 @@ def generate_insights(
         mois_nom = age_to_month_name(mois_champion, date_naissance)
 
         insights.append(
-            f"🏆 Période record : {mois_champion}-{mois_champion+1} mois ({mois_nom}) avec {nb_photos_champion} photos!"
+            tr.t("record_period", start=mois_champion, end=mois_champion+1, month=mois_nom, count=nb_photos_champion)
         )
 
     # Analyse des jours de la semaine
@@ -496,7 +503,7 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            f"📸 Mode rafale activé ! Record : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
+            tr.t("burst_mode_activated", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
         )
     elif metrics["jour_record"] >= 5:
         # Trouver la date du record
@@ -504,7 +511,7 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            f"📷 Journée productive : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
+            tr.t("productive_day", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
         )
 
     # Analyse des gaps
@@ -513,16 +520,16 @@ def generate_insights(
         gap_le_plus_long = max(gaps, key=lambda x: x[2])
         if gap_le_plus_long[2] >= 10:
             insights.append(
-                f"⚠️ Plus long silence : {gap_le_plus_long[2]} jours entre le {gap_le_plus_long[0].strftime('%d/%m')} et le {gap_le_plus_long[1].strftime('%d/%m')}"
+                tr.t("longest_silence", days=gap_le_plus_long[2], start=gap_le_plus_long[0].strftime('%d/%m'), end=gap_le_plus_long[1].strftime('%d/%m'))
             )
 
     # Régularité récente
     if not df.empty:
         photos_recentes = df[df["date"] >= (datetime.now() - timedelta(days=30))]
         if len(photos_recentes) == 0:
-            insights.append("💡 Pensez à prendre quelques photos récentes!")
+            insights.append(tr.t("think_recent_photos"))
         elif len(photos_recentes) >= 20:
-            insights.append("🔥 Très actif ce mois-ci!")
+            insights.append(tr.t("very_active_month"))
 
     # Projection future
     if metrics["moyenne_par_mois"] > 0:
@@ -536,7 +543,7 @@ def generate_insights(
     insights.extend(special_moments)
 
     # 3. Comparaisons temporelles 📊 (sans doublons avec analyse weekends existante)
-    temporal_comparisons = generate_temporal_comparisons(df, date_naissance)
+    temporal_comparisons = generate_temporal_comparisons(df, date_naissance, tr)
     insights.extend(temporal_comparisons)
 
     return insights
@@ -618,10 +625,15 @@ def age_to_month_name(age_mois: int, date_naissance: datetime) -> str:
 
 
 def generate_temporal_comparisons(
-    df: pd.DataFrame, date_naissance: datetime
+    df: pd.DataFrame, date_naissance: datetime, tr=None
 ) -> List[str]:
     """Génère des comparaisons temporelles (évite doublons avec analyse weekends existante)."""
     comparisons = []
+    
+    # Protection contre tr None
+    if not tr:
+        from src.moment_keeper.translations import Translator
+        tr = Translator("fr")
 
     if df.empty:
         return comparisons
@@ -666,7 +678,7 @@ def generate_temporal_comparisons(
                 ratio = photos_max / photos_min
                 if ratio >= 2:
                     comparisons.append(
-                        f"📊 Contraste : {mois_max_nom} vs {mois_min_nom} = {ratio:.1f}x plus de photos"
+                        tr.t("contrast_months", max_month=mois_max_nom, min_month=mois_min_nom, ratio=f"{ratio:.1f}")
                     )
 
     # 2. Comparaison week-end vs semaine avec RATIOS PRÉCIS (complément de l'existant)
@@ -684,11 +696,11 @@ def generate_temporal_comparisons(
             # Seulement si très marqué (éviter doublon avec message existant)
             if multiplicateur >= 3:
                 comparisons.append(
-                    f"🎯 Weekend intense : {multiplicateur:.1f}x plus de photos par jour le weekend"
+                    tr.t("intense_weekend", ratio=f"{multiplicateur:.1f}")
                 )
             elif multiplicateur <= 0.4:
                 comparisons.append(
-                    f"💼 Semaine active : {1/multiplicateur:.1f}x plus de photos par jour en semaine"
+                    tr.t("active_weekdays", ratio=f"{1/multiplicateur:.1f}")
                 )
 
     # 3. Tendance sur les derniers mois
@@ -1163,24 +1175,24 @@ def main():
                                 ),
                             )
                         else:
-                            label = "📸 Photos gardées" if "Photos" in type_fichiers else "🎬 Vidéos gardées"
+                            label = tr.t("photos_kept") if "Photos" in type_fichiers else tr.t("videos_kept")
                             st.metric(
                                 label,
                                 metrics["total_fichiers"],
                                 delta=(
-                                    "Souvenirs précieux !"
+                                    tr.t("precious_memories")
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
                             )
                         st.metric(
-                            "📅 Dernière capture",
+                            tr.t("last_capture"),
                             (
                                 metrics["derniere_photo"].strftime("%d/%m/%Y")
                                 if metrics["derniere_photo"]
                                 else "N/A"
                             ),
-                            delta="Récente !" if metrics["derniere_photo"] else None,
+                            delta=tr.t("recent") if metrics["derniere_photo"] else None,
                         )
 
                     with col2:
@@ -1196,19 +1208,19 @@ def main():
                             )
                         else:
                             st.metric(
-                                "🗓️ Croissance",
+                                tr.t("growth_period"),
                                 f"{metrics['periode_couverte']} mois",
                                 delta=(
-                                    "Ça grandit vite !"
+                                    tr.t("growing_fast")
                                     if metrics["periode_couverte"] > 6
                                     else None
                                 ),
                             )
                         st.metric(
-                            "🏆 Record quotidien",
+                            tr.t("daily_record"),
                             f"{metrics['jour_record']} photos",
                             delta=(
-                                "Mode rafale !"
+                                tr.t("burst_mode")
                                 if metrics["jour_record"] >= 10
                                 else None
                             ),
@@ -1216,21 +1228,21 @@ def main():
 
                     with col3:
                         st.metric(
-                            "📈 Rythme",
+                            tr.t("average_rhythm"),
                             f"{metrics['moyenne_par_mois']:.1f}/mois",
                             delta=(
-                                "Régulier !"
+                                tr.t("regular")
                                 if metrics["moyenne_par_mois"] >= 20
-                                else "On peut faire mieux"
+                                else tr.t("can_do_better")
                             ),
                         )
                         st.metric(
-                            "⏱️ Plus long silence",
+                            tr.t("longest_gap"),
                             f"{metrics['max_gap']} jours",
                             delta=(
-                                "T-Rex endormi ?"
+                                tr.t("trex_sleeping")
                                 if metrics["max_gap"] >= 7
-                                else "Bien suivi !"
+                                else tr.t("well_followed")
                             ),
                         )
 
@@ -1283,7 +1295,7 @@ def main():
 
                 # Messages d'insights
                 insights = generate_insights(
-                    df_photos, metrics, organiseur.date_naissance, type_fichiers
+                    df_photos, metrics, organiseur.date_naissance, type_fichiers, tr
                 )
 
                 if insights:

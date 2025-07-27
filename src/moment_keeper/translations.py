@@ -95,6 +95,29 @@ TRANSLATIONS = {
         "videos_unit": "vidéos",
         "files_unit": "fichiers",
         "and_more": "... et {count} autres",
+        
+        # Analytics - textes additionnels
+        "precious_memories": "Souvenirs précieux !",
+        "recent": "Récente !",
+        "growing_fast": "Ça grandit vite !",
+        "burst_mode": "Mode rafale !",
+        "regular": "Régulier !",
+        "can_do_better": "On peut faire mieux",
+        "trex_sleeping": "T-Rex endormi ?",
+        "well_followed": "Bien suivi !",
+        
+        # Insights - messages d'analyse
+        "magnificent_collection_mixed": "🎉 Magnifique collection de {photos} 📸 photos et {videos} 🎬 vidéos!",
+        "magnificent_collection": "🎉 Magnifique collection de {total} {type}!",
+        "record_period": "🏆 Période record : {start}-{end} mois ({month}) avec {count} photos!",
+        "burst_mode_activated": "📸 Mode rafale activé ! Record : {count} photos le {date}!",
+        "productive_day": "📷 Journée productive : {count} photos le {date}!",
+        "longest_silence": "⚠️ Plus long silence : {days} jours entre le {start} et le {end}",
+        "think_recent_photos": "💡 Pensez à prendre quelques photos récentes!",
+        "very_active_month": "🔥 Très actif ce mois-ci!",
+        "contrast_months": "📊 Contraste : {max_month} vs {min_month} = {ratio}x plus de photos",
+        "intense_weekend": "🎯 Weekend intense : {ratio}x plus de photos par jour le weekend",
+        "active_weekdays": "💼 Semaine active : {ratio}x plus de photos par jour en semaine",
     },
     
     "en": {
@@ -191,6 +214,29 @@ TRANSLATIONS = {
         "videos_unit": "videos",
         "files_unit": "files",
         "and_more": "... and {count} more",
+        
+        # Analytics - additional texts
+        "precious_memories": "Precious memories!",
+        "recent": "Recent!",
+        "growing_fast": "Growing fast!",
+        "burst_mode": "Burst mode!",
+        "regular": "Regular!",
+        "can_do_better": "Could do better",
+        "trex_sleeping": "T-Rex sleeping?",
+        "well_followed": "Well followed!",
+        
+        # Insights - analysis messages
+        "magnificent_collection_mixed": "🎉 Magnificent collection of {photos} 📸 photos and {videos} 🎬 videos!",
+        "magnificent_collection": "🎉 Magnificent collection of {total} {type}!",
+        "record_period": "🏆 Record period: {start}-{end} months ({month}) with {count} photos!",
+        "burst_mode_activated": "📸 Burst mode activated! Record: {count} photos on {date}!",
+        "productive_day": "📷 Productive day: {count} photos on {date}!",
+        "longest_silence": "⚠️ Longest silence: {days} days between {start} and {end}",
+        "think_recent_photos": "💡 Think about taking some recent photos!",
+        "very_active_month": "🔥 Very active this month!",
+        "contrast_months": "📊 Contrast: {max_month} vs {min_month} = {ratio}x more photos",
+        "intense_weekend": "🎯 Intense weekend: {ratio}x more photos per day on weekends",
+        "active_weekdays": "💼 Active weekdays: {ratio}x more photos per day on weekdays",
     }
 }
 
