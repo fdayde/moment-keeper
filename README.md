@@ -191,11 +191,41 @@ moment-keeper/
 └── requirements*.txt        # Dependencies
 ```
 
+## 🤝 Contributing
+
+We welcome contributions! To maintain code quality:
+
+### Setup
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Install pre-commit hooks (required)
+pre-commit install
+```
+
+### Before submitting
+- ✅ Run `pre-commit run --all-files` to check formatting and linting
+- ✅ Ensure all tests pass (when available)
+- ✅ Follow existing code patterns and conventions
+- ✅ Update documentation if needed
+
+### Code quality tools
+- **black**: Code formatting
+- **isort**: Import sorting
+- **ruff**: Fast Python linting
+- **pre-commit**: Automated checks before commit
+
 ## 📝 License
 
 This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 If you use MomentKeeper in your project, a mention would be appreciated! 🦖
+
+## 🏆 Acknowledgments
+
+- Inspired by the chaos of 10,000 unsorted baby photos
+- T-Rex mascot because parenting is like having a tiny dinosaur 🦖
 
 ---
 
