@@ -683,6 +683,30 @@ def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
     return gallery_data
 
 
+def get_photos_by_mode(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    mode: str,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos selon le mode sélectionné."""
+    if mode == "🎲 Aléatoire" or mode == "🎲 Random":
+        return get_random_photos_for_month(gallery_data, selected_month, num_photos)
+    elif mode == "⏰ Chronologique" or mode == "⏰ Chronological":
+        return get_chronological_photos(
+            gallery_data, organiseur, selected_month, num_photos
+        )
+    elif mode == "📸 Moments forts" or mode == "📸 Highlights":
+        return get_highlight_photos(
+            gallery_data, organiseur, selected_month, num_photos
+        )
+    elif mode == "📈 Timeline croissance" or mode == "📈 Growth timeline":
+        return get_timeline_photos(gallery_data, organiseur, num_photos)
+    else:
+        return get_random_photos_for_month(gallery_data, selected_month, num_photos)
+
+
 def get_random_photos_for_month(
     gallery_data: dict[str, list[Path]], selected_month: str, num_photos: int = 6
 ) -> list[Path]:
@@ -700,3 +724,118 @@ def get_random_photos_for_month(
 
     photos = gallery_data.get(selected_month, [])
     return random.sample(photos, min(num_photos, len(photos))) if photos else []
+
+
+def get_chronological_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos triées chronologiquement (plus récent → plus ancien)."""
+    if selected_month == "Tous les mois":
+        # Collecter toutes les photos avec leur date
+        all_photos_with_dates = []
+        for photos in gallery_data.values():
+            for photo in photos:
+                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                if date_photo:
+                    all_photos_with_dates.append((photo, date_photo))
+
+        # Trier par date décroissante (plus récent en premier)
+        all_photos_with_dates.sort(key=lambda x: x[1], reverse=True)
+        return [photo for photo, _ in all_photos_with_dates[:num_photos]]
+
+    # Pour un mois spécifique
+    photos = gallery_data.get(selected_month, [])
+    photos_with_dates = []
+    for photo in photos:
+        date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+        if date_photo:
+            photos_with_dates.append((photo, date_photo))
+
+    # Trier par date décroissante
+    photos_with_dates.sort(key=lambda x: x[1], reverse=True)
+    return [photo for photo, _ in photos_with_dates[:num_photos]]
+
+
+def get_highlight_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos des journées avec le plus de photos (moments forts)."""
+    if selected_month == "Tous les mois":
+        # Collecter toutes les photos avec leur date
+        all_photos_with_dates = []
+        for photos in gallery_data.values():
+            for photo in photos:
+                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                if date_photo:
+                    all_photos_with_dates.append((photo, date_photo.date()))
+    else:
+        # Pour un mois spécifique
+        photos = gallery_data.get(selected_month, [])
+        all_photos_with_dates = []
+        for photo in photos:
+            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            if date_photo:
+                all_photos_with_dates.append((photo, date_photo.date()))
+
+    if not all_photos_with_dates:
+        return []
+
+    # Grouper par jour et compter les photos
+    from collections import defaultdict
+
+    photos_par_jour = defaultdict(list)
+    for photo, date in all_photos_with_dates:
+        photos_par_jour[date].append(photo)
+
+    # Trier les jours par nombre de photos (moments forts)
+    jours_tries = sorted(photos_par_jour.items(), key=lambda x: len(x[1]), reverse=True)
+
+    # Sélectionner des photos des jours les plus actifs
+    selected_photos = []
+    for _, photos_du_jour in jours_tries:
+        if len(selected_photos) >= num_photos:
+            break
+        # Prendre une photo aléatoire de ce jour fort
+        selected_photos.append(random.choice(photos_du_jour))
+
+    return selected_photos[:num_photos]
+
+
+def get_timeline_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient une photo aléatoire par mois pour montrer la timeline de croissance."""
+    # Ignorer "Photos non triées" et ne prendre que les dossiers mensuels
+    monthly_folders = {
+        k: v for k, v in gallery_data.items() if k != "Photos non triées" and "-" in k
+    }
+
+    if not monthly_folders:
+        return []
+
+    # Fonction pour extraire le nombre du début du nom de dossier
+    def extract_month_number(folder_name):
+        try:
+            return int(folder_name.split("-")[0])
+        except:
+            return 999
+
+    # Trier les mois par ordre chronologique
+    sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
+
+    # Prendre une photo aléatoire par mois (limité par num_photos)
+    timeline_photos = []
+    for month in sorted_months[:num_photos]:
+        month_photos = monthly_folders[month]
+        if month_photos:
+            timeline_photos.append(random.choice(month_photos))
+
+    return timeline_photos

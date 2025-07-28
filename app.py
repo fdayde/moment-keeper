@@ -21,7 +21,7 @@ from src.moment_keeper.analytics import (
     find_gaps,
     generate_insights,
     get_gallery_data,
-    get_random_photos_for_month,
+    get_photos_by_mode,
 )
 from src.moment_keeper.config import (
     FILE_TYPES,
@@ -778,7 +778,7 @@ def main():
                     st.info(tr.t("no_photos_month"))
                 else:
                     # Contrôles de l'interface
-                    col1, col2, col3 = st.columns([2, 1, 1])
+                    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
 
                     with col1:
                         # Fonction pour extraire le nombre du début du nom de dossier
@@ -798,6 +798,17 @@ def main():
                         )
 
                     with col2:
+                        # Sélecteur de mode d'affichage
+                        view_modes = [
+                            tr.t("mode_random"),
+                            tr.t("mode_chronological"),
+                            tr.t("mode_highlights"),
+                            tr.t("mode_timeline"),
+                        ]
+
+                        view_mode = st.selectbox(tr.t("view_mode"), view_modes, index=0)
+
+                    with col3:
                         num_photos = st.slider(
                             tr.t("photos_to_show"),
                             min_value=1,
@@ -806,12 +817,22 @@ def main():
                             step=1,
                         )
 
-                    with col3:
+                    with col4:
                         if st.button(tr.t("refresh_gallery"), type="secondary"):
                             st.rerun()
 
                     # Afficher le nombre de photos trouvées
-                    if selected_month == "Tous les mois":
+                    if view_mode == tr.t("mode_timeline"):
+                        # Pour le mode timeline, afficher le nombre de mois disponibles
+                        monthly_folders = {
+                            k: v
+                            for k, v in gallery_data.items()
+                            if k != "Photos non triées" and "-" in k
+                        }
+                        st.info(
+                            f"📈 {len(monthly_folders)} mois de croissance disponibles"
+                        )
+                    elif selected_month == "Tous les mois":
                         total_photos = sum(
                             len(photos) for photos in gallery_data.values()
                         )
@@ -820,17 +841,17 @@ def main():
                         month_photos = len(gallery_data.get(selected_month, []))
                         st.info(tr.t("photos_found", count=month_photos))
 
-                    # Obtenir et afficher les photos aléatoires
-                    random_photos = get_random_photos_for_month(
-                        gallery_data, selected_month, num_photos
+                    # Obtenir et afficher les photos selon le mode sélectionné
+                    selected_photos = get_photos_by_mode(
+                        gallery_data, organiseur, view_mode, selected_month, num_photos
                     )
 
-                    if random_photos:
+                    if selected_photos:
                         # Afficher les photos in une grille
                         cols_per_row = 3
                         rows = [
-                            random_photos[i : i + cols_per_row]
-                            for i in range(0, len(random_photos), cols_per_row)
+                            selected_photos[i : i + cols_per_row]
+                            for i in range(0, len(selected_photos), cols_per_row)
                         ]
 
                         for row in rows:
