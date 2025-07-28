@@ -12,6 +12,8 @@ import streamlit as st
 # Force reload des modules en développement
 if "src.moment_keeper.analytics" in sys.modules:
     importlib.reload(sys.modules["src.moment_keeper.analytics"])
+if "src.moment_keeper.translations" in sys.modules:
+    importlib.reload(sys.modules["src.moment_keeper.translations"])
 
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
@@ -151,6 +153,13 @@ def main():
             # Mettre à jour la session state si l'utilisateur tape directement
             if sous_dossier_photos != st.session_state.sous_dossier_photos:
                 st.session_state.sous_dossier_photos = sous_dossier_photos
+
+        # Champ prénom du bébé
+        baby_name = st.text_input(
+            tr.t("baby_name"),
+            placeholder=tr.t("baby_name_placeholder"),
+            help="Optionnel : permet de personnaliser l'affichage",
+        )
 
         date_naissance = st.date_input(
             tr.t("birth_date"),
@@ -841,17 +850,43 @@ def main():
                             for k, v in gallery_data.items()
                             if k != "Photos non triées" and "-" in k
                         }
-                        st.info(
-                            f"📈 {len(monthly_folders)} mois de croissance disponibles"
-                        )
+                        if baby_name.strip():
+                            message = tr.t(
+                                "months_growth_available",
+                                count=len(monthly_folders),
+                                name=baby_name.strip(),
+                            )
+                            st.info(f"📈 {message}")
+                        else:
+                            message = tr.t(
+                                "months_growth_available_no_name",
+                                count=len(monthly_folders),
+                            )
+                            st.info(f"📈 {message}")
                     elif selected_month == "Tous les mois":
                         total_photos = sum(
                             len(photos) for photos in gallery_data.values()
                         )
-                        st.info(tr.t("photos_found", count=total_photos))
+                        if baby_name.strip():
+                            message = tr.t(
+                                "photos_found_with_name",
+                                count=total_photos,
+                                name=baby_name.strip(),
+                            )
+                            st.info(message)
+                        else:
+                            st.info(tr.t("photos_found", count=total_photos))
                     else:
                         month_photos = len(gallery_data.get(selected_month, []))
-                        st.info(tr.t("photos_found", count=month_photos))
+                        if baby_name.strip():
+                            message = tr.t(
+                                "photos_found_with_name",
+                                count=month_photos,
+                                name=baby_name.strip(),
+                            )
+                            st.info(message)
+                        else:
+                            st.info(tr.t("photos_found", count=month_photos))
 
                     # Obtenir et afficher les photos selon le mode sélectionné
                     selected_photos = get_photos_by_mode(
