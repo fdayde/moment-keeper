@@ -284,9 +284,6 @@ def main():
                     for erreur in erreurs:
                         st.error(erreur)
 
-        # Séparateur avant les boutons de langue
-        st.markdown("---")
-
         # Bouton pour charger la configuration de test
         if st.button(
             "🦖 " + tr.t("load_test_config"),
@@ -320,9 +317,6 @@ def main():
                     st.rerun()
             else:
                 st.error(tr.t("test_config_not_found"))
-
-        # Séparateur avant les boutons de langue
-        st.markdown("---")
 
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
