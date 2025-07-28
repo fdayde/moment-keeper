@@ -1,16 +1,19 @@
 # MomentKeeper
 
-🦖🍼 **Automatic (Baby) Photo Organizer** - Organize precious moments chronologically with intelligent automation.
+🦖🍼 **Automatic (Baby) Photo & Video Organizer** - Organize precious moments chronologically with intelligent automation.
 
 ## 🎯 Overview
 
-MomentKeeper automatically organizes baby photos into monthly folders based on birth date and photo timestamps extracted from filenames. 
-Transform thousands of photos from chaos to chronological perfection in minutes.
+MomentKeeper automatically organizes baby photos and videos into monthly folders based on birth date and timestamps extracted from filenames. 
+Transform thousands of media files from chaos to chronological perfection in minutes.
 
 ## ✨ Features
 
-- **Smart Organization**: Automatically sorts photos into monthly folders (0-1months, 1-2months, etc.)
+- **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
+- **Media Support**: Handles photos (.jpg, .jpeg, .png, .heic, .webp) and videos (.mp4, .mov, .avi, .mkv, .m4v, .3gp, .wmv)
 - **Date Intelligence**: Extracts dates from filename patterns (`YYYYMMDD_description.jpg`)
+- **Multilingual Interface**: Available in French and English
+- **Analytics Dashboard**: Track your photo habits with insights and visualizations
 - **Dual Interface**: Web interface (Streamlit) and command-line interface
 - **Safe Operation**: Simulation mode before actual organization
 - **Reset Capability**: Undo organization if needed
@@ -21,8 +24,11 @@ Transform thousands of photos from chaos to chronological perfection in minutes.
 
 ### Core Modules
 - `OrganisateurPhotos`: Main organization logic with calendar-accurate age calculation
-- `PhotoCopier`: File operations and safety with move/copy capabilities
-- `PathManager`: Cross-platform path handling
+- `PhotoCopier`: Safe file operations with move/copy capabilities
+- `Analytics`: Photo statistics, insights generation, and visualizations
+- `Config`: Centralized configuration management
+- `Theme`: UI styling and color palette
+- `Translations`: Multilingual support (FR/EN)
 
 ### Workflow
 1. **Configuration**: Set root folder, photos subfolder, and baby's birth date
@@ -112,7 +118,8 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - **Root Directory**: Main project folder containing photos subfolder
 - **Photos Subfolder**: Subdirectory with photos to organize (default: "photos")
 - **Birth Date**: Baby's birth date for precise age calculations
-- **File Pattern**: Supports `YYYYMMDD_description.jpg` format
+- **File Pattern**: Supports `YYYYMMDD_description.ext` format for all media types
+- **File Types**: Choose between photos only, videos only, or both
 
 ## 🎨 User Interface
 
@@ -124,6 +131,9 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - Progress tracking and detailed error reporting
 - Debug information for ignored files
 - One-click reset functionality
+- Analytics dashboard with charts and insights
+- Language selector (FR/EN)
+- T-Rex themed UI with pastel colors
 
 ## 🛡️ Safety Features
 
@@ -179,7 +189,10 @@ moment-keeper/
 ├── src/moment_keeper/       # Main package
 │   ├── organizer.py         # Core organization logic
 │   ├── photo_copier.py      # File operations
-│   ├── path_manager.py      # Path utilities
+│   ├── analytics.py         # Statistics and insights
+│   ├── config.py            # Configuration constants
+│   ├── theme.py             # UI theming
+│   ├── translations.py      # i18n support
 │   └── cli.py              # Command-line interface
 ├── app.py                   # Streamlit web interface
 ├── notebooks/               # Jupyter notebooks
