@@ -1,0 +1,6 @@
+# This file ensures the docs/images directory is tracked by git
+# Place your screenshots here with descriptive names like:
+# - dashboard-main.png
+# - simulation-preview.png
+# - analytics-insights.png
+# - configuration-panel.png

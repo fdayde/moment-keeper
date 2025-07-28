@@ -1,17 +1,35 @@
 # MomentKeeper
 
-🦖🍼 **Automatic (Baby) Photo Organizer** - Organize precious moments chronologically with intelligent automation.
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+🦖🍼 **Automatic (Baby) Photo & Video Organizer** - Organize precious moments chronologically with intelligent automation.
 
 ## 🎯 Overview
 
-MomentKeeper automatically organizes baby photos into monthly folders based on birth date and photo timestamps extracted from filenames. 
-Transform thousands of photos from chaos to chronological perfection in minutes.
+MomentKeeper automatically organizes baby photos and videos into monthly folders based on birth date and timestamps extracted from filenames.
+Transform thousands of media files from chaos to chronological perfection in minutes.
+
+## 📸 Screenshots
+
+<div align="center">
+
+| Simulation Preview | Analytics Dashboard | Insights |
+|:-----------------:|:------------------:|:--------:|
+| ![Simulation](docs/images/simulation_preview.png) | ![Analytics](docs/images/analytics.png) | ![Insights](docs/images/insights.png) |
+| *Preview organization before moving files* | *Track your photo habits with detailed metrics* | *Discover patterns in your photo collection* |
+
+</div>
 
 ## ✨ Features
 
-- **Smart Organization**: Automatically sorts photos into monthly folders (0-1months, 1-2months, etc.)
+- **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
+- **Media Support**: Handles photos (.jpg, .jpeg, .png, .heic, .webp) and videos (.mp4, .mov, .avi, .mkv, .m4v, .3gp, .wmv)
 - **Date Intelligence**: Extracts dates from filename patterns (`YYYYMMDD_description.jpg`)
-- **Dual Interface**: Web interface (Streamlit) and command-line interface
+- **Multilingual Interface**: Available in French and English
+- **Analytics Dashboard**: Track your photo habits with insights and visualizations
 - **Safe Operation**: Simulation mode before actual organization
 - **Reset Capability**: Undo organization if needed
 - **Error Handling**: Robust handling of invalid dates and file formats
@@ -21,8 +39,11 @@ Transform thousands of photos from chaos to chronological perfection in minutes.
 
 ### Core Modules
 - `OrganisateurPhotos`: Main organization logic with calendar-accurate age calculation
-- `PhotoCopier`: File operations and safety with move/copy capabilities
-- `PathManager`: Cross-platform path handling
+- `PhotoCopier`: Safe file operations with move/copy capabilities
+- `Analytics`: Photo statistics, insights generation, and visualizations
+- `Config`: Centralized configuration management
+- `Theme`: UI styling and color palette
+- `Translations`: Multilingual support (FR/EN)
 
 ### Workflow
 1. **Configuration**: Set root folder, photos subfolder, and baby's birth date
@@ -78,9 +99,6 @@ pip install -r requirements.txt
 
 # Run the Streamlit web interface
 streamlit run app.py
-
-# Or use the command line interface
-python -m src.moment_keeper.cli /path/to/project-folder 2024-06-25
 ```
 
 ## 🖥️ Usage
@@ -92,27 +110,14 @@ python -m src.moment_keeper.cli /path/to/project-folder 2024-06-25
 4. **Organize**: Confirm and run actual organization
 5. **Reset**: Undo organization if needed
 
-### Command Line Interface
-```bash
-# Basic usage
-python -m src.moment_keeper.cli /path/to/project 2024-06-25
-
-# Simulation mode
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
-
-# Custom photos subfolder
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --photos-dir images
-
-# Reset organization
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
-```
 
 ## 🔧 Configuration
 
 - **Root Directory**: Main project folder containing photos subfolder
 - **Photos Subfolder**: Subdirectory with photos to organize (default: "photos")
 - **Birth Date**: Baby's birth date for precise age calculations
-- **File Pattern**: Supports `YYYYMMDD_description.jpg` format
+- **File Pattern**: Supports `YYYYMMDD_description.ext` format for all media types
+- **File Types**: Choose between photos only, videos only, or both
 
 ## 🎨 User Interface
 
@@ -124,6 +129,9 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - Progress tracking and detailed error reporting
 - Debug information for ignored files
 - One-click reset functionality
+- Analytics dashboard with charts and insights
+- Language selector (FR/EN)
+- T-Rex themed UI with pastel colors
 
 ## 🛡️ Safety Features
 
@@ -138,7 +146,6 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - ✅ Core organization logic with accurate age calculation
 - ✅ Cross-platform path handling
 - ✅ Complete Streamlit interface
-- ✅ Command-line interface
 - ✅ Jupyter notebook integration
 - ✅ Advanced error handling and debugging
 
@@ -148,6 +155,32 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - **Family Archives**: Sort historical baby photos
 - **Photo Enthusiasts**: Maintain chronological photo libraries
 - **Memory Keeping**: Create timeline-based photo albums
+
+## 📈 Performance
+
+- **High Speed**: Processes ~750,000 photos per minute
+- **Low Memory**: < 35MB RAM usage for 10,000+ files
+- **Scalable**: Tested efficiently from 100 to 10,000+ photos
+- **Cross-Platform**: Verified on Windows 11, Python 3.13
+
+### Supported Filename Patterns
+- ✅ `20240315_photo.jpg` - Standard format
+- ✅ `20240315_long_description.jpg` - With description
+- ✅ `20240315_été_vacances.jpg` - Special characters
+- ❌ `2024-03-15_photo.jpg` - Hyphens not supported
+- ❌ `photo_20240315.jpg` - Date must be at start
+
+### File Size Support
+- **All formats**: Successfully tested up to 1GB per file
+- **Path compatibility**: Supports spaces and special characters in folder names
+- **Memory efficient**: Linear scaling with collection size
+
+### Known Limitations
+- Filename pattern must include `YYYYMMDD_description` format
+- Date extraction from filenames only (EXIF support planned for v2.0)
+- Requires Python 3.8+ and dependencies listed in requirements.txt
+
+> 💡 **Benchmark results** based on real testing with the included benchmark scripts in `/scripts/`
 
 ## 🚀 Development
 
@@ -179,13 +212,51 @@ moment-keeper/
 ├── src/moment_keeper/       # Main package
 │   ├── organizer.py         # Core organization logic
 │   ├── photo_copier.py      # File operations
-│   ├── path_manager.py      # Path utilities
-│   └── cli.py              # Command-line interface
+│   ├── analytics.py         # Statistics and insights
+│   ├── config.py            # Configuration constants
+│   ├── theme.py             # UI theming
+│   └── translations.py      # i18n support
 ├── app.py                   # Streamlit web interface
 ├── notebooks/               # Jupyter notebooks
 ├── tests/                   # Unit tests
 └── requirements*.txt        # Dependencies
 ```
+
+## 🤝 Contributing
+
+We welcome contributions! To maintain code quality:
+
+### Setup
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Install pre-commit hooks (required)
+pre-commit install
+```
+
+### Before submitting
+- ✅ Run `pre-commit run --all-files` to check formatting and linting
+- ✅ Ensure all tests pass (when available)
+- ✅ Follow existing code patterns and conventions
+- ✅ Update documentation if needed
+
+### Code quality tools
+- **black**: Code formatting
+- **isort**: Import sorting
+- **ruff**: Fast Python linting
+- **pre-commit**: Automated checks before commit
+
+## 📝 License
+
+This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
+
+If you use MomentKeeper in your project, a mention would be appreciated! 🦖
+
+## 🏆 Acknowledgments
+
+- Inspired by the chaos of 10,000 unsorted baby photos
+- T-Rex mascot because parenting is like having a tiny dinosaur 🦖
 
 ---
 

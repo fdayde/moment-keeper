@@ -15,7 +15,10 @@ moment-keeper/
 │   ├── __init__.py             # Version et exports
 │   ├── organizer.py            # Logique principale d'organisation
 │   ├── photo_copier.py         # Opérations sur fichiers
-│   ├── path_manager.py         # Gestion des chemins
+│   ├── analytics.py            # Analyse et statistiques
+│   ├── config.py               # Configuration centralisée
+│   ├── theme.py                # Thème et styles UI
+│   ├── translations.py         # Support multilingue
 │   └── cli.py                  # Interface ligne de commande
 ├── app.py                      # Interface Streamlit
 ├── notebooks/                  # Notebooks Jupyter
@@ -37,7 +40,7 @@ moment-keeper/
 
 ### `OrganisateurPhotos` (organizer.py)
 ```python
-def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissance: datetime):
+def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissance: datetime, type_fichiers: str):
 ```
 - **Méthodes clés** :
   - `analyser_photos()` : Analyse et répartit les photos par âge
@@ -45,15 +48,34 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
   - `organiser()` : Déplace réellement les photos
   - `reinitialiser()` : Remet les photos dans le dossier original
   - `calculer_age_mois()` : Calcul précis basé sur les mois calendaires
+  - `get_file_type()` : Détermine si c'est une photo ou vidéo
 
 ### `PhotoCopier` (photo_copier.py)
 - Gestion sécurisée des déplacements de fichiers
-- Historique des opérations pour rollback
 - Gestion des conflits de noms
+- Méthodes simples et robustes
 
-### `PathManager` (path_manager.py)
-- Compatibilité multi-plateforme
-- Gestion des chemins absolus/relatifs
+### `Analytics` (analytics.py)
+- Extraction et analyse des données
+- Calcul des métriques (total, moyenne, gaps)
+- Génération d'insights contextuels
+- Création de graphiques interactifs
+
+### `Config` (config.py)
+- Constantes centralisées
+- Extensions de fichiers supportées
+- Seuils pour les insights
+- Configuration des graphiques
+
+### `Theme` (theme.py)
+- Palette de couleurs T-Rex pastel
+- Styles CSS personnalisés
+- Thème cohérent pour l'UI
+
+### `Translations` (translations.py)
+- Support multilingue (FR/EN)
+- Tous les textes de l'interface
+- Traductions contextuelles
 
 ## 🖥️ Interfaces Utilisateur
 
@@ -114,9 +136,11 @@ python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
 - Exemple : Photo du 21/07/2025, naissance 25/06/2024 → 12 mois (pas 13)
 
 ### Gestion des Fichiers
-- Format requis : `YYYYMMDD_description.jpg`
-- Extensions supportées : `.jpg`, `.jpeg`, `.png`
+- Format requis : `YYYYMMDD_description.ext`
+- Extensions photos : `.jpg`, `.jpeg`, `.png`, `.heic`, `.webp`
+- Extensions vidéos : `.mp4`, `.mov`, `.avi`, `.mkv`, `.m4v`, `.3gp`, `.wmv`
 - Les fichiers sans date ou antérieurs à la naissance sont ignorés
+- Sélection possible : photos seules, vidéos seules, ou les deux
 
 ### Sécurité
 - Simulation obligatoire avant organisation
@@ -169,3 +193,8 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
 - Utiliser les modules du package plutôt que des définitions locales
 - Les emojis T-Rex (🦖) sont utilisés pour représenter les bébés/enfants
 - L'architecture est modulaire pour faciliter les tests et la maintenance
+- Le refactoring récent a séparé la logique métier de l'UI
+- path_manager.py a été supprimé (utilisation directe de pathlib)
+- Toute la configuration est dans config.py
+- Les styles sont dans theme.py
+- L'analyse et les statistiques sont dans analytics.py
