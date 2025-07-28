@@ -154,6 +154,7 @@ def get_css_styles() -> str:
 .trex-success {{
     background: linear-gradient(135deg, {COLORS['success']} 0%, {COLORS['primary']} 100%);
     border-left-color: #4CAF50;
+    color: {COLORS['text_dark']} !important;
 }}
 
 .trex-warning {{
@@ -172,6 +173,10 @@ def get_css_styles() -> str:
 }}
 
 /* Onglets personnalisés */
+.stTabs {{
+    margin-top: -0.5rem;
+}}
+
 .stTabs [data-baseweb="tab-list"] {{
     gap: 8px;
     background: rgba(255,255,255,0.1);

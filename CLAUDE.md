@@ -2,9 +2,16 @@
 
 ## 🎯 Contexte du Projet
 
-**MomentKeeper** est un organisateur automatique de photos de bébé qui classe les images par mois d'âge basé sur :
+**MomentKeeper** est un organisateur automatique de photos et vidéos de bébé qui classe les fichiers média par mois d'âge basé sur :
 - La date de naissance du bébé
 - Les dates extraites des noms de fichiers (format `YYYYMMDD_description.jpg`)
+
+### Fonctionnalités récentes ajoutées :
+- **Galerie interactive** avec 4 modes de visualisation
+- **Badges d'âge** sur les photos montrant l'âge du bébé
+- **Prénom du bébé** pour personnaliser l'expérience
+- **Persistance de configuration** automatique
+- **Navigation améliorée** avec tous les onglets toujours accessibles
 
 ## 📁 Architecture du Projet
 
@@ -17,9 +24,9 @@ moment-keeper/
 │   ├── photo_copier.py         # Opérations sur fichiers
 │   ├── analytics.py            # Analyse et statistiques
 │   ├── config.py               # Configuration centralisée
+│   ├── config_manager.py       # Persistance de la configuration
 │   ├── theme.py                # Thème et styles UI
-│   ├── translations.py         # Support multilingue
-│   └── cli.py                  # Interface ligne de commande
+│   └── translations.py         # Support multilingue
 ├── app.py                      # Interface Streamlit
 ├── notebooks/                  # Notebooks Jupyter
 │   └── classement_photos.ipynb
@@ -60,6 +67,8 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
 - Calcul des métriques (total, moyenne, gaps)
 - Génération d'insights contextuels
 - Création de graphiques interactifs
+- Gestion de la galerie photos avec 4 modes d'affichage
+- Calcul et affichage de l'âge du bébé sur les photos
 
 ### `Config` (config.py)
 - Constantes centralisées
@@ -67,28 +76,43 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
 - Seuils pour les insights
 - Configuration des graphiques
 
+### `ConfigManager` (config_manager.py)
+- Sauvegarde automatique de la configuration
+- Stockage dans `~/.momentkeeper/momentkeeper_config.json`
+- Chargement au démarrage de l'application
+- Gestion des conversions de dates pour JSON
+
 ### `Theme` (theme.py)
 - Palette de couleurs T-Rex pastel
 - Styles CSS personnalisés
 - Thème cohérent pour l'UI
+- Styles pour les badges d'âge dans la galerie
 
 ### `Translations` (translations.py)
 - Support multilingue (FR/EN)
 - Tous les textes de l'interface
 - Traductions contextuelles
+- Préférence de langue persistante
 
 ## 🖥️ Interfaces Utilisateur
 
 ### Interface Streamlit (app.py)
-- **Configuration** : Sélection de dossiers avec dialogues natifs (tkinter)
+- **Configuration** :
+  - Sélection de dossiers avec dialogues natifs (tkinter)
+  - Champ pour le prénom du bébé (personnalisation)
+  - Sélection du type de fichiers (photos/vidéos/les deux)
+  - Sauvegarde automatique de tous les paramètres
+- **Navigation** : Tous les onglets toujours accessibles
 - **Simulation** : Prévisualisation avant organisation
 - **Organisation** : Déplacement avec confirmation
+- **Analytics** : Tableaux de bord avec métriques et graphiques
+- **Insights** : Découverte de patterns dans les habitudes photo
+- **Galerie** :
+  - 4 modes d'affichage (aléatoire, chronologique, highlights, timeline)
+  - Badges d'âge sur chaque photo
+  - Slider adaptatif basé sur l'âge actuel du bébé
 - **Debug** : Affichage des fichiers ignorés et raisons
 
-### Interface CLI (cli.py)
-```bash
-python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
-```
 
 ### Notebook Jupyter
 - Version interactive pour exploration et tests
@@ -113,6 +137,9 @@ python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
    - Sélection du dossier racine (ex: `/Users/nom/photos-lucas`)
    - Sélection du sous-dossier photos (ex: `photos`)
    - Date de naissance du bébé
+   - Prénom du bébé (optionnel)
+   - Type de fichiers à organiser
+   - **Toute la configuration est sauvegardée automatiquement**
 
 2. **Simulation** :
    - Analyse des photos avec format `YYYYMMDD_*.jpg`
@@ -124,7 +151,12 @@ python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
    - Déplacement des photos vers les dossiers appropriés
    - Gestion des erreurs et conflits
 
-4. **Reset** (optionnel) :
+4. **Exploration** :
+   - Analytics : métriques et graphiques
+   - Insights : découverte de patterns
+   - Galerie : visualisation des photos organisées
+
+5. **Reset** (optionnel) :
    - Remise de toutes les photos dans le dossier original
    - Suppression des dossiers vides
 
@@ -181,9 +213,6 @@ pre-commit run --all-files
 
 # Interface web
 streamlit run app.py
-
-# CLI
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
 ```
 
 ## 📝 Notes pour Claude
@@ -198,3 +227,7 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
 - Toute la configuration est dans config.py
 - Les styles sont dans theme.py
 - L'analyse et les statistiques sont dans analytics.py
+- La configuration est persistante grâce à ConfigManager
+- La galerie offre 4 modes de visualisation différents
+- Les badges d'âge sont calculés et affichés sur les photos
+- Tous les onglets sont toujours accessibles pour une meilleure navigation
