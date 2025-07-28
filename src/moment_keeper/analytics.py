@@ -7,6 +7,8 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
+from PIL import Image, ImageOps
 
 from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
 from .organizer import OrganisateurPhotos
@@ -871,3 +873,29 @@ def get_photo_caption_with_age(
     """
 
     return caption_html
+
+
+@st.cache_data
+def get_image_with_correct_orientation(image_path: str) -> Image.Image:
+    """
+    Charge une image en appliquant automatiquement la rotation EXIF.
+
+    Args:
+        image_path: Chemin vers l'image
+
+    Returns:
+        Image PIL avec l'orientation corrigée
+    """
+    try:
+        # Ouvrir l'image
+        image = Image.open(image_path)
+
+        # Appliquer la rotation EXIF automatiquement
+        # ImageOps.exif_transpose gère tous les cas d'orientation EXIF
+        image = ImageOps.exif_transpose(image)
+
+        return image
+    except Exception as e:
+        # En cas d'erreur, retourner l'image sans transformation
+        print(f"Erreur lors du chargement de l'image {image_path}: {e}")
+        return Image.open(image_path)

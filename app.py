@@ -1,9 +1,11 @@
 """Application Streamlit pour MomentKeeper."""
 
+import base64
 import importlib
 import sys
 import tkinter as tk
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from tkinter import filedialog
 
@@ -23,6 +25,7 @@ from src.moment_keeper.analytics import (
     find_gaps,
     generate_insights,
     get_gallery_data,
+    get_image_with_correct_orientation,
     get_photo_caption_with_age,
     get_photos_by_mode,
 )
@@ -1060,11 +1063,29 @@ def main():
                             for idx, photo_path in enumerate(row):
                                 with cols[idx]:
                                     try:
-                                        # Afficher l'image sans caption par défaut
-                                        st.image(
-                                            str(photo_path),
-                                            use_container_width=True,
+                                        # Charger l'image avec l'orientation EXIF corrigée
+                                        image = get_image_with_correct_orientation(
+                                            str(photo_path)
                                         )
+
+                                        # Convertir l'image PIL en base64 pour l'intégrer dans le HTML
+                                        buffered = BytesIO()
+                                        image.save(buffered, format="JPEG", quality=85)
+                                        img_str = base64.b64encode(
+                                            buffered.getvalue()
+                                        ).decode()
+
+                                        # Créer le HTML pour l'image avec le style carré
+                                        image_html = f"""
+                                        <div class="gallery-image-container">
+                                            <img src="data:image/jpeg;base64,{img_str}"
+                                                 class="gallery-image"
+                                                 alt="{photo_path.name}"
+                                                 loading="lazy">
+                                        </div>
+                                        """
+                                        st.markdown(image_html, unsafe_allow_html=True)
+
                                         # Afficher la légende personnalisée avec badge d'âge
                                         caption_html = get_photo_caption_with_age(
                                             photo_path, organiseur, tr
