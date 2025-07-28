@@ -839,3 +839,35 @@ def get_timeline_photos(
             timeline_photos.append(random.choice(month_photos))
 
     return timeline_photos
+
+
+def get_photo_caption_with_age(
+    photo_path: Path, organiseur: OrganisateurPhotos, tr
+) -> str:
+    """Génère une légende de photo avec badge d'âge."""
+    # Extraire la date de la photo
+    date_photo = organiseur.extraire_date_nom_fichier(photo_path.name)
+
+    if not date_photo or date_photo < organiseur.date_naissance:
+        return photo_path.name
+
+    # Calculer l'âge en mois
+    age_mois = organiseur.calculer_age_mois(date_photo)
+
+    # Créer le badge d'âge
+    if age_mois < 1:
+        # Pour les photos de moins d'1 mois, afficher en jours
+        age_jours = (date_photo.date() - organiseur.date_naissance.date()).days
+        age_text = tr.t("age_days", age=age_jours)
+    else:
+        age_text = tr.t("age_months", age=age_mois)
+
+    # Créer la légende HTML avec badge
+    caption_html = f"""
+    <div class="photo-caption">
+        <span>{photo_path.name}</span>
+        <span class="age-badge">🦖 {age_text}</span>
+    </div>
+    """
+
+    return caption_html

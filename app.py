@@ -21,6 +21,7 @@ from src.moment_keeper.analytics import (
     find_gaps,
     generate_insights,
     get_gallery_data,
+    get_photo_caption_with_age,
     get_photos_by_mode,
 )
 from src.moment_keeper.config import (
@@ -864,10 +865,17 @@ def main():
                             for idx, photo_path in enumerate(row):
                                 with cols[idx]:
                                     try:
+                                        # Afficher l'image sans caption par défaut
                                         st.image(
                                             str(photo_path),
-                                            caption=photo_path.name,
                                             use_container_width=True,
+                                        )
+                                        # Afficher la légende personnalisée avec badge d'âge
+                                        caption_html = get_photo_caption_with_age(
+                                            photo_path, organiseur, tr
+                                        )
+                                        st.markdown(
+                                            caption_html, unsafe_allow_html=True
                                         )
                                     except Exception as e:
                                         st.error(
@@ -878,6 +886,12 @@ def main():
                             for idx in range(len(row), cols_per_row):
                                 with cols[idx]:
                                     st.empty()
+
+                            # Ajouter un espace entre les rangées
+                            st.markdown(
+                                "<div style='margin-bottom: 1rem;'></div>",
+                                unsafe_allow_html=True,
+                            )
                     else:
                         st.warning(tr.t("no_photos_month"))
     else:

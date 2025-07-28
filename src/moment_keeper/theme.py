@@ -336,5 +336,32 @@ def get_css_styles() -> str:
     border: 2px solid {COLORS['primary']};
     color: {COLORS['text_light']};
 }}
+
+/* Badge d'âge pour les photos */
+.age-badge {{
+    display: inline-block;
+    background: #2C3E50;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    border: 1px solid #34495E;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}}
+
+/* Container pour légende photo avec badge */
+.photo-caption {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: {COLORS['text_dark']};
+}}
 </style>
 """
