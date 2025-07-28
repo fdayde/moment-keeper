@@ -172,6 +172,7 @@ TRANSLATIONS = {
         # Messages additionnels
         "errors_encountered": "❌ Erreurs rencontrées:",
         "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
+        "configure_settings_first": "ℹ️ Configurez d'abord les paramètres dans la barre latérale pour utiliser cette fonctionnalité",
         "files_reset": "✅ {count} fichiers remis dans le dossier photos",
     },
     "en": {
@@ -345,6 +346,7 @@ TRANSLATIONS = {
         # Additional messages
         "errors_encountered": "❌ Errors encountered:",
         "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
+        "configure_settings_first": "ℹ️ First configure the settings in the sidebar to use this feature",
         "files_reset": "✅ {count} files put back in the photos folder",
     },
 }
