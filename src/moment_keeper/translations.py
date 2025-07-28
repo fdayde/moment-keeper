@@ -25,7 +25,7 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Veuillez sélectionner au moins un type de fichier",
         
         "reset_button": "🔄 Réinitialiser",
-        "reset_help": "Remet toutes les photos dans le dossier photos",
+        "reset_help": "Remet tous les fichiers dans le dossier source",
         
         # Tabs
         "tab_simulation": "🔍 Simulation",
@@ -180,7 +180,7 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Please select at least one file type",
         
         "reset_button": "🔄 Reset",
-        "reset_help": "Puts all photos back in the photos folder",
+        "reset_help": "Puts all files back in the source folder",
         
         # Tabs
         "tab_simulation": "🔍 Simulation",

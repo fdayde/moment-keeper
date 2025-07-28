@@ -77,32 +77,9 @@ def main():
         )
 
     with st.sidebar:
-        # Titre compact dans la sidebar si la page a été naviguée
-        if st.session_state.page_loaded:
-            st.markdown("<h3 style='text-align: center;'>🦖 MomentKeeper</h3>", unsafe_allow_html=True)
-            st.markdown("---")
-        
-        # Sélecteur de langue ultra-compact
-        current_lang = st.session_state.language
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("FR", key="lang_fr_mini", 
-                        type="primary" if current_lang == "fr" else "secondary",
-                        help="Français",
-                        use_container_width=True):
-                if current_lang != "fr":
-                    st.session_state.language = "fr"
-                    st.rerun()
-        
-        with col2:
-            if st.button("EN", key="lang_en_mini",
-                        type="primary" if current_lang == "en" else "secondary", 
-                        help="English",
-                        use_container_width=True):
-                if current_lang != "en":
-                    st.session_state.language = "en"
-                    st.rerun()
+        # Titre compact dans la sidebar
+        st.markdown("<h3 style='text-align: center;'>🦖 MomentKeeper</h3>", unsafe_allow_html=True)
+        st.markdown("---")
         
         # Initialiser le traducteur
         tr = Translator(st.session_state.language)
@@ -212,6 +189,31 @@ def main():
                     st.error(tr.t("errors_encountered"))
                     for erreur in erreurs:
                         st.error(erreur)
+        
+        # Séparateur avant les boutons de langue
+        st.markdown("---")
+        
+        # Sélecteur de langue ultra-compact
+        current_lang = st.session_state.language
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("FR", key="lang_fr_mini", 
+                        type="primary" if current_lang == "fr" else "secondary",
+                        help="Français",
+                        use_container_width=True):
+                if current_lang != "fr":
+                    st.session_state.language = "fr"
+                    st.rerun()
+        
+        with col2:
+            if st.button("EN", key="lang_en_mini",
+                        type="primary" if current_lang == "en" else "secondary", 
+                        help="English",
+                        use_container_width=True):
+                if current_lang != "en":
+                    st.session_state.language = "en"
+                    st.rerun()
 
     if dossier_racine and Path(dossier_racine).exists():
         dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
