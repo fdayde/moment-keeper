@@ -7,6 +7,17 @@
 MomentKeeper automatically organizes baby photos and videos into monthly folders based on birth date and timestamps extracted from filenames.
 Transform thousands of media files from chaos to chronological perfection in minutes.
 
+## 📸 Screenshots
+
+<div align="center">
+
+| Simulation Preview | Analytics Dashboard | Insights |
+|:-----------------:|:------------------:|:--------:|
+| ![Simulation](docs/images/simulation_preview.png) | ![Analytics](docs/images/analytics.png) | ![Insights](docs/images/insights.png) |
+| *Preview organization before moving files* | *Track your photo habits with detailed metrics* | *Discover patterns in your photo collection* |
+
+</div>
+
 ## ✨ Features
 
 - **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
@@ -14,7 +25,6 @@ Transform thousands of media files from chaos to chronological perfection in min
 - **Date Intelligence**: Extracts dates from filename patterns (`YYYYMMDD_description.jpg`)
 - **Multilingual Interface**: Available in French and English
 - **Analytics Dashboard**: Track your photo habits with insights and visualizations
-- **Dual Interface**: Web interface (Streamlit) and command-line interface
 - **Safe Operation**: Simulation mode before actual organization
 - **Reset Capability**: Undo organization if needed
 - **Error Handling**: Robust handling of invalid dates and file formats
@@ -84,9 +94,6 @@ pip install -r requirements.txt
 
 # Run the Streamlit web interface
 streamlit run app.py
-
-# Or use the command line interface
-python -m src.moment_keeper.cli /path/to/project-folder 2024-06-25
 ```
 
 ## 🖥️ Usage
@@ -98,20 +105,6 @@ python -m src.moment_keeper.cli /path/to/project-folder 2024-06-25
 4. **Organize**: Confirm and run actual organization
 5. **Reset**: Undo organization if needed
 
-### Command Line Interface
-```bash
-# Basic usage
-python -m src.moment_keeper.cli /path/to/project 2024-06-25
-
-# Simulation mode
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
-
-# Custom photos subfolder
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --photos-dir images
-
-# Reset organization
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
-```
 
 ## 🔧 Configuration
 
@@ -148,7 +141,6 @@ python -m src.moment_keeper.cli /path/to/project 2024-06-25 --reset
 - ✅ Core organization logic with accurate age calculation
 - ✅ Cross-platform path handling
 - ✅ Complete Streamlit interface
-- ✅ Command-line interface
 - ✅ Jupyter notebook integration
 - ✅ Advanced error handling and debugging
 
@@ -192,8 +184,7 @@ moment-keeper/
 │   ├── analytics.py         # Statistics and insights
 │   ├── config.py            # Configuration constants
 │   ├── theme.py             # UI theming
-│   ├── translations.py      # i18n support
-│   └── cli.py              # Command-line interface
+│   └── translations.py      # i18n support
 ├── app.py                   # Streamlit web interface
 ├── notebooks/               # Jupyter notebooks
 ├── tests/                   # Unit tests
