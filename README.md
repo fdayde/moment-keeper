@@ -28,8 +28,11 @@ Transform thousands of media files from chaos to chronological perfection in min
 - **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
 - **Media Support**: Handles photos (.jpg, .jpeg, .png, .heic, .webp) and videos (.mp4, .mov, .avi, .mkv, .m4v, .3gp, .wmv)
 - **Date Intelligence**: Extracts dates from filename patterns (`YYYYMMDD_description.jpg`)
-- **Multilingual Interface**: Available in French and English
+- **Multilingual Interface**: Available in French and English with persistent language preference
 - **Analytics Dashboard**: Track your photo habits with insights and visualizations
+- **Gallery View**: Browse organized photos with multiple viewing modes (random, chronological, highlights, timeline)
+- **Baby's Name Personalization**: Add your baby's name for personalized messages and insights
+- **Configuration Persistence**: Settings are saved automatically and restored on next launch
 - **Safe Operation**: Simulation mode before actual organization
 - **Reset Capability**: Undo organization if needed
 - **Error Handling**: Robust handling of invalid dates and file formats
@@ -42,6 +45,7 @@ Transform thousands of media files from chaos to chronological perfection in min
 - `PhotoCopier`: Safe file operations with move/copy capabilities
 - `Analytics`: Photo statistics, insights generation, and visualizations
 - `Config`: Centralized configuration management
+- `ConfigManager`: Persistent configuration storage in JSON format
 - `Theme`: UI styling and color palette
 - `Translations`: Multilingual support (FR/EN)
 
@@ -106,9 +110,15 @@ streamlit run app.py
 ### Streamlit Web Interface
 1. **Configure paths**: Select root directory and photos subfolder using browse buttons
 2. **Set birth date**: Choose baby's birth date with date picker
-3. **Simulate**: Preview organization with "Analyser les photos"
-4. **Organize**: Confirm and run actual organization
-5. **Reset**: Undo organization if needed
+3. **Add baby's name** (optional): Personalize messages and insights
+4. **Select file types**: Choose to organize photos, videos, or both
+5. **Simulate**: Preview organization with "Analyser les photos"
+6. **Organize**: Confirm and run actual organization
+7. **Explore Analytics**: View statistics and insights about your photo collection
+8. **Browse Gallery**: View organized photos with different display modes
+9. **Reset**: Undo organization if needed
+
+All settings are automatically saved and restored on next launch.
 
 
 ## 🔧 Configuration
@@ -116,8 +126,11 @@ streamlit run app.py
 - **Root Directory**: Main project folder containing photos subfolder
 - **Photos Subfolder**: Subdirectory with photos to organize (default: "photos")
 - **Birth Date**: Baby's birth date for precise age calculations
+- **Baby's Name** (optional): Personalize the experience with your baby's name
 - **File Pattern**: Supports `YYYYMMDD_description.ext` format for all media types
 - **File Types**: Choose between photos only, videos only, or both
+- **Language**: French or English interface (preference saved)
+- **Configuration File**: Settings saved in `~/.momentkeeper/momentkeeper_config.json`
 
 ## 🎨 User Interface
 
@@ -125,13 +138,22 @@ streamlit run app.py
 - Native folder browsing with tkinter dialogs
 - Dual path configuration (root + subfolder)
 - Date picker with validation
+- Baby name personalization
 - Real-time simulation preview
 - Progress tracking and detailed error reporting
 - Debug information for ignored files
 - One-click reset functionality
 - Analytics dashboard with charts and insights
-- Language selector (FR/EN)
+- Interactive photo gallery with 4 viewing modes:
+  - Random: Discover forgotten memories
+  - Chronological: View photos in date order
+  - Highlights: See the most photo-heavy days
+  - Timeline: One photo per month showing growth
+- Age badges on gallery photos showing baby's age when taken
+- Adaptive photo count slider based on baby's current age
+- Language selector (FR/EN) with persistent preference
 - T-Rex themed UI with pastel colors
+- All tabs always accessible for better navigation
 
 ## 🛡️ Safety Features
 
@@ -214,6 +236,7 @@ moment-keeper/
 │   ├── photo_copier.py      # File operations
 │   ├── analytics.py         # Statistics and insights
 │   ├── config.py            # Configuration constants
+│   ├── config_manager.py    # Persistent configuration
 │   ├── theme.py             # UI theming
 │   └── translations.py      # i18n support
 ├── app.py                   # Streamlit web interface
