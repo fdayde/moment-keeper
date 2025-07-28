@@ -28,6 +28,7 @@ TRANSLATIONS = {
         "reset_help": "Remet tous les fichiers dans le dossier source",
         
         # Tabs
+        "tab_home": "🏠 Accueil",
         "tab_simulation": "🔍 Simulation",
         "tab_organization": "🗂️ Organisation",
         "tab_analytics": "📊 Analytics",
@@ -87,6 +88,12 @@ TRANSLATIONS = {
         "welcome_feature_4": "📊 Analyse vos habitudes photo avec des statistiques détaillées",
         "welcome_feature_5": "🦖 Fournit des insights personnalisés sur vos tendances de capture",
         "welcome_start": "👈 Commencez par configurer le dossier principal dans la barre latérale !",
+        "welcome_steps_title": "🚀 Étapes pour commencer :",
+        "welcome_step_1": "1️⃣ Configurez vos dossiers et la date de naissance dans la barre latérale",
+        "welcome_step_2": "2️⃣ Allez dans l'onglet Simulation pour prévisualiser l'organisation",
+        "welcome_step_3": "3️⃣ Utilisez l'onglet Organisation pour déplacer réellement vos fichiers",
+        "welcome_step_4": "4️⃣ Explorez Analytics pour découvrir vos statistiques de capture",
+        "welcome_step_5": "5️⃣ Consultez Insights pour des analyses personnalisées de vos habitudes",
         
         # Footer
         "footer_love": "Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur",
@@ -193,6 +200,7 @@ TRANSLATIONS = {
         "reset_help": "Puts all files back in the source folder",
         
         # Tabs
+        "tab_home": "🏠 Home",
         "tab_simulation": "🔍 Simulation",
         "tab_organization": "🗂️ Organization",
         "tab_analytics": "📊 Analytics",
@@ -252,6 +260,12 @@ TRANSLATIONS = {
         "welcome_feature_4": "📊 Analyzes your photo habits with detailed statistics",
         "welcome_feature_5": "🦖 Provides personalized insights on your capture trends",
         "welcome_start": "👈 Start by configuring the main folder in the sidebar!",
+        "welcome_steps_title": "🚀 Steps to get started:",
+        "welcome_step_1": "1️⃣ Configure your folders and birth date in the sidebar",
+        "welcome_step_2": "2️⃣ Go to the Simulation tab to preview the organization",
+        "welcome_step_3": "3️⃣ Use the Organization tab to actually move your files",
+        "welcome_step_4": "4️⃣ Explore Analytics to discover your capture statistics",
+        "welcome_step_5": "5️⃣ Check Insights for personalized analysis of your habits",
         
         # Footer
         "footer_love": "Created with ❤️ for a 🦖 with tiny arms but a big heart",

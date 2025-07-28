@@ -50,6 +50,10 @@ def main():
 
     # 🎨 Appliquer le CSS custom
     st.markdown(get_css_styles(), unsafe_allow_html=True)
+    
+    # Forcer l'ouverture de la sidebar au premier lancement
+    if "sidebar_state" not in st.session_state:
+        st.session_state.sidebar_state = "expanded"
 
     # Initialiser la session state
     if "dossier_path" not in st.session_state:
@@ -215,12 +219,65 @@ def main():
                     st.session_state.language = "en"
                     st.rerun()
 
-    if dossier_racine and Path(dossier_racine).exists():
-        dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
-        if dossier_photos_complet.exists():
-            if type_fichiers is None:
+    # Afficher les onglets si la page a été chargée au moins une fois
+    if st.session_state.page_loaded or (dossier_racine and Path(dossier_racine).exists()):
+        # Créer les onglets avec Accueil en premier
+        tab_list = [tr.t("tab_home")]
+        if dossier_racine and Path(dossier_racine).exists():
+            dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
+            if dossier_photos_complet.exists() and type_fichiers is not None:
+                tab_list.extend([
+                    tr.t("tab_simulation"),
+                    tr.t("tab_organization"),
+                    tr.t("tab_analytics"),
+                    tr.t("tab_insights"),
+                ])
+        
+        tabs = st.tabs(tab_list)
+        
+        # Onglet Accueil
+        with tabs[0]:
+            # Zone d'explication de l'application
+            st.markdown(
+                f"""
+                <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                    <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
+                    <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
+                    <ul style="color: #7F8C8D; margin-left: 1.5rem;">
+                        <li>{temp_tr.t("welcome_feature_1")}</li>
+                        <li>{temp_tr.t("welcome_feature_2")}</li>
+                        <li>{temp_tr.t("welcome_feature_3")}</li>
+                        <li>{temp_tr.t("welcome_feature_4")}</li>
+                        <li>{temp_tr.t("welcome_feature_5")}</li>
+                    </ul>
+                </div>
+                
+                <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
+                    <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">{temp_tr.t("welcome_steps_title")}</h4>
+                    <div style="color: #7F8C8D; line-height: 1.8;">
+                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_1")}</p>
+                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_2")}</p>
+                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_3")}</p>
+                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_4")}</p>
+                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_5")}</p>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            
+            if not dossier_racine:
+                st.info(tr.t("configure_root"))
+            elif not Path(dossier_racine).exists():
+                st.error(tr.t("root_not_exist"))
+            elif not dossier_photos_complet.exists():
+                st.error(tr.t("folder_not_exist", folder=sous_dossier_photos, root=dossier_racine))
+            elif type_fichiers is None:
                 st.error(tr.t("select_file_type"))
-            else:
+        
+        # Autres onglets si disponibles
+        if len(tab_list) > 1:
+            if type_fichiers is not None:
                 organiseur = OrganisateurPhotos(
                     Path(dossier_racine),
                     sous_dossier_photos,
@@ -228,16 +285,7 @@ def main():
                     type_fichiers
                 )
 
-                tab1, tab2, tab3, tab4 = st.tabs(
-                [
-                    tr.t("tab_simulation"),
-                    tr.t("tab_organization"),
-                    tr.t("tab_analytics"),
-                    tr.t("tab_insights"),
-                ]
-            )
-
-            with tab1:
+            with tabs[1]:
                 st.markdown(
                     f'<div class="trex-message">{tr.t("simulation_title")}</div>',
                     unsafe_allow_html=True,
@@ -327,7 +375,7 @@ def main():
                         for erreur in erreurs:
                             st.warning(erreur)
 
-            with tab2:
+            with tabs[2]:
                 st.markdown(
                     f'<div class="trex-message">{tr.t("organization_title")}</div>',
                     unsafe_allow_html=True,
@@ -367,7 +415,7 @@ def main():
                             for erreur in erreurs:
                                 st.error(erreur)
 
-            with tab3:
+            with tabs[3]:
                 st.markdown(
                     f'<div class="trex-message">{tr.t("analytics_title")}</div>',
                     unsafe_allow_html=True,
@@ -504,7 +552,7 @@ def main():
                                         tr.t("gap_alert", days=gap_days, start=gap_start.strftime('%d/%m/%Y'), end=gap_end.strftime('%d/%m/%Y'))
                                     )
 
-            with tab4:
+            with tabs[4]:
                 st.markdown(
                     f'<div class="trex-message">{tr.t("insights_title")}</div>',
                     unsafe_allow_html=True,
@@ -593,30 +641,36 @@ def main():
                             st.write(tr.t("small_moments_matter"))
                     else:
                         st.info(tr.t("analyze_first"))
-        else:
-            st.error(tr.t("folder_not_exist", folder=sous_dossier_photos, root=dossier_racine))
     else:
-        if dossier_racine:
-            st.error(tr.t("root_not_exist"))
-        else:
-            # Zone d'explication de l'application
-            st.markdown(
-                f"""
-                <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                    <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
-                    <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
-                    <ul style="color: #7F8C8D; margin-left: 1.5rem;">
-                        <li>{temp_tr.t("welcome_feature_1")}</li>
-                        <li>{temp_tr.t("welcome_feature_2")}</li>
-                        <li>{temp_tr.t("welcome_feature_3")}</li>
-                        <li>{temp_tr.t("welcome_feature_4")}</li>
-                        <li>{temp_tr.t("welcome_feature_5")}</li>
-                    </ul>
-                    <p style="color: #7F8C8D; margin-top: 0.8rem; margin-bottom: 0;"><strong>{temp_tr.t("welcome_start")}</strong></p>
+        # Page d'accueil initiale (sans onglets)
+        # Zone d'explication de l'application
+        st.markdown(
+            f"""
+            <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
+                <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
+                <ul style="color: #7F8C8D; margin-left: 1.5rem;">
+                    <li>{temp_tr.t("welcome_feature_1")}</li>
+                    <li>{temp_tr.t("welcome_feature_2")}</li>
+                    <li>{temp_tr.t("welcome_feature_3")}</li>
+                    <li>{temp_tr.t("welcome_feature_4")}</li>
+                    <li>{temp_tr.t("welcome_feature_5")}</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
+                <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">🚀 Étapes pour commencer :</h4>
+                <div style="color: #7F8C8D; line-height: 1.8;">
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_1")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_2")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_3")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_4")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_5")}</p>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
     # 🦖 Footer T-Rex avec personnalité
     st.markdown(
