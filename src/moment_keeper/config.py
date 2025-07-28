@@ -10,8 +10,8 @@ ALL_EXTENSIONS: Set[str] = EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
 # Types de fichiers pour l'interface
 FILE_TYPES = {
     "photos_only": "📸 Photos uniquement",
-    "videos_only": "🎬 Vidéos uniquement", 
-    "both": "📸🎬 Photos et Vidéos"
+    "videos_only": "🎬 Vidéos uniquement",
+    "both": "📸🎬 Photos et Vidéos",
 }
 
 # Configuration par défaut
@@ -24,7 +24,7 @@ PAGE_CONFIG = {
     "page_title": "🦖 MomentKeeper",
     "page_icon": "🦖",
     "layout": "wide",
-    "initial_sidebar_state": "expanded"
+    "initial_sidebar_state": "expanded",
 }
 
 # Limites d'affichage
@@ -55,7 +55,7 @@ INSIGHTS_THRESHOLDS = {
     "trend_decrease_threshold": -8,
     "evolution_significant": 50,
     "evolution_decrease": -40,
-    "contrast_ratio_min": 2
+    "contrast_ratio_min": 2,
 }
 
 # Configuration des graphiques
@@ -65,5 +65,5 @@ CHART_CONFIG = {
     "tick_angle": 45,
     "line_width": 4,
     "marker_size": 8,
-    "marker_line_width": 2
+    "marker_line_width": 2,
 }

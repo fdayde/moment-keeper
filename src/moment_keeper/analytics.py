@@ -1,27 +1,30 @@
 """Module d'analyse et de statistiques pour MomentKeeper."""
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from .config import INSIGHTS_THRESHOLDS, CHART_CONFIG
+from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
 from .organizer import OrganisateurPhotos
-from .theme import CHART_COLORS, BAR_CHART_GRADIENT, HEATMAP_COLORSCALE, COLORS
+from .theme import BAR_CHART_GRADIENT, CHART_COLORS, COLORS, HEATMAP_COLORSCALE
 from .translations import Translator
 
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     """Extrait les données des photos pour l'analyse."""
     photos_data = []
-    
+
     # Parcourir tous les dossiers du projet (source + dossiers mensuels)
     for dossier in organiseur.dossier_racine.iterdir():
         if dossier.is_dir():
             for fichier in dossier.iterdir():
-                if fichier.is_file() and fichier.suffix.lower() in organiseur.extensions_actives:
+                if (
+                    fichier.is_file()
+                    and fichier.suffix.lower() in organiseur.extensions_actives
+                ):
                     # Réutiliser la méthode existante pour extraire la date
                     date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
 
@@ -59,15 +62,19 @@ def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
         }
 
     # Métriques de base avec distinction photo/vidéo si nécessaire
-    if type_fichiers == "📸🎬 Photos et Vidéos" and 'type' in df.columns:
-        total_photos = len(df[df['type'] == 'photo'])
-        total_videos = len(df[df['type'] == 'video'])
+    if type_fichiers == "📸🎬 Photos et Vidéos" and "type" in df.columns:
+        total_photos = len(df[df["type"] == "photo"])
+        total_videos = len(df[df["type"] == "video"])
         total_fichiers = total_photos + total_videos
     else:
         total_fichiers = len(df)
-        total_photos = total_fichiers if type_fichiers and "Photos" in type_fichiers else 0
-        total_videos = total_fichiers if type_fichiers and "Vidéos" in type_fichiers else 0
-    
+        total_photos = (
+            total_fichiers if type_fichiers and "Photos" in type_fichiers else 0
+        )
+        total_videos = (
+            total_fichiers if type_fichiers and "Vidéos" in type_fichiers else 0
+        )
+
     periode_couverte = df["age_mois"].max() + 1 if not df.empty else 0
     moyenne_par_mois = total_fichiers / periode_couverte if periode_couverte > 0 else 0
 
@@ -104,7 +111,7 @@ def find_gaps(
     """Trouve les gaps temporels dans les photos."""
     if min_gap_days is None:
         min_gap_days = INSIGHTS_THRESHOLDS["min_gap_days"]
-        
+
     if df.empty:
         return []
 
@@ -119,26 +126,50 @@ def find_gaps(
     return gaps
 
 
-def age_to_month_name(age_mois: int, date_naissance: datetime, language: str = "fr") -> str:
+def age_to_month_name(
+    age_mois: int, date_naissance: datetime, language: str = "fr"
+) -> str:
     """Convertit un âge en mois vers le nom du mois calendaire correspondant."""
     mois_cible = date_naissance + timedelta(
         days=age_mois * 30.44  # 30.44 jours par mois en moyenne
     )
-    
+
     if language == "fr":
         mois_noms = [
-            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+            "Janvier",
+            "Février",
+            "Mars",
+            "Avril",
+            "Mai",
+            "Juin",
+            "Juillet",
+            "Août",
+            "Septembre",
+            "Octobre",
+            "Novembre",
+            "Décembre",
         ]
     else:
         mois_noms = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
     return mois_noms[mois_cible.month - 1]
 
 
-def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr: Translator) -> List[str]:
+def detect_special_moments(
+    df: pd.DataFrame, jour_record_existant: int, tr: Translator
+) -> List[str]:
     """Détecte les moments spéciaux basés sur les pics de photos."""
     special_insights = []
 
@@ -149,8 +180,8 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr: Tran
     photos_par_jour = df.groupby(df["date"].dt.date).size()
     moyenne_quotidienne = photos_par_jour.mean()
     seuil_pic = max(
-        moyenne_quotidienne * INSIGHTS_THRESHOLDS["special_event_multiplier"], 
-        INSIGHTS_THRESHOLDS["special_event_min"]
+        moyenne_quotidienne * INSIGHTS_THRESHOLDS["special_event_multiplier"],
+        INSIGHTS_THRESHOLDS["special_event_min"],
     )
 
     pics = photos_par_jour[photos_par_jour >= seuil_pic]
@@ -163,7 +194,8 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr: Tran
             dates_str += "..."
 
         special_insights.append(
-            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})" if tr.language == "fr"
+            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
+            if tr.language == "fr"
             else f"🎉 {len(pics)} special events detected ({dates_str})"
         )
 
@@ -173,12 +205,14 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr: Tran
 
         if pic_max >= INSIGHTS_THRESHOLDS["major_event_threshold"]:
             special_insights.append(
-                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?" if tr.language == "fr"
+                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
+                if tr.language == "fr"
                 else f"🎊 Major event on {date_pic_max.strftime('%d/%m/%Y')} - First vacation? Family visit?"
             )
         elif pic_max >= INSIGHTS_THRESHOLDS["nice_event_threshold"]:
             special_insights.append(
-                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?" if tr.language == "fr"
+                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
+                if tr.language == "fr"
                 else f"🎈 Great day on {date_pic_max.strftime('%d/%m/%Y')} - Family outing? First birthday?"
             )
 
@@ -186,11 +220,14 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr: Tran
     dates_pics = sorted(pics.index)
     if len(dates_pics) >= 2:
         for i in range(1, len(dates_pics)):
-            if (dates_pics[i] - dates_pics[i - 1]).days <= INSIGHTS_THRESHOLDS["intensive_period_gap"]:
+            if (dates_pics[i] - dates_pics[i - 1]).days <= INSIGHTS_THRESHOLDS[
+                "intensive_period_gap"
+            ]:
                 date_debut = dates_pics[i - 1]
                 date_fin = dates_pics[i]
                 special_insights.append(
-                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?" if tr.language == "fr"
+                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
+                    if tr.language == "fr"
                     else f"🏖️ Intensive period {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacation or event?"
                 )
                 break
@@ -226,12 +263,14 @@ def generate_temporal_comparisons(
                 evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
                 if evolution > INSIGHTS_THRESHOLDS["evolution_significant"]:
                     comparisons.append(
-                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        if tr.language == "fr"
                         else f"📈 Growing evolution: +{evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
                 elif evolution < INSIGHTS_THRESHOLDS["evolution_decrease"]:
                     comparisons.append(
-                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        if tr.language == "fr"
                         else f"📉 Evolution: {evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
 
@@ -249,7 +288,12 @@ def generate_temporal_comparisons(
                 ratio = photos_max / photos_min
                 if ratio >= INSIGHTS_THRESHOLDS["contrast_ratio_min"]:
                     comparisons.append(
-                        tr.t("contrast_months", max_month=mois_max_nom, min_month=mois_min_nom, ratio=f"{ratio:.1f}")
+                        tr.t(
+                            "contrast_months",
+                            max_month=mois_max_nom,
+                            min_month=mois_min_nom,
+                            ratio=f"{ratio:.1f}",
+                        )
                     )
 
     # 2. Comparaison week-end vs semaine
@@ -290,7 +334,11 @@ def generate_temporal_comparisons(
 
 
 def generate_insights(
-    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None, tr: Translator = None
+    df: pd.DataFrame,
+    metrics: Dict,
+    date_naissance: datetime,
+    type_fichiers: str = None,
+    tr: Translator = None,
 ) -> List[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
@@ -299,7 +347,7 @@ def generate_insights(
         if tr:
             return [tr.t("analyze_first")]
         return ["Aucune photo analysée pour le moment 📸"]
-    
+
     # Protection contre tr None
     if not tr:
         tr = Translator("fr")
@@ -309,9 +357,13 @@ def generate_insights(
         total = metrics.get("total_fichiers", 0)
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(
-                tr.t("magnificent_collection_mixed", photos=metrics['total_photos'], videos=metrics['total_videos'])
+                tr.t(
+                    "magnificent_collection_mixed",
+                    photos=metrics["total_photos"],
+                    videos=metrics["total_videos"],
+                )
             )
-        
+
         # Ratio photos/vidéos
         if metrics["total_videos"] > 0:
             ratio = metrics["total_photos"] / metrics["total_videos"]
@@ -325,18 +377,21 @@ def generate_insights(
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
         if tr.language == "fr":
-            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
-        else:
-            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
-        type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
-        
-        if total > INSIGHTS_THRESHOLDS["large_collection"]:
-            insights.append(
-                tr.t("magnificent_collection", total=total, type=type_nom)
+            type_nom = (
+                "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
             )
+        else:
+            type_nom = (
+                "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
+            )
+        type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
+
+        if total > INSIGHTS_THRESHOLDS["large_collection"]:
+            insights.append(tr.t("magnificent_collection", total=total, type=type_nom))
         elif total > INSIGHTS_THRESHOLDS["medium_collection"]:
             insights.append(
-                f"{type_emoji} Belle collection de {total} {type_nom}!" if tr.language == "fr"
+                f"{type_emoji} Belle collection de {total} {type_nom}!"
+                if tr.language == "fr"
                 else f"{type_emoji} Nice collection of {total} {type_nom}!"
             )
 
@@ -350,7 +405,13 @@ def generate_insights(
         mois_nom = age_to_month_name(mois_champion, date_naissance, tr.language)
 
         insights.append(
-            tr.t("record_period", start=mois_champion, end=mois_champion+1, month=mois_nom, count=nb_photos_champion)
+            tr.t(
+                "record_period",
+                start=mois_champion,
+                end=mois_champion + 1,
+                month=mois_nom,
+                count=nb_photos_champion,
+            )
         )
 
     # Analyse des jours de la semaine
@@ -369,7 +430,11 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            tr.t("burst_mode_activated", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
+            tr.t(
+                "burst_mode_activated",
+                count=metrics["jour_record"],
+                date=date_record.strftime("%d/%m/%Y"),
+            )
         )
     elif metrics["jour_record"] >= INSIGHTS_THRESHOLDS["productive_day_threshold"]:
         # Trouver la date du record
@@ -377,7 +442,11 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            tr.t("productive_day", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
+            tr.t(
+                "productive_day",
+                count=metrics["jour_record"],
+                date=date_record.strftime("%d/%m/%Y"),
+            )
         )
 
     # Analyse des gaps
@@ -386,12 +455,20 @@ def generate_insights(
         gap_le_plus_long = max(gaps, key=lambda x: x[2])
         if gap_le_plus_long[2] >= INSIGHTS_THRESHOLDS["very_long_gap"]:
             insights.append(
-                tr.t("longest_silence", days=gap_le_plus_long[2], start=gap_le_plus_long[0].strftime('%d/%m'), end=gap_le_plus_long[1].strftime('%d/%m'))
+                tr.t(
+                    "longest_silence",
+                    days=gap_le_plus_long[2],
+                    start=gap_le_plus_long[0].strftime("%d/%m"),
+                    end=gap_le_plus_long[1].strftime("%d/%m"),
+                )
             )
 
     # Régularité récente
     if not df.empty:
-        photos_recentes = df[df["date"] >= (datetime.now() - timedelta(days=INSIGHTS_THRESHOLDS["recent_days"]))]
+        photos_recentes = df[
+            df["date"]
+            >= (datetime.now() - timedelta(days=INSIGHTS_THRESHOLDS["recent_days"]))
+        ]
         if len(photos_recentes) == 0:
             insights.append(tr.t("think_recent_photos"))
         elif len(photos_recentes) >= INSIGHTS_THRESHOLDS["recent_active_threshold"]:
@@ -426,10 +503,18 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title="🦖 Évolution des photos par mois d'âge" if tr.language == "fr" else "🦖 Photo evolution by age in months",
+        title=(
+            "🦖 Évolution des photos par mois d'âge"
+            if tr.language == "fr"
+            else "🦖 Photo evolution by age in months"
+        ),
         labels={
-            "age_mois": "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)",
-            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+            "age_mois": (
+                "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)"
+            ),
+            "nb_photos": (
+                "Nombre de photos" if tr.language == "fr" else "Number of photos"
+            ),
         },
         color="nb_photos",
         color_continuous_scale=BAR_CHART_GRADIENT,
@@ -441,12 +526,12 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig_barres.update_xaxes(
-        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)", 
-        gridcolor=COLORS["primary"]
+        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)",
+        gridcolor=COLORS["primary"],
     )
     fig_barres.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
-        gridcolor=COLORS["primary"]
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        gridcolor=COLORS["primary"],
     )
     charts["barres"] = fig_barres
 
@@ -460,10 +545,16 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title="🦖 Timeline : Activité hebdomadaire" if tr.language == "fr" else "🦖 Timeline: Weekly activity",
+        title=(
+            "🦖 Timeline : Activité hebdomadaire"
+            if tr.language == "fr"
+            else "🦖 Timeline: Weekly activity"
+        ),
         labels={
             "semaine_annee": "Semaine" if tr.language == "fr" else "Week",
-            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+            "nb_photos": (
+                "Nombre de photos" if tr.language == "fr" else "Number of photos"
+            ),
         },
         color_discrete_sequence=[COLORS["chart_purple"]],
     )
@@ -473,34 +564,57 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig_timeline.update_xaxes(
-        tickangle=CHART_CONFIG["tick_angle"], 
-        title="Semaine" if tr.language == "fr" else "Week", 
-        gridcolor=COLORS["primary"]
+        tickangle=CHART_CONFIG["tick_angle"],
+        title="Semaine" if tr.language == "fr" else "Week",
+        gridcolor=COLORS["primary"],
     )
     fig_timeline.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
-        gridcolor=COLORS["primary"]
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        gridcolor=COLORS["primary"],
     )
     fig_timeline.update_traces(
         line_width=CHART_CONFIG["line_width"],
         line_color=COLORS["chart_purple"],
         marker=dict(
-            size=CHART_CONFIG["marker_size"], 
-            color=COLORS["chart_coral"], 
-            line=dict(width=CHART_CONFIG["marker_line_width"], color=COLORS["text_dark"])
-        )
+            size=CHART_CONFIG["marker_size"],
+            color=COLORS["chart_coral"],
+            line=dict(
+                width=CHART_CONFIG["marker_line_width"], color=COLORS["text_dark"]
+            ),
+        ),
     )
     charts["timeline"] = fig_timeline
 
     # 3. Heatmap : Répartition par jour de la semaine
     jours_ordre = [
-        "Monday", "Tuesday", "Wednesday", "Thursday", 
-        "Friday", "Saturday", "Sunday"
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
     ]
     if tr.language == "fr":
-        jours_display = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+        jours_display = [
+            "Lundi",
+            "Mardi",
+            "Mercredi",
+            "Jeudi",
+            "Vendredi",
+            "Samedi",
+            "Dimanche",
+        ]
     else:
-        jours_display = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        jours_display = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
 
     photos_par_jour = (
         df.groupby("jour_semaine").size().reindex(jours_ordre, fill_value=0)
@@ -519,7 +633,11 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
         )
     )
     fig_heatmap.update_layout(
-        title="🦖 Heatmap : Jours favoris" if tr.language == "fr" else "🦖 Heatmap: Favorite days",
+        title=(
+            "🦖 Heatmap : Jours favoris"
+            if tr.language == "fr"
+            else "🦖 Heatmap: Favorite days"
+        ),
         xaxis_title="Jour de la semaine" if tr.language == "fr" else "Day of the week",
         yaxis_title="",
         height=CHART_CONFIG["height_heatmap"],

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from .photo_copier import PhotoCopier
 
@@ -15,8 +15,11 @@ class OrganisateurPhotos:
     """Organisateur principal des photos par mois."""
 
     def __init__(
-        self, dossier_racine: Path, sous_dossier_photos: str, date_naissance: datetime,
-        type_fichiers: str = "📸🎬 Photos et Vidéos"
+        self,
+        dossier_racine: Path,
+        sous_dossier_photos: str,
+        date_naissance: datetime,
+        type_fichiers: str = "📸🎬 Photos et Vidéos",
     ):
         self.dossier_racine = Path(dossier_racine)
         self.dossier_source = self.dossier_racine / sous_dossier_photos
@@ -50,7 +53,7 @@ class OrganisateurPhotos:
     def obtenir_nom_dossier_mois(self, age_mois: int) -> str:
         """Retourne le nom du dossier pour un âge donné."""
         return f"{age_mois}-{age_mois + 1}months"
-    
+
     def _get_extensions_actives(self) -> Set[str]:
         """Retourne les extensions actives selon le type de fichiers sélectionné."""
         if self.type_fichiers == "📸 Photos uniquement":
@@ -59,7 +62,7 @@ class OrganisateurPhotos:
             return EXTENSIONS_VIDEOS
         else:  # 📸🎬 Photos et Vidéos
             return EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
-    
+
     def get_file_type(self, filepath: Path) -> str:
         """Retourne 'photo' ou 'video' selon l'extension."""
         extension = filepath.suffix.lower()

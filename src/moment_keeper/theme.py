@@ -2,21 +2,21 @@
 
 # 🎨 Palette couleurs T-Rex Pastel
 COLORS = {
-    "primary": "#E8F4F8",        # Bleu pastel doux (ciel préhistorique)
-    "secondary": "#F9F2E7",      # Beige/crème chaleureux (sable ancien)
-    "accent": "#D4C5B9",         # Taupe rosé (terre préhistorique)
-    "success": "#C8E6C9",        # Vert pastel (T-Rex amical)
-    "warning": "#FFE0B2",        # Orange pastel
-    "error": "#FFCDD2",          # Rose pastel
-    "text_dark": "#2C3E50",      # Bleu marine doux
-    "text_light": "#7F8C8D",     # Gris élégant
+    "primary": "#E8F4F8",  # Bleu pastel doux (ciel préhistorique)
+    "secondary": "#F9F2E7",  # Beige/crème chaleureux (sable ancien)
+    "accent": "#D4C5B9",  # Taupe rosé (terre préhistorique)
+    "success": "#C8E6C9",  # Vert pastel (T-Rex amical)
+    "warning": "#FFE0B2",  # Orange pastel
+    "error": "#FFCDD2",  # Rose pastel
+    "text_dark": "#2C3E50",  # Bleu marine doux
+    "text_light": "#7F8C8D",  # Gris élégant
     # Couleurs additionnelles pour graphiques
-    "chart_purple": "#E1D5E7",   # Violet pastel
-    "chart_mint": "#D5F4E6",     # Menthe pastel
-    "chart_peach": "#FFE5D9",    # Pêche pastel
-    "chart_lavender": "#E6E6FA", # Lavande pastel
-    "chart_coral": "#FFB3BA",    # Corail pastel
-    "dark_red_pastel": "#F8BBD9" # Rouge pastel plus foncé
+    "chart_purple": "#E1D5E7",  # Violet pastel
+    "chart_mint": "#D5F4E6",  # Menthe pastel
+    "chart_peach": "#FFE5D9",  # Pêche pastel
+    "chart_lavender": "#E6E6FA",  # Lavande pastel
+    "chart_coral": "#FFB3BA",  # Corail pastel
+    "dark_red_pastel": "#F8BBD9",  # Rouge pastel plus foncé
 }
 
 # Couleurs pour les graphiques Plotly
@@ -28,7 +28,7 @@ CHART_COLORS = [
     COLORS["warning"],
     COLORS["chart_purple"],
     COLORS["chart_lavender"],
-    COLORS["chart_coral"]
+    COLORS["chart_coral"],
 ]
 
 # Gradient pour le graphique en barres
@@ -36,18 +36,19 @@ BAR_CHART_GRADIENT = [
     [0, COLORS["success"]],
     [0.3, COLORS["chart_mint"]],
     [0.6, COLORS["primary"]],
-    [1, COLORS["chart_purple"]]
+    [1, COLORS["chart_purple"]],
 ]
 
 # Colorscale pour la heatmap
 HEATMAP_COLORSCALE = [
-    [0.0, "#F0F8FF"],           # Blanc cassé pour zéro
-    [0.2, COLORS["chart_mint"]], # Menthe pour faible activité
-    [0.4, COLORS["success"]],    # Vert pastel pour activité modérée
-    [0.6, COLORS["chart_peach"]], # Pêche pour bonne activité
-    [0.8, COLORS["warning"]],    # Orange pour forte activité
-    [1.0, COLORS["chart_coral"]] # Corail pour activité maximale
+    [0.0, "#F0F8FF"],  # Blanc cassé pour zéro
+    [0.2, COLORS["chart_mint"]],  # Menthe pour faible activité
+    [0.4, COLORS["success"]],  # Vert pastel pour activité modérée
+    [0.6, COLORS["chart_peach"]],  # Pêche pour bonne activité
+    [0.8, COLORS["warning"]],  # Orange pour forte activité
+    [1.0, COLORS["chart_coral"]],  # Corail pour activité maximale
 ]
+
 
 def get_css_styles() -> str:
     """Retourne les styles CSS personnalisés pour l'application."""

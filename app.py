@@ -26,8 +26,6 @@ from src.moment_keeper.theme import get_css_styles
 from src.moment_keeper.translations import Translator
 
 
-
-
 def selectionner_dossier():
     """Ouvre une fenêtre de sélection de dossier."""
     root = tk.Tk()
@@ -40,17 +38,13 @@ def selectionner_dossier():
     return dossier
 
 
-
-
-
-
 def main():
     # 🦖 Configuration T-Rex Pastel
     st.set_page_config(**PAGE_CONFIG)
 
     # 🎨 Appliquer le CSS custom
     st.markdown(get_css_styles(), unsafe_allow_html=True)
-    
+
     # Forcer l'ouverture de la sidebar au premier lancement
     if "sidebar_state" not in st.session_state:
         st.session_state.sidebar_state = "expanded"
@@ -64,9 +58,9 @@ def main():
         st.session_state.page_loaded = False
 
     # Traducteur temporaire pour le header et footer
-    temp_lang = st.session_state.get("language", "fr") 
+    temp_lang = st.session_state.get("language", "fr")
     temp_tr = Translator(temp_lang)
-    
+
     # 🦖 Header principal avec style T-Rex - seulement à l'accueil
     if not st.session_state.page_loaded:
         st.markdown(
@@ -82,9 +76,12 @@ def main():
 
     with st.sidebar:
         # Titre compact dans la sidebar
-        st.markdown("<h3 style='text-align: center;'>🦖 MomentKeeper</h3>", unsafe_allow_html=True)
+        st.markdown(
+            "<h3 style='text-align: center;'>🦖 MomentKeeper</h3>",
+            unsafe_allow_html=True,
+        )
         st.markdown("---")
-        
+
         # Initialiser le traducteur
         tr = Translator(st.session_state.language)
 
@@ -104,7 +101,7 @@ def main():
                 placeholder=tr.t("main_folder_placeholder"),
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
-                help=tr.t("main_folder_help")
+                help=tr.t("main_folder_help"),
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
@@ -151,11 +148,11 @@ def main():
         )
 
         st.subheader(tr.t("file_types"))
-        
+
         # Checkboxes pour photos et vidéos
         photos_selected = st.checkbox(tr.t("photos"), value=True)
         videos_selected = st.checkbox(tr.t("videos"), value=True)
-        
+
         # Déterminer le type de fichiers basé sur les checkboxes
         if photos_selected and videos_selected:
             type_fichiers = FILE_TYPES["both"]
@@ -169,72 +166,80 @@ def main():
 
         # Séparateur avant le bouton de réinitialisation
         st.markdown("---")
-        
+
         if st.button(
-            tr.t("reset_button"), 
+            tr.t("reset_button"),
             help=tr.t("reset_help"),
             type="secondary",
-            use_container_width=True
+            use_container_width=True,
         ):
             if dossier_racine and Path(dossier_racine).exists():
                 organiseur = OrganisateurPhotos(
                     Path(dossier_racine),
                     sous_dossier_photos,
                     datetime.combine(date_naissance, datetime.min.time()),
-                    type_fichiers
+                    type_fichiers,
                 )
                 nb_fichiers, erreurs = organiseur.reinitialiser()
 
                 if nb_fichiers > 0:
-                    st.success(
-                        tr.t("files_reset", count=nb_fichiers)
-                    )
+                    st.success(tr.t("files_reset", count=nb_fichiers))
                 if erreurs:
                     st.error(tr.t("errors_encountered"))
                     for erreur in erreurs:
                         st.error(erreur)
-        
+
         # Séparateur avant les boutons de langue
         st.markdown("---")
-        
+
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
-        
+
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("FR", key="lang_fr_mini", 
-                        type="primary" if current_lang == "fr" else "secondary",
-                        help="Français",
-                        use_container_width=True):
+            if st.button(
+                "FR",
+                key="lang_fr_mini",
+                type="primary" if current_lang == "fr" else "secondary",
+                help="Français",
+                use_container_width=True,
+            ):
                 if current_lang != "fr":
                     st.session_state.language = "fr"
                     st.rerun()
-        
+
         with col2:
-            if st.button("EN", key="lang_en_mini",
-                        type="primary" if current_lang == "en" else "secondary", 
-                        help="English",
-                        use_container_width=True):
+            if st.button(
+                "EN",
+                key="lang_en_mini",
+                type="primary" if current_lang == "en" else "secondary",
+                help="English",
+                use_container_width=True,
+            ):
                 if current_lang != "en":
                     st.session_state.language = "en"
                     st.rerun()
 
     # Afficher les onglets si la page a été chargée au moins une fois
-    if st.session_state.page_loaded or (dossier_racine and Path(dossier_racine).exists()):
+    if st.session_state.page_loaded or (
+        dossier_racine and Path(dossier_racine).exists()
+    ):
         # Créer les onglets avec Accueil en premier
         tab_list = [tr.t("tab_home")]
         if dossier_racine and Path(dossier_racine).exists():
             dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
             if dossier_photos_complet.exists() and type_fichiers is not None:
-                tab_list.extend([
-                    tr.t("tab_simulation"),
-                    tr.t("tab_organization"),
-                    tr.t("tab_analytics"),
-                    tr.t("tab_insights"),
-                ])
-        
+                tab_list.extend(
+                    [
+                        tr.t("tab_simulation"),
+                        tr.t("tab_organization"),
+                        tr.t("tab_analytics"),
+                        tr.t("tab_insights"),
+                    ]
+                )
+
         tabs = st.tabs(tab_list)
-        
+
         # Onglet Accueil
         with tabs[0]:
             # Zone d'explication de l'application
@@ -263,18 +268,24 @@ def main():
                     </div>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-            
+
             if not dossier_racine:
                 st.info(tr.t("configure_root"))
             elif not Path(dossier_racine).exists():
                 st.error(tr.t("root_not_exist"))
             elif not dossier_photos_complet.exists():
-                st.error(tr.t("folder_not_exist", folder=sous_dossier_photos, root=dossier_racine))
+                st.error(
+                    tr.t(
+                        "folder_not_exist",
+                        folder=sous_dossier_photos,
+                        root=dossier_racine,
+                    )
+                )
             elif type_fichiers is None:
                 st.error(tr.t("select_file_type"))
-        
+
         # Autres onglets si disponibles
         if len(tab_list) > 1:
             if type_fichiers is not None:
@@ -282,7 +293,7 @@ def main():
                     Path(dossier_racine),
                     sous_dossier_photos,
                     datetime.combine(date_naissance, datetime.min.time()),
-                    type_fichiers
+                    type_fichiers,
                 )
 
             with tabs[1]:
@@ -299,17 +310,39 @@ def main():
 
                     if repartition:
                         total_photos = sum(len(f) for f in repartition.values())
-                        
+
                         if type_fichiers == FILE_TYPES["both"]:
                             # Compter photos et vidéos séparément
-                            total_photos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "photo"]) for fichiers in repartition.values())
-                            total_videos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "video"]) for fichiers in repartition.values())
-                            message = tr.t("success_simulation_mixed", photos=total_photos_count, videos=total_videos_count)
+                            total_photos_count = sum(
+                                len(
+                                    [
+                                        f
+                                        for f in fichiers
+                                        if organiseur.get_file_type(f) == "photo"
+                                    ]
+                                )
+                                for fichiers in repartition.values()
+                            )
+                            total_videos_count = sum(
+                                len(
+                                    [
+                                        f
+                                        for f in fichiers
+                                        if organiseur.get_file_type(f) == "video"
+                                    ]
+                                )
+                                for fichiers in repartition.values()
+                            )
+                            message = tr.t(
+                                "success_simulation_mixed",
+                                photos=total_photos_count,
+                                videos=total_videos_count,
+                            )
                         elif "Photos" in type_fichiers:
                             message = tr.t("success_simulation", photos=total_photos)
                         else:
                             message = tr.t("success_simulation", photos=total_photos)
-                        
+
                         st.markdown(
                             f'<div class="trex-success">{message}</div>',
                             unsafe_allow_html=True,
@@ -319,40 +352,68 @@ def main():
                         def extract_month_number(folder_name):
                             # Extrait le premier nombre du nom du dossier (ex: "0-1months" -> 0)
                             try:
-                                return int(folder_name.split('-')[0])
+                                return int(folder_name.split("-")[0])
                             except:
                                 return 999  # Valeur par défaut pour les dossiers non standards
-                        
-                        for dossier, fichiers in sorted(repartition.items(), key=lambda x: extract_month_number(x[0])):
+
+                        for dossier, fichiers in sorted(
+                            repartition.items(),
+                            key=lambda x: extract_month_number(x[0]),
+                        ):
                             if type_fichiers == FILE_TYPES["both"]:
                                 # Séparer photos et vidéos
-                                photos = [f for f in fichiers if organiseur.get_file_type(f) == "photo"]
-                                videos = [f for f in fichiers if organiseur.get_file_type(f) == "video"]
-                                
-                                with st.expander(f"📁 {dossier} ({len(photos)} 📸 + {len(videos)} 🎬)"):
+                                photos = [
+                                    f
+                                    for f in fichiers
+                                    if organiseur.get_file_type(f) == "photo"
+                                ]
+                                videos = [
+                                    f
+                                    for f in fichiers
+                                    if organiseur.get_file_type(f) == "video"
+                                ]
+
+                                with st.expander(
+                                    f"📁 {dossier} ({len(photos)} 📸 + {len(videos)} 🎬)"
+                                ):
                                     if photos:
                                         st.write("📸 **Photos:**")
                                         for photo in photos[:MAX_FILES_EXPANDER]:
                                             st.text(f"  📸 {photo.name}")
                                         if len(photos) > MAX_FILES_EXPANDER:
-                                            st.text(f"  ... et {len(photos) - MAX_FILES_EXPANDER} autres photos")
-                                    
+                                            st.text(
+                                                f"  ... et {len(photos) - MAX_FILES_EXPANDER} autres photos"
+                                            )
+
                                     if videos:
                                         st.write("🎬 **Vidéos:**")
                                         for video in videos[:MAX_FILES_EXPANDER]:
                                             st.text(f"  🎬 {video.name}")
                                         if len(videos) > MAX_FILES_EXPANDER:
-                                            st.text(f"  ... et {len(videos) - MAX_FILES_EXPANDER} autres vidéos")
+                                            st.text(
+                                                f"  ... et {len(videos) - MAX_FILES_EXPANDER} autres vidéos"
+                                            )
                             else:
                                 # Affichage normal pour un seul type
                                 type_emoji = "📸" if "Photos" in type_fichiers else "🎬"
-                                type_nom = tr.t("photos_unit") if "Photos" in type_fichiers else tr.t("videos_unit")
-                                
-                                with st.expander(f"📁 {dossier} ({len(fichiers)} {type_nom})"):
+                                type_nom = (
+                                    tr.t("photos_unit")
+                                    if "Photos" in type_fichiers
+                                    else tr.t("videos_unit")
+                                )
+
+                                with st.expander(
+                                    f"📁 {dossier} ({len(fichiers)} {type_nom})"
+                                ):
                                     for fichier in fichiers[:MAX_FILES_PREVIEW]:
                                         st.text(f"  {type_emoji} {fichier.name}")
                                     if len(fichiers) > MAX_FILES_PREVIEW:
-                                        st.text(tr.t("and_more", count=len(fichiers) - MAX_FILES_PREVIEW))
+                                        st.text(
+                                            tr.t(
+                                                "and_more",
+                                                count=len(fichiers) - MAX_FILES_PREVIEW,
+                                            )
+                                        )
                     else:
                         st.info(tr.t("no_files_found"))
 
@@ -370,10 +431,15 @@ def main():
                                 )
 
                                 # Afficher quelques exemples
-                                for nom, raison in organiseur._fichiers_ignores[:MAX_IGNORED_FILES_DISPLAY]:
+                                for nom, raison in organiseur._fichiers_ignores[
+                                    :MAX_IGNORED_FILES_DISPLAY
+                                ]:
                                     st.text(f"  - {nom}: {raison}")
 
-                                if len(organiseur._fichiers_ignores) > MAX_IGNORED_FILES_DISPLAY:
+                                if (
+                                    len(organiseur._fichiers_ignores)
+                                    > MAX_IGNORED_FILES_DISPLAY
+                                ):
                                     st.text(
                                         f"  ... et {len(organiseur._fichiers_ignores) - MAX_IGNORED_FILES_DISPLAY} autres"
                                     )
@@ -395,7 +461,15 @@ def main():
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    type_text = tr.t("photos_unit") if "Photos" in type_fichiers else tr.t("videos_unit") if "Vidéos" in type_fichiers else tr.t("files_unit")
+                    type_text = (
+                        tr.t("photos_unit")
+                        if "Photos" in type_fichiers
+                        else (
+                            tr.t("videos_unit")
+                            if "Vidéos" in type_fichiers
+                            else tr.t("files_unit")
+                        )
+                    )
                     confirmer = st.checkbox(tr.t("confirm_organize", type=type_text))
 
                 with col2:
@@ -411,8 +485,10 @@ def main():
                                 type_text = tr.t("photos_unit")
                             else:
                                 type_text = tr.t("videos_unit")
-                            
-                            message = tr.t("success_organize", count=nb_fichiers, type=type_text)
+
+                            message = tr.t(
+                                "success_organize", count=nb_fichiers, type=type_text
+                            )
                             st.markdown(
                                 f'<div class="trex-success">{message}</div>',
                                 unsafe_allow_html=True,
@@ -446,14 +522,21 @@ def main():
                                 "📸 Photos" if tr.language == "fr" else "📸 Photos",
                                 metrics["total_photos"],
                                 delta=(
-                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
-                                    else f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% of total"
-                                    if metrics["total_fichiers"] > 0
-                                    else None
+                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    if tr.language == "fr"
+                                    else (
+                                        f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% of total"
+                                        if metrics["total_fichiers"] > 0
+                                        else None
+                                    )
                                 ),
                             )
                         else:
-                            label = tr.t("photos_kept") if "Photos" in type_fichiers else tr.t("videos_kept")
+                            label = (
+                                tr.t("photos_kept")
+                                if "Photos" in type_fichiers
+                                else tr.t("videos_kept")
+                            )
                             st.metric(
                                 label,
                                 metrics["total_fichiers"],
@@ -479,10 +562,13 @@ def main():
                                 "🎬 Vidéos" if tr.language == "fr" else "🎬 Videos",
                                 metrics["total_videos"],
                                 delta=(
-                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
-                                    else f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% of total"
-                                    if metrics["total_fichiers"] > 0
-                                    else None
+                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    if tr.language == "fr"
+                                    else (
+                                        f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% of total"
+                                        if metrics["total_fichiers"] > 0
+                                        else None
+                                    )
                                 ),
                             )
                         else:
@@ -557,7 +643,12 @@ def main():
                             for gap_start, gap_end, gap_days in gaps:
                                 if gap_days >= 5:
                                     st.warning(
-                                        tr.t("gap_alert", days=gap_days, start=gap_start.strftime('%d/%m/%Y'), end=gap_end.strftime('%d/%m/%Y'))
+                                        tr.t(
+                                            "gap_alert",
+                                            days=gap_days,
+                                            start=gap_start.strftime("%d/%m/%Y"),
+                                            end=gap_end.strftime("%d/%m/%Y"),
+                                        )
                                     )
 
             with tabs[4]:
@@ -597,10 +688,20 @@ def main():
                             st.write(tr.t("monthly_distribution"))
                             photos_par_mois = df_photos.groupby("age_mois").size()
                             for mois, nb in photos_par_mois.head(5).items():
-                                st.write(tr.t("months_pattern", start=mois, end=mois+1, count=nb))
+                                st.write(
+                                    tr.t(
+                                        "months_pattern",
+                                        start=mois,
+                                        end=mois + 1,
+                                        count=nb,
+                                    )
+                                )
                             if len(photos_par_mois) > 5:
                                 st.write(
-                                    tr.t("and_other_months", count=len(photos_par_mois) - 5)
+                                    tr.t(
+                                        "and_other_months",
+                                        count=len(photos_par_mois) - 5,
+                                    )
                                 )
 
                         with col2:
@@ -632,7 +733,9 @@ def main():
                             )
                             for jour_en, nb in photos_par_jour.head(3).items():
                                 jour_localized = jours_map.get(jour_en, jour_en)
-                                st.write(tr.t("photos_count", day=jour_localized, count=nb))
+                                st.write(
+                                    tr.t("photos_count", day=jour_localized, count=nb)
+                                )
 
                         # Suggestions d'amélioration
                         st.subheader(tr.t("suggestions"))
@@ -677,7 +780,7 @@ def main():
                 </div>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     # 🦖 Footer T-Rex avec personnalité
