@@ -86,6 +86,7 @@ TRANSLATIONS = {
         "footer_love": "Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur",
         "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"Du Chaos à la Chronologie, une photo à la fois"',
+        "footer_new_tagline": "Fait avec ❤️ pour organiser les souvenirs qui comptent",
         # Messages dynamiques
         "success_simulation": "🦖 Rawr de satisfaction ! {photos} photos analysées et prêtes à être organisées !",
         "success_simulation_mixed": "🦖 Rawr de satisfaction ! {photos} 📸 photos et {videos} 🎬 vidéos analysées !",
@@ -235,6 +236,7 @@ TRANSLATIONS = {
         "footer_love": "Created with ❤️ for a 🦖 with tiny arms but a big heart",
         "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"From Chaos to Chronology, one photo at a time"',
+        "footer_new_tagline": "Made with ❤️ to organize the memories that matter",
         # Messages dynamiques
         "success_simulation": "🦖 Satisfaction roar! {photos} photos analyzed and ready to be organized!",
         "success_simulation_mixed": "🦖 Satisfaction roar! {photos} 📸 photos and {videos} 🎬 videos analyzed!",

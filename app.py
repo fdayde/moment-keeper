@@ -7,6 +7,7 @@ from tkinter import filedialog
 
 import streamlit as st
 
+from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
     calculate_metrics,
     create_charts,
@@ -16,6 +17,7 @@ from src.moment_keeper.analytics import (
 )
 from src.moment_keeper.config import (
     FILE_TYPES,
+    GITHUB_REPO,
     MAX_FILES_EXPANDER,
     MAX_FILES_PREVIEW,
     MAX_IGNORED_FILES_DISPLAY,
@@ -787,9 +789,8 @@ def main():
     st.markdown(
         f"""
         <div class="trex-footer">
-            <p>{temp_tr.t("footer_love")}</p>
-            <p><strong>{temp_tr.t("footer_version")}</strong></p>
-            <p><em>{temp_tr.t("footer_tagline")}</em></p>
+            <p><a href="{GITHUB_REPO}" target="_blank">MomentKeeper 🦖</a> • v{__version__} • <a href="{GITHUB_REPO}" target="_blank">GitHub</a></p>
+            <p>{temp_tr.t("footer_new_tagline")}</p>
         </div>
     """,
         unsafe_allow_html=True,

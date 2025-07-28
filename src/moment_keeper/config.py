@@ -67,3 +67,6 @@ CHART_CONFIG = {
     "marker_size": 8,
     "marker_line_width": 2,
 }
+
+# Configuration GitHub
+GITHUB_REPO = "https://github.com/fdayde/moment-keeper"

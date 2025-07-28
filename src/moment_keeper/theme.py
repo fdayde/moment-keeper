@@ -206,6 +206,17 @@ def get_css_styles() -> str:
     font-size: 0.9rem;
 }}
 
+.trex-footer a {{
+    color: {COLORS['accent']};
+    text-decoration: none;
+    font-weight: 600;
+}}
+
+.trex-footer a:hover {{
+    color: {COLORS['primary']};
+    text-decoration: underline;
+}}
+
 /* Buttons personnalisés */
 .stButton > button {{
     background: linear-gradient(135deg, {COLORS['accent']} 0%, {COLORS['primary']} 100%);
