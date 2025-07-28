@@ -34,6 +34,7 @@ from src.moment_keeper.config import (
     MAX_IGNORED_FILES_DISPLAY,
     PAGE_CONFIG,
 )
+from src.moment_keeper.config_manager import ConfigManager
 from src.moment_keeper.organizer import OrganisateurPhotos
 from src.moment_keeper.theme import get_css_styles
 from src.moment_keeper.translations import Translator
@@ -51,6 +52,26 @@ def selectionner_dossier():
     return dossier
 
 
+def save_configuration(config_manager: ConfigManager):
+    """Sauvegarde la configuration actuelle."""
+    config = {
+        "dossier_path": st.session_state.get("dossier_path", ""),
+        "sous_dossier_photos": st.session_state.get("sous_dossier_photos", "photos"),
+        "language": st.session_state.get("language", "fr"),
+        "baby_name": st.session_state.get("baby_name", ""),
+        "photos_selected": st.session_state.get("photos_selected", True),
+        "videos_selected": st.session_state.get("videos_selected", True),
+    }
+
+    # Ajouter la date de naissance si elle existe
+    if "date_naissance" in st.session_state:
+        config["date_naissance"] = datetime.combine(
+            st.session_state.date_naissance, datetime.min.time()
+        )
+
+    config_manager.save_config(config)
+
+
 def main():
     # 🦖 Configuration T-Rex Pastel
     st.set_page_config(**PAGE_CONFIG)
@@ -62,13 +83,47 @@ def main():
     if "sidebar_state" not in st.session_state:
         st.session_state.sidebar_state = "expanded"
 
-    # Initialiser la session state
+    # Initialiser le gestionnaire de configuration
+    config_manager = ConfigManager()
+
+    # Charger la configuration sauvegardée au premier chargement
+    if "config_loaded" not in st.session_state:
+        saved_config = config_manager.load_config()
+        if saved_config:
+            st.session_state.dossier_path = saved_config.get("dossier_path", "")
+            st.session_state.sous_dossier_photos = saved_config.get(
+                "sous_dossier_photos", "photos"
+            )
+            st.session_state.language = saved_config.get("language", "fr")
+            if "date_naissance" in saved_config:
+                st.session_state.date_naissance = saved_config["date_naissance"]
+            if "baby_name" in saved_config:
+                st.session_state.baby_name = saved_config.get("baby_name", "")
+            if "photos_selected" in saved_config:
+                st.session_state.photos_selected = saved_config.get(
+                    "photos_selected", True
+                )
+            if "videos_selected" in saved_config:
+                st.session_state.videos_selected = saved_config.get(
+                    "videos_selected", True
+                )
+        st.session_state.config_loaded = True
+
+    # Initialiser la session state avec les valeurs par défaut si nécessaire
     if "dossier_path" not in st.session_state:
         st.session_state.dossier_path = ""
+    if "sous_dossier_photos" not in st.session_state:
+        st.session_state.sous_dossier_photos = "photos"
     if "language" not in st.session_state:
         st.session_state.language = "fr"
     if "page_loaded" not in st.session_state:
         st.session_state.page_loaded = False
+    if "baby_name" not in st.session_state:
+        st.session_state.baby_name = ""
+    if "photos_selected" not in st.session_state:
+        st.session_state.photos_selected = True
+    if "videos_selected" not in st.session_state:
+        st.session_state.videos_selected = True
 
     # Traducteur temporaire pour le header et footer
     temp_lang = st.session_state.get("language", "fr")
@@ -95,6 +150,7 @@ def main():
                 dossier_selectionne = selectionner_dossier()
                 if dossier_selectionne:
                     st.session_state.dossier_path = dossier_selectionne
+                    save_configuration(config_manager)
                     st.rerun()
 
         with col2:
@@ -104,10 +160,12 @@ def main():
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
                 help=tr.t("main_folder_help"),
+                key="dossier_racine_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
                 st.session_state.dossier_path = dossier_racine
+                save_configuration(config_manager)
 
         st.subheader(tr.t("source_folder"))
         col3, col4 = st.columns([1, 5], gap="small")
@@ -122,6 +180,7 @@ def main():
                                 Path(dossier_racine)
                             )
                             st.session_state.sous_dossier_photos = str(chemin_relatif)
+                            save_configuration(config_manager)
                             st.rerun()
                         except ValueError:
                             st.error(tr.t("folder_must_be_in_root"))
@@ -138,29 +197,56 @@ def main():
                 value=st.session_state.sous_dossier_photos,
                 help=tr.t("source_folder_help"),
                 label_visibility="collapsed",
+                key="sous_dossier_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if sous_dossier_photos != st.session_state.sous_dossier_photos:
                 st.session_state.sous_dossier_photos = sous_dossier_photos
+                save_configuration(config_manager)
 
         # Champ prénom du bébé
         baby_name = st.text_input(
             tr.t("baby_name"),
             placeholder=tr.t("baby_name_placeholder"),
             help="Optionnel : permet de personnaliser l'affichage",
+            value=st.session_state.baby_name,
+            key="baby_name_input",
         )
+        if baby_name != st.session_state.baby_name:
+            st.session_state.baby_name = baby_name
+            save_configuration(config_manager)
 
         date_naissance = st.date_input(
             tr.t("birth_date"),
             min_value=datetime(2000, 1, 1).date(),
             max_value=datetime.now().date(),
+            value=st.session_state.get("date_naissance", datetime.now().date()),
+            key="date_naissance_input",
         )
+        if date_naissance != st.session_state.get("date_naissance"):
+            st.session_state.date_naissance = date_naissance
+            save_configuration(config_manager)
 
         st.subheader(tr.t("file_types"))
 
         # Checkboxes pour photos et vidéos
-        photos_selected = st.checkbox(tr.t("photos"), value=True)
-        videos_selected = st.checkbox(tr.t("videos"), value=True)
+        photos_selected = st.checkbox(
+            tr.t("photos"),
+            value=st.session_state.photos_selected,
+            key="photos_checkbox",
+        )
+        if photos_selected != st.session_state.photos_selected:
+            st.session_state.photos_selected = photos_selected
+            save_configuration(config_manager)
+
+        videos_selected = st.checkbox(
+            tr.t("videos"),
+            value=st.session_state.videos_selected,
+            key="videos_checkbox",
+        )
+        if videos_selected != st.session_state.videos_selected:
+            st.session_state.videos_selected = videos_selected
+            save_configuration(config_manager)
 
         # Déterminer le type de fichiers basé sur les checkboxes
         if photos_selected and videos_selected:
@@ -215,6 +301,7 @@ def main():
             ):
                 if current_lang != "fr":
                     st.session_state.language = "fr"
+                    save_configuration(config_manager)
                     st.rerun()
 
         with col2:
@@ -227,6 +314,7 @@ def main():
             ):
                 if current_lang != "en":
                     st.session_state.language = "en"
+                    save_configuration(config_manager)
                     st.rerun()
 
     # Toujours afficher tous les onglets
