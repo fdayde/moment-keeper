@@ -815,32 +815,55 @@ def get_timeline_photos(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient une photo aléatoire par mois pour montrer la timeline de croissance."""
-    # Ignorer "Photos non triées" et ne prendre que les dossiers mensuels
+    # D'abord essayer avec les dossiers mensuels organisés
     monthly_folders = {
         k: v for k, v in gallery_data.items() if k != "Photos non triées" and "-" in k
     }
 
-    if not monthly_folders:
-        return []
+    if monthly_folders:
+        # Si on a des dossiers mensuels, utiliser la logique existante
+        # Fonction pour extraire le nombre du début du nom de dossier
+        def extract_month_number(folder_name):
+            try:
+                return int(folder_name.split("-")[0])
+            except:
+                return 999
 
-    # Fonction pour extraire le nombre du début du nom de dossier
-    def extract_month_number(folder_name):
-        try:
-            return int(folder_name.split("-")[0])
-        except:
-            return 999
+        # Trier les mois par ordre chronologique
+        sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
 
-    # Trier les mois par ordre chronologique
-    sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
+        # Prendre une photo aléatoire par mois (limité par num_photos)
+        timeline_photos = []
+        for month in sorted_months[:num_photos]:
+            month_photos = monthly_folders[month]
+            if month_photos:
+                timeline_photos.append(random.choice(month_photos))
 
-    # Prendre une photo aléatoire par mois (limité par num_photos)
-    timeline_photos = []
-    for month in sorted_months[:num_photos]:
-        month_photos = monthly_folders[month]
-        if month_photos:
-            timeline_photos.append(random.choice(month_photos))
+        return timeline_photos
 
-    return timeline_photos
+    # Si pas de dossiers mensuels, créer une timeline à partir des photos non triées
+    elif "Photos non triées" in gallery_data:
+        all_photos = gallery_data["Photos non triées"]
+
+        # Grouper les photos par mois d'âge
+        photos_by_month = {}
+        for photo in all_photos:
+            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            if date_photo:
+                age_mois = organiseur.calculer_age_mois(date_photo)
+                if age_mois not in photos_by_month:
+                    photos_by_month[age_mois] = []
+                photos_by_month[age_mois].append(photo)
+
+        # Prendre une photo par mois dans l'ordre chronologique
+        timeline_photos = []
+        for month in sorted(photos_by_month.keys())[:num_photos]:
+            if photos_by_month[month]:
+                timeline_photos.append(random.choice(photos_by_month[month]))
+
+        return timeline_photos
+
+    return []
 
 
 def get_photo_caption_with_age(
