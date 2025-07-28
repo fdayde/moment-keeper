@@ -4,7 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
 
-from .path_manager import PathManager
 from .photo_copier import PhotoCopier
 
 # Extensions supportées
@@ -22,7 +21,6 @@ class OrganisateurPhotos:
         self.dossier_racine = Path(dossier_racine)
         self.dossier_source = self.dossier_racine / sous_dossier_photos
         self.date_naissance = date_naissance
-        self.path_manager = PathManager(self.dossier_racine)
         self.copieur = PhotoCopier()
         self.type_fichiers = type_fichiers
         self.extensions_actives = self._get_extensions_actives()
