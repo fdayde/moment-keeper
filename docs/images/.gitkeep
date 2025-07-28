@@ -1,6 +1,12 @@
-# This file ensures the docs/images directory is tracked by git
-# Place your screenshots here with descriptive names like:
-# - dashboard-main.png
-# - simulation-preview.png
-# - analytics-insights.png
-# - configuration-panel.png
+# Documentation Screenshots
+#
+# Ce dossier contient les captures d'écran pour la documentation GitHub.
+# Ces images SONT stockées dans git (contrairement aux photos de test).
+#
+# Noms recommandés:
+# - simulation_preview.png     # Onglet Simulation
+# - analytics.png              # Onglet Analytics
+# - insights.png               # Onglet Insights
+#
+# Format recommandé: PNG pour la qualité, taille optimisée (~500KB max)
+# Résolution: 1920x1080 ou équivalent pour une bonne lisibilité
