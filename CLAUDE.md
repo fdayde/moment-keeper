@@ -26,8 +26,7 @@ moment-keeper/
 │   ├── config.py               # Configuration centralisée
 │   ├── config_manager.py       # Persistance de la configuration
 │   ├── theme.py                # Thème et styles UI
-│   ├── translations.py         # Support multilingue
-│   └── cli.py                  # Interface ligne de commande
+│   └── translations.py         # Support multilingue
 ├── app.py                      # Interface Streamlit
 ├── notebooks/                  # Notebooks Jupyter
 │   └── classement_photos.ipynb
@@ -114,10 +113,6 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
   - Slider adaptatif basé sur l'âge actuel du bébé
 - **Debug** : Affichage des fichiers ignorés et raisons
 
-### Interface CLI (cli.py)
-```bash
-python -m src.moment_keeper.cli /path/to/root 2024-06-25 [options]
-```
 
 ### Notebook Jupyter
 - Version interactive pour exploration et tests
@@ -218,9 +213,6 @@ pre-commit run --all-files
 
 # Interface web
 streamlit run app.py
-
-# CLI
-python -m src.moment_keeper.cli /path/to/project 2024-06-25 --simulate
 ```
 
 ## 📝 Notes pour Claude
