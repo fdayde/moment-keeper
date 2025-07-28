@@ -315,7 +315,15 @@ def main():
                             unsafe_allow_html=True,
                         )
 
-                        for dossier, fichiers in sorted(repartition.items()):
+                        # Fonction pour extraire le nombre du début du nom de dossier
+                        def extract_month_number(folder_name):
+                            # Extrait le premier nombre du nom du dossier (ex: "0-1months" -> 0)
+                            try:
+                                return int(folder_name.split('-')[0])
+                            except:
+                                return 999  # Valeur par défaut pour les dossiers non standards
+                        
+                        for dossier, fichiers in sorted(repartition.items(), key=lambda x: extract_month_number(x[0])):
                             if type_fichiers == FILE_TYPES["both"]:
                                 # Séparer photos et vidéos
                                 photos = [f for f in fichiers if organiseur.get_file_type(f) == "photo"]
