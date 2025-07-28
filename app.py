@@ -106,8 +106,6 @@ def main():
         
         # Initialiser le traducteur
         tr = Translator(st.session_state.language)
-        
-        st.header(tr.t("config_header"))
 
         st.subheader(tr.t("main_folder"))
         col1, col2 = st.columns([1, 5], gap="small")
@@ -188,8 +186,14 @@ def main():
             type_fichiers = None
             st.warning(tr.t("no_type_selected"))
 
+        # Séparateur avant le bouton de réinitialisation
+        st.markdown("---")
+        
         if st.button(
-            tr.t("reset_button"), help=tr.t("reset_help")
+            tr.t("reset_button"), 
+            help=tr.t("reset_help"),
+            type="secondary",
+            use_container_width=True
         ):
             if dossier_racine and Path(dossier_racine).exists():
                 organiseur = OrganisateurPhotos(
