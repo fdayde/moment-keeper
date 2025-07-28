@@ -143,9 +143,11 @@ def main():
         tr = Translator(st.session_state.language)
 
         st.subheader(tr.t("main_folder"))
-        col1, col2 = st.columns([1, 5], gap="small")
+        col1, col2 = st.columns([1, 8])
         with col1:
-            if st.button("📁", help=tr.t("browse"), key="browse_root"):
+            if st.button(
+                "📁", help=tr.t("browse"), key="browse_root", use_container_width=True
+            ):
                 st.session_state.page_loaded = True
                 dossier_selectionne = selectionner_dossier()
                 if dossier_selectionne:
@@ -168,9 +170,14 @@ def main():
                 save_configuration(config_manager)
 
         st.subheader(tr.t("source_folder"))
-        col3, col4 = st.columns([1, 5], gap="small")
+        col3, col4 = st.columns([1, 8])
         with col3:
-            if st.button("📁", help=tr.t("browse_subfolder"), key="browse_sub"):
+            if st.button(
+                "📁",
+                help=tr.t("browse_subfolder"),
+                key="browse_sub",
+                use_container_width=True,
+            ):
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
