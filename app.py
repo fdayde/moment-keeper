@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.moment_keeper.organizer import OrganisateurPhotos
+from src.moment_keeper.translations import Translator
 
 # 🎨 Palette couleurs T-Rex Pastel
 PRIMARY = "#E8F4F8"  # Bleu pastel doux (ciel préhistorique)
@@ -276,6 +277,38 @@ TREX_CSS = f"""
 .main .block-container .stText {{
     color: {TEXT_DARK} !important;
 }}
+
+/* Sélecteur de langue moderne */
+.language-selector {{
+    margin-bottom: 1rem;
+}}
+
+.language-selector .stButton > button {{
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}}
+
+.language-selector .stButton > button:hover {{
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}}
+
+/* Style pour le bouton actif */
+.language-selector .stButton > button[data-testid="baseButton-primary"] {{
+    background: linear-gradient(135deg, {ACCENT} 0%, {PRIMARY} 100%);
+    border: 2px solid {ACCENT};
+    color: {TEXT_DARK};
+}}
+
+/* Style pour le bouton inactif */
+.language-selector .stButton > button[data-testid="baseButton-secondary"] {{
+    background: rgba(255,255,255,0.7);
+    border: 2px solid {PRIMARY};
+    color: {TEXT_LIGHT};
+}}
 </style>
 """
 
@@ -396,43 +429,65 @@ def find_gaps(
 
 
 def generate_insights(
-    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None
+    df: pd.DataFrame, metrics: Dict, date_naissance: datetime, type_fichiers: str = None, tr=None
 ) -> List[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
 
     if df.empty:
+        if tr:
+            return [tr.t("analyze_first")]
         return ["Aucune photo analysée pour le moment 📸"]
+    
+    # Protection contre tr None
+    if not tr:
+        from src.moment_keeper.translations import Translator
+        tr = Translator("fr")
 
     # Messages encourageants adaptés au type
     if type_fichiers == "📸🎬 Photos et Vidéos":
         total = metrics.get("total_fichiers", 0)
         if total > 100:
             insights.append(
-                f"🎉 Magnifique collection de {metrics['total_photos']} 📸 photos et {metrics['total_videos']} 🎬 vidéos!"
+                tr.t("magnificent_collection_mixed", photos=metrics['total_photos'], videos=metrics['total_videos'])
             )
         
         # Ratio photos/vidéos
         if metrics["total_videos"] > 0:
             ratio = metrics["total_photos"] / metrics["total_videos"]
             if ratio > 5:
-                insights.append("📸 Vous préférez clairement les photos aux vidéos!")
+                insights.append(
+                    "📸 Vous préférez clairement les photos aux vidéos!" if tr.language == "fr" 
+                    else "📸 You clearly prefer photos to videos!"
+                )
             elif ratio < 0.2:
-                insights.append("🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo")
+                insights.append(
+                    "🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo" if tr.language == "fr"
+                    else "🎬 A true videographer! You mostly capture in video"
+                )
             elif 0.8 < ratio < 1.2:
-                insights.append("⚖️ Équilibre parfait entre photos et vidéos!")
+                insights.append(
+                    "⚖️ Équilibre parfait entre photos et vidéos!" if tr.language == "fr"
+                    else "⚖️ Perfect balance between photos and videos!"
+                )
     else:
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
-        type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
+        if tr.language == "fr":
+            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
+        else:
+            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
         type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
         
         if total > 100:
             insights.append(
-                f"🎉 Magnifique collection de {total} {type_nom}!"
+                tr.t("magnificent_collection", total=total, type=type_nom)
             )
         elif total > 50:
-            insights.append(f"{type_emoji} Belle collection de {total} {type_nom}!")
+            insights.append(
+                f"{type_emoji} Belle collection de {total} {type_nom}!" if tr.language == "fr"
+                else f"{type_emoji} Nice collection of {total} {type_nom}!"
+            )
 
     # Analyse des mois les plus photographiés
     photos_par_mois = df.groupby("age_mois").size()
@@ -441,10 +496,10 @@ def generate_insights(
         nb_photos_champion = photos_par_mois.max()
 
         # Convertir l'âge en nom de mois calendaire
-        mois_nom = age_to_month_name(mois_champion, date_naissance)
+        mois_nom = age_to_month_name(mois_champion, date_naissance, tr.language)
 
         insights.append(
-            f"🏆 Période record : {mois_champion}-{mois_champion+1} mois ({mois_nom}) avec {nb_photos_champion} photos!"
+            tr.t("record_period", start=mois_champion, end=mois_champion+1, month=mois_nom, count=nb_photos_champion)
         )
 
     # Analyse des jours de la semaine
@@ -452,9 +507,15 @@ def generate_insights(
     if not photos_par_jour_semaine.empty:
         jour_favori = photos_par_jour_semaine.idxmax()
         if jour_favori in ["Saturday", "Sunday"]:
-            insights.append("📅 Vous capturez bien les week-ends en famille!")
+            insights.append(
+                "📅 Vous capturez bien les week-ends en famille!" if tr.language == "fr" 
+                else "📅 You capture family weekends well!"
+            )
         elif jour_favori == "Sunday":
-            insights.append("🌅 Champion du dimanche!")
+            insights.append(
+                "🌅 Champion du dimanche!" if tr.language == "fr"
+                else "🌅 Sunday champion!"
+            )
 
     # Record de photos en une journée
     if metrics["jour_record"] >= 10:
@@ -463,7 +524,7 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            f"📸 Mode rafale activé ! Record : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
+            tr.t("burst_mode_activated", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
         )
     elif metrics["jour_record"] >= 5:
         # Trouver la date du record
@@ -471,7 +532,7 @@ def generate_insights(
         date_record = photos_par_jour.idxmax()
 
         insights.append(
-            f"📷 Journée productive : {metrics['jour_record']} photos le {date_record.strftime('%d/%m/%Y')}!"
+            tr.t("productive_day", count=metrics['jour_record'], date=date_record.strftime('%d/%m/%Y'))
         )
 
     # Analyse des gaps
@@ -480,36 +541,37 @@ def generate_insights(
         gap_le_plus_long = max(gaps, key=lambda x: x[2])
         if gap_le_plus_long[2] >= 10:
             insights.append(
-                f"⚠️ Plus long silence : {gap_le_plus_long[2]} jours entre le {gap_le_plus_long[0].strftime('%d/%m')} et le {gap_le_plus_long[1].strftime('%d/%m')}"
+                tr.t("longest_silence", days=gap_le_plus_long[2], start=gap_le_plus_long[0].strftime('%d/%m'), end=gap_le_plus_long[1].strftime('%d/%m'))
             )
 
     # Régularité récente
     if not df.empty:
         photos_recentes = df[df["date"] >= (datetime.now() - timedelta(days=30))]
         if len(photos_recentes) == 0:
-            insights.append("💡 Pensez à prendre quelques photos récentes!")
+            insights.append(tr.t("think_recent_photos"))
         elif len(photos_recentes) >= 20:
-            insights.append("🔥 Très actif ce mois-ci!")
+            insights.append(tr.t("very_active_month"))
 
     # Projection future
     if metrics["moyenne_par_mois"] > 0:
         projection_annuelle = metrics["moyenne_par_mois"] * 12
         insights.append(
-            f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!"
+            f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!" if tr.language == "fr"
+            else f"📈 At this rate, you'll have ~{int(projection_annuelle)} photos per year!"
         )
 
     # 2. Détection de moments spéciaux 🎉 (sans doublons avec jour_record)
-    special_moments = detect_special_moments(df, metrics["jour_record"])
+    special_moments = detect_special_moments(df, metrics["jour_record"], tr)
     insights.extend(special_moments)
 
     # 3. Comparaisons temporelles 📊 (sans doublons avec analyse weekends existante)
-    temporal_comparisons = generate_temporal_comparisons(df, date_naissance)
+    temporal_comparisons = generate_temporal_comparisons(df, date_naissance, tr)
     insights.extend(temporal_comparisons)
 
     return insights
 
 
-def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[str]:
+def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr) -> List[str]:
     """Détecte les moments spéciaux basés sur les pics de photos (évite doublons avec jour_record)."""
     special_insights = []
 
@@ -531,7 +593,8 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
             dates_str += "..."
 
         special_insights.append(
-            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
+            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})" if tr.language == "fr"
+            else f"🎉 {len(pics)} special events detected ({dates_str})"
         )
 
         # Suggestions d'événements selon les pics avec date du pic maximum
@@ -540,11 +603,13 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
 
         if pic_max >= 25:
             special_insights.append(
-                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
+                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?" if tr.language == "fr"
+                else f"🎊 Major event on {date_pic_max.strftime('%d/%m/%Y')} - First vacation? Family visit?"
             )
         elif pic_max >= 15:
             special_insights.append(
-                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
+                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?" if tr.language == "fr"
+                else f"🎈 Great day on {date_pic_max.strftime('%d/%m/%Y')} - Family outing? First birthday?"
             )
 
     # Détection de séries de photos (plusieurs jours consécutifs avec beaucoup de photos)
@@ -555,40 +620,63 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int) -> List[
                 date_debut = dates_pics[i - 1]
                 date_fin = dates_pics[i]
                 special_insights.append(
-                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
+                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?" if tr.language == "fr"
+                    else f"🏖️ Intensive period {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacation or event?"
                 )
                 break  # Une seule fois
 
     return special_insights
 
 
-def age_to_month_name(age_mois: int, date_naissance: datetime) -> str:
+def age_to_month_name(age_mois: int, date_naissance: datetime, language: str = "fr") -> str:
     """Convertit un âge en mois vers le nom du mois calendaire correspondant."""
     mois_cible = date_naissance + timedelta(
         days=age_mois * 30.44
     )  # 30.44 jours par mois en moyenne
-    mois_noms = [
-        "Janvier",
-        "Février",
-        "Mars",
-        "Avril",
-        "Mai",
-        "Juin",
-        "Juillet",
-        "Août",
-        "Septembre",
-        "Octobre",
-        "Novembre",
-        "Décembre",
-    ]
+    
+    if language == "fr":
+        mois_noms = [
+            "Janvier",
+            "Février",
+            "Mars",
+            "Avril",
+            "Mai",
+            "Juin",
+            "Juillet",
+            "Août",
+            "Septembre",
+            "Octobre",
+            "Novembre",
+            "Décembre",
+        ]
+    else:
+        mois_noms = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
     return mois_noms[mois_cible.month - 1]
 
 
 def generate_temporal_comparisons(
-    df: pd.DataFrame, date_naissance: datetime
+    df: pd.DataFrame, date_naissance: datetime, tr=None
 ) -> List[str]:
     """Génère des comparaisons temporelles (évite doublons avec analyse weekends existante)."""
     comparisons = []
+    
+    # Protection contre tr None
+    if not tr:
+        from src.moment_keeper.translations import Translator
+        tr = Translator("fr")
 
     if df.empty:
         return comparisons
@@ -605,18 +693,20 @@ def generate_temporal_comparisons(
             photos_premier = photos_par_mois.loc[premier_mois]
             photos_dernier = photos_par_mois.loc[dernier_mois]
 
-            premier_nom = age_to_month_name(premier_mois, date_naissance)
-            dernier_nom = age_to_month_name(dernier_mois, date_naissance)
+            premier_nom = age_to_month_name(premier_mois, date_naissance, tr.language)
+            dernier_nom = age_to_month_name(dernier_mois, date_naissance, tr.language)
 
             if photos_premier > 0:
                 evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
                 if evolution > 50:
                     comparisons.append(
-                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        else f"📈 Growing evolution: +{evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
                 elif evolution < -40:
                     comparisons.append(
-                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        else f"📉 Evolution: {evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
 
         # Comparaison des 2 mois les plus contrastés
@@ -626,14 +716,14 @@ def generate_temporal_comparisons(
             photos_min = photos_par_mois.min()
             photos_max = photos_par_mois.max()
 
-            mois_min_nom = age_to_month_name(mois_min, date_naissance)
-            mois_max_nom = age_to_month_name(mois_max, date_naissance)
+            mois_min_nom = age_to_month_name(mois_min, date_naissance, tr.language)
+            mois_max_nom = age_to_month_name(mois_max, date_naissance, tr.language)
 
             if photos_min > 0 and mois_min != mois_max:
                 ratio = photos_max / photos_min
                 if ratio >= 2:
                     comparisons.append(
-                        f"📊 Contraste : {mois_max_nom} vs {mois_min_nom} = {ratio:.1f}x plus de photos"
+                        tr.t("contrast_months", max_month=mois_max_nom, min_month=mois_min_nom, ratio=f"{ratio:.1f}")
                     )
 
     # 2. Comparaison week-end vs semaine avec RATIOS PRÉCIS (complément de l'existant)
@@ -651,11 +741,11 @@ def generate_temporal_comparisons(
             # Seulement si très marqué (éviter doublon avec message existant)
             if multiplicateur >= 3:
                 comparisons.append(
-                    f"🎯 Weekend intense : {multiplicateur:.1f}x plus de photos par jour le weekend"
+                    tr.t("intense_weekend", ratio=f"{multiplicateur:.1f}")
                 )
             elif multiplicateur <= 0.4:
                 comparisons.append(
-                    f"💼 Semaine active : {1/multiplicateur:.1f}x plus de photos par jour en semaine"
+                    tr.t("active_weekdays", ratio=f"{1/multiplicateur:.1f}")
                 )
 
     # 3. Tendance sur les derniers mois
@@ -668,17 +758,19 @@ def generate_temporal_comparisons(
             tendance = (valeurs[2] - valeurs[0]) / 2  # Pente moyenne
             if tendance > 8:
                 comparisons.append(
-                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖"
+                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖" if tr.language == "fr"
+                    else "📈 Recent trend: You're photographing your 🦖 more and more"
                 )
             elif tendance < -8:
                 comparisons.append(
-                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!"
+                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!" if tr.language == "fr"
+                    else "📉 Recent trend: Fewer photos - normal as 🦖 grows!"
                 )
 
     return comparisons
 
 
-def create_charts(df: pd.DataFrame):
+def create_charts(df: pd.DataFrame, tr):
     """Crée tous les graphiques pour l'onglet Analytics avec palette T-Rex Pastel."""
     charts = {}
 
@@ -694,8 +786,11 @@ def create_charts(df: pd.DataFrame):
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title="🦖 Évolution des photos par mois d'âge",
-        labels={"age_mois": "Âge du T-Rex (mois)", "nb_photos": "Nombre de photos"},
+        title="🦖 Évolution des photos par mois d'âge" if tr.language == "fr" else "🦖 Photo evolution by age in months",
+        labels={
+            "age_mois": "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)",
+            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+        },
         color="nb_photos",
         color_continuous_scale=[[0, SUCCESS], [0.3, CHART_MINT], [0.6, PRIMARY], [1, CHART_PURPLE]],
     )
@@ -705,8 +800,14 @@ def create_charts(df: pd.DataFrame):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig_barres.update_xaxes(title="Âge du bébé (mois)", gridcolor=PRIMARY)
-    fig_barres.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
+    fig_barres.update_xaxes(
+        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)", 
+        gridcolor=PRIMARY
+    )
+    fig_barres.update_yaxes(
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
+        gridcolor=PRIMARY
+    )
     charts["barres"] = fig_barres
 
     # 2. Timeline : Évolution hebdomadaire
@@ -719,8 +820,11 @@ def create_charts(df: pd.DataFrame):
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title="🦖 Timeline : Activité hebdomadaire",
-        labels={"semaine_annee": "Semaine", "nb_photos": "Nombre de photos"},
+        title="🦖 Timeline : Activité hebdomadaire" if tr.language == "fr" else "🦖 Timeline: Weekly activity",
+        labels={
+            "semaine_annee": "Semaine" if tr.language == "fr" else "Week",
+            "nb_photos": "Nombre de photos" if tr.language == "fr" else "Number of photos"
+        },
         color_discrete_sequence=[CHART_PURPLE],
     )
     fig_timeline.update_layout(
@@ -728,8 +832,15 @@ def create_charts(df: pd.DataFrame):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
     )
-    fig_timeline.update_xaxes(tickangle=45, title="Semaine", gridcolor=PRIMARY)
-    fig_timeline.update_yaxes(title="Nombre de photos", gridcolor=PRIMARY)
+    fig_timeline.update_xaxes(
+        tickangle=45, 
+        title="Semaine" if tr.language == "fr" else "Week", 
+        gridcolor=PRIMARY
+    )
+    fig_timeline.update_yaxes(
+        title="Nombre de photos" if tr.language == "fr" else "Number of photos", 
+        gridcolor=PRIMARY
+    )
     fig_timeline.update_traces(
         line_width=4,
         line_color=CHART_PURPLE,
@@ -747,7 +858,10 @@ def create_charts(df: pd.DataFrame):
         "Saturday",
         "Sunday",
     ]
-    jours_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    if tr.language == "fr":
+        jours_display = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    else:
+        jours_display = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     photos_par_jour = (
         df.groupby("jour_semaine").size().reindex(jours_ordre, fill_value=0)
@@ -766,7 +880,7 @@ def create_charts(df: pd.DataFrame):
     fig_heatmap = go.Figure(
         data=go.Heatmap(
             z=[photos_par_jour.values],
-            x=jours_fr,
+            x=jours_display,
             y=["🦖 Activité"],
             colorscale=trex_colorscale,
             showscale=True,
@@ -776,8 +890,8 @@ def create_charts(df: pd.DataFrame):
         )
     )
     fig_heatmap.update_layout(
-        title="🦖 Heatmap : Jours favoris",
-        xaxis_title="Jour de la semaine",
+        title="🦖 Heatmap : Jours favoris" if tr.language == "fr" else "🦖 Heatmap: Favorite days",
+        xaxis_title="Jour de la semaine" if tr.language == "fr" else "Day of the week",
         yaxis_title="",
         height=200,
         font=dict(family="Poppins, sans-serif", color=TEXT_DARK),
@@ -802,12 +916,16 @@ def main():
     st.markdown(TREX_CSS, unsafe_allow_html=True)
 
     # 🦖 Header principal avec style T-Rex
+    # Traducteur temporaire pour le header (avant la sidebar)
+    temp_lang = st.session_state.get("language", "fr") 
+    temp_tr = Translator(temp_lang)
+    
     st.markdown(
-        """
+        f"""
         <div class="main-header">
-            <h1>🦖 MomentKeeper</h1>
-            <p><strong>Du Chaos à la Chronologie</strong></p>
-            <p>Organisez vos photos de 🦖 (bébé) par mois d'âge et découvrez vos habitudes photo</p>
+            <h1>{temp_tr.t("app_title")}</h1>
+            <p><strong>{temp_tr.t("tagline")}</strong></p>
+            <p>{temp_tr.t("subtitle")}</p>
         </div>
     """,
         unsafe_allow_html=True,
@@ -816,14 +934,43 @@ def main():
     # Initialiser la session state
     if "dossier_path" not in st.session_state:
         st.session_state.dossier_path = ""
+    if "language" not in st.session_state:
+        st.session_state.language = "fr"
 
     with st.sidebar:
-        st.header("Configuration")
+        # Sélecteur de langue ultra-compact
+        current_lang = st.session_state.language
+        
+        col1, col2, col3 = st.columns([1, 0.2, 1])
+        with col1:
+            if st.button("FR", key="lang_fr_mini", 
+                        type="primary" if current_lang == "fr" else "secondary",
+                        help="Français"):
+                if current_lang != "fr":
+                    st.session_state.language = "fr"
+                    st.rerun()
+        
+        with col2:
+            st.markdown("<p style='text-align: center; margin: 0.5rem 0; color: #7F8C8D;'>|</p>", 
+                       unsafe_allow_html=True)
+        
+        with col3:
+            if st.button("EN", key="lang_en_mini",
+                        type="primary" if current_lang == "en" else "secondary", 
+                        help="English"):
+                if current_lang != "en":
+                    st.session_state.language = "en"
+                    st.rerun()
+        
+        # Initialiser le traducteur
+        tr = Translator(st.session_state.language)
+        
+        st.header(tr.t("config_header"))
 
-        st.subheader("📁 Dossier principal")
+        st.subheader(tr.t("main_folder"))
         col1, col2 = st.columns([1, 3])
         with col1:
-            if st.button("📁", help="Parcourir", key="browse_root"):
+            if st.button("📁", help=tr.t("browse"), key="browse_root"):
                 dossier_selectionne = selectionner_dossier()
                 if dossier_selectionne:
                     st.session_state.dossier_path = dossier_selectionne
@@ -831,20 +978,20 @@ def main():
 
         with col2:
             dossier_racine = st.text_input(
-                "Dossier principal du projet",
-                placeholder="C:/Users/Nom/ProjetPhotos",
+                tr.t("main_folder"),
+                placeholder=tr.t("main_folder_placeholder"),
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
-                help="Dossier qui contiendra les sous-dossiers par mois"
+                help=tr.t("main_folder_help")
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
                 st.session_state.dossier_path = dossier_racine
 
-        st.subheader("📂 Dossier source")
+        st.subheader(tr.t("source_folder"))
         col3, col4 = st.columns([1, 3])
         with col3:
-            if st.button("📁", help="Parcourir sous-dossier", key="browse_sub"):
+            if st.button("📁", help=tr.t("browse_subfolder"), key="browse_sub"):
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
@@ -856,11 +1003,9 @@ def main():
                             st.session_state.sous_dossier_photos = str(chemin_relatif)
                             st.rerun()
                         except ValueError:
-                            st.error(
-                                "Le dossier sélectionné doit être dans le dossier principal"
-                            )
+                            st.error(tr.t("folder_must_be_in_root"))
                 else:
-                    st.error("Sélectionnez d'abord le dossier principal")
+                    st.error(tr.t("select_root_first"))
 
         with col4:
             # Initialiser la session state pour le sous-dossier
@@ -868,9 +1013,9 @@ def main():
                 st.session_state.sous_dossier_photos = "photos"
 
             sous_dossier_photos = st.text_input(
-                "Nom du dossier source",
+                tr.t("source_folder"),
                 value=st.session_state.sous_dossier_photos,
-                help="Dossier contenant les fichiers non triés",
+                help=tr.t("source_folder_help"),
                 label_visibility="collapsed",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
@@ -878,16 +1023,16 @@ def main():
                 st.session_state.sous_dossier_photos = sous_dossier_photos
 
         date_naissance = st.date_input(
-            "🦖 Date de naissance",
+            tr.t("birth_date"),
             min_value=datetime(2000, 1, 1).date(),
             max_value=datetime.now().date(),
         )
 
-        st.subheader("📹 Type de fichiers")
+        st.subheader(tr.t("file_types"))
         
         # Checkboxes pour photos et vidéos
-        photos_selected = st.checkbox("📸 Photos", value=True)
-        videos_selected = st.checkbox("🎬 Vidéos", value=True)
+        photos_selected = st.checkbox(tr.t("photos"), value=True)
+        videos_selected = st.checkbox(tr.t("videos"), value=True)
         
         # Déterminer le type de fichiers basé sur les checkboxes
         if photos_selected and videos_selected:
@@ -898,10 +1043,10 @@ def main():
             type_fichiers = "🎬 Vidéos uniquement"
         else:
             type_fichiers = None
-            st.warning("⚠️ Veuillez sélectionner au moins un type de fichier")
+            st.warning(tr.t("no_type_selected"))
 
         if st.button(
-            "🔄 Réinitialiser", help="Remet toutes les photos dans le dossier photos"
+            tr.t("reset_button"), help=tr.t("reset_help")
         ):
             if dossier_racine and Path(dossier_racine).exists():
                 organiseur = OrganisateurPhotos(
@@ -936,21 +1081,21 @@ def main():
 
                 tab1, tab2, tab3, tab4 = st.tabs(
                 [
-                    "🔍 Simulation",
-                    "🗂️ Organisation",
-                    "📊 Analytics",
-                    "🦖 Insights",  # T-Rex pour les découvertes
+                    tr.t("tab_simulation"),
+                    tr.t("tab_organization"),
+                    tr.t("tab_analytics"),
+                    tr.t("tab_insights"),
                 ]
             )
 
             with tab1:
                 st.markdown(
-                    '<div class="trex-message">🦖 <strong>Simulation de l\'organisation</strong><br>Prévisualisez sans déplacer vos fichiers !</div>',
+                    f'<div class="trex-message">{tr.t("simulation_title")}</div>',
                     unsafe_allow_html=True,
                 )
 
-                if st.button("🦖 Analyser les photos"):
-                    with st.spinner("🦖 Analyse vos photos..."):
+                if st.button(tr.t("analyze_button")):
+                    with st.spinner(tr.t("analyzing")):
                         repartition, erreurs = organiseur.simuler_organisation()
 
                     if repartition:
@@ -960,11 +1105,11 @@ def main():
                             # Compter photos et vidéos séparément
                             total_photos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "photo"]) for fichiers in repartition.values())
                             total_videos_count = sum(len([f for f in fichiers if organiseur.get_file_type(f) == "video"]) for fichiers in repartition.values())
-                            message = f"🦖 Rawr de satisfaction ! {total_photos_count} 📸 photos et {total_videos_count} 🎬 vidéos analysées !"
+                            message = tr.t("success_simulation_mixed", photos=total_photos_count, videos=total_videos_count)
                         elif "Photos" in type_fichiers:
-                            message = f"🦖 Rawr de satisfaction ! {total_photos} photos analysées et prêtes à être organisées !"
+                            message = tr.t("success_simulation", photos=total_photos)
                         else:
-                            message = f"🦖 Rawr de satisfaction ! {total_photos} vidéos analysées et prêtes à être organisées !"
+                            message = tr.t("success_simulation", photos=total_photos)
                         
                         st.markdown(
                             f'<div class="trex-success">{message}</div>',
@@ -994,27 +1139,27 @@ def main():
                             else:
                                 # Affichage normal pour un seul type
                                 type_emoji = "📸" if "Photos" in type_fichiers else "🎬"
-                                type_nom = "photos" if "Photos" in type_fichiers else "vidéos"
+                                type_nom = tr.t("photos_unit") if "Photos" in type_fichiers else tr.t("videos_unit")
                                 
                                 with st.expander(f"📁 {dossier} ({len(fichiers)} {type_nom})"):
                                     for fichier in fichiers[:10]:
                                         st.text(f"  {type_emoji} {fichier.name}")
                                     if len(fichiers) > 10:
-                                        st.text(f"  ... et {len(fichiers) - 10} autres")
+                                        st.text(tr.t("and_more", count=len(fichiers) - 10))
                     else:
-                        st.info("ℹ️ Aucune photo trouvée à organiser")
+                        st.info(tr.t("no_files_found"))
 
                         # Afficher des informations de débogage
                         if (
                             hasattr(organiseur, "_fichiers_ignores")
                             and organiseur._fichiers_ignores
                         ):
-                            with st.expander("🔍 Détails de l'analyse"):
+                            with st.expander(tr.t("debug_details")):
                                 st.write(
-                                    f"Date de naissance configurée : {date_naissance}"
+                                    f"{tr.t('birth_date_configured')}{date_naissance}"
                                 )
                                 st.write(
-                                    f"Nombre de fichiers ignorés : {len(organiseur._fichiers_ignores)}"
+                                    f"{tr.t('ignored_files_count')}{len(organiseur._fichiers_ignores)}"
                                 )
 
                                 # Afficher quelques exemples
@@ -1027,63 +1172,62 @@ def main():
                                     )
 
                     if erreurs:
-                        st.warning("⚠️ Avertissements:")
+                        st.warning(tr.t("warnings"))
                         for erreur in erreurs:
                             st.warning(erreur)
 
             with tab2:
                 st.markdown(
-                    '<div class="trex-message">🗂️ <strong>Organisation réelle</strong><br>Temps de passer à l\'action !</div>',
+                    f'<div class="trex-message">{tr.t("organization_title")}</div>',
                     unsafe_allow_html=True,
                 )
                 st.markdown(
-                    '<div class="trex-warning">🦖 Attention petits bras ! Cette action déplacera réellement vos fichiers.</div>',
+                    f'<div class="trex-warning">{tr.t("organization_warning")}</div>',
                     unsafe_allow_html=True,
                 )
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    type_text = "photos" if "Photos" in type_fichiers else "vidéos" if "Vidéos" in type_fichiers else "fichiers"
-                    confirmer = st.checkbox(f"Je confirme vouloir organiser mes {type_text}")
+                    type_text = tr.t("photos_unit") if "Photos" in type_fichiers else tr.t("videos_unit") if "Vidéos" in type_fichiers else tr.t("files_unit")
+                    confirmer = st.checkbox(tr.t("confirm_organize", type=type_text))
 
                 with col2:
-                    if st.button("🦖 Organiser", disabled=not confirmer):
-                        with st.spinner("🦖 Petits bras en action..."):
+                    if st.button(tr.t("organize_button"), disabled=not confirmer):
+                        with st.spinner(tr.t("organizing")):
                             nb_fichiers, erreurs = organiseur.organiser()
 
                         if nb_fichiers > 0:
                             if type_fichiers == "📸🎬 Photos et Vidéos":
-                                # Pour une estimation rapide, on peut faire une analyse après coup
-                                # Mais pour simplifier, on affiche juste le total
-                                message = f"🦖 Rawr de victoire ! {nb_fichiers} fichiers parfaitement organisés !"
+                                type_text = tr.t("files_unit")
                             elif "Photos" in type_fichiers:
-                                message = f"🦖 Rawr de victoire ! {nb_fichiers} photos parfaitement organisées !"
+                                type_text = tr.t("photos_unit")
                             else:
-                                message = f"🦖 Rawr de victoire ! {nb_fichiers} vidéos parfaitement organisées !"
+                                type_text = tr.t("videos_unit")
                             
+                            message = tr.t("success_organize", count=nb_fichiers, type=type_text)
                             st.markdown(
                                 f'<div class="trex-success">{message}</div>',
                                 unsafe_allow_html=True,
                             )
 
                         if erreurs:
-                            st.error("❌ Erreurs rencontrées:")
+                            st.error(tr.t("errors_occurred"))
                             for erreur in erreurs:
                                 st.error(erreur)
 
             with tab3:
                 st.markdown(
-                    '<div class="trex-message">📊 <strong>Analytics</strong><br>🦖 Découvrez les statistiques de votre petit explorateur !</div>',
+                    f'<div class="trex-message">{tr.t("analytics_title")}</div>',
                     unsafe_allow_html=True,
                 )
 
                 # Extraire les données des photos
-                with st.spinner("🦖 Calcul des statistiques en cours..."):
+                with st.spinner(tr.t("calculating_stats")):
                     df_photos = extract_photo_data(organiseur)
                     metrics = calculate_metrics(df_photos, type_fichiers)
 
                 if df_photos.empty:
-                    st.info("ℹ️ Aucune photo trouvée pour l'analyse")
+                    st.info(tr.t("no_data_analytics"))
                 else:
                     # Métriques principales en colonnes (3x2 layout)
                     col1, col2, col3 = st.columns(3)
@@ -1091,61 +1235,63 @@ def main():
                     with col1:
                         if type_fichiers == "📸🎬 Photos et Vidéos":
                             st.metric(
-                                "📸 Photos",
+                                "📸 Photos" if tr.language == "fr" else "📸 Photos",
                                 metrics["total_photos"],
                                 delta=(
-                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
+                                    else f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% of total"
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
                             )
                         else:
-                            label = "📸 Photos gardées" if "Photos" in type_fichiers else "🎬 Vidéos gardées"
+                            label = tr.t("photos_kept") if "Photos" in type_fichiers else tr.t("videos_kept")
                             st.metric(
                                 label,
                                 metrics["total_fichiers"],
                                 delta=(
-                                    "Souvenirs précieux !"
+                                    tr.t("precious_memories")
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
                             )
                         st.metric(
-                            "📅 Dernière capture",
+                            tr.t("last_capture"),
                             (
                                 metrics["derniere_photo"].strftime("%d/%m/%Y")
                                 if metrics["derniere_photo"]
                                 else "N/A"
                             ),
-                            delta="Récente !" if metrics["derniere_photo"] else None,
+                            delta=tr.t("recent") if metrics["derniere_photo"] else None,
                         )
 
                     with col2:
                         if type_fichiers == "📸🎬 Photos et Vidéos":
                             st.metric(
-                                "🎬 Vidéos",
+                                "🎬 Vidéos" if tr.language == "fr" else "🎬 Videos",
                                 metrics["total_videos"],
                                 delta=(
-                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
+                                    else f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% of total"
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
                             )
                         else:
                             st.metric(
-                                "🗓️ Croissance",
+                                tr.t("growth_period"),
                                 f"{metrics['periode_couverte']} mois",
                                 delta=(
-                                    "Ça grandit vite !"
+                                    tr.t("growing_fast")
                                     if metrics["periode_couverte"] > 6
                                     else None
                                 ),
                             )
                         st.metric(
-                            "🏆 Record quotidien",
+                            tr.t("daily_record"),
                             f"{metrics['jour_record']} photos",
                             delta=(
-                                "Mode rafale !"
+                                tr.t("burst_mode")
                                 if metrics["jour_record"] >= 10
                                 else None
                             ),
@@ -1153,28 +1299,28 @@ def main():
 
                     with col3:
                         st.metric(
-                            "📈 Rythme",
+                            tr.t("average_rhythm"),
                             f"{metrics['moyenne_par_mois']:.1f}/mois",
                             delta=(
-                                "Régulier !"
+                                tr.t("regular")
                                 if metrics["moyenne_par_mois"] >= 20
-                                else "On peut faire mieux"
+                                else tr.t("can_do_better")
                             ),
                         )
                         st.metric(
-                            "⏱️ Plus long silence",
+                            tr.t("longest_gap"),
                             f"{metrics['max_gap']} jours",
                             delta=(
-                                "T-Rex endormi ?"
+                                tr.t("trex_sleeping")
                                 if metrics["max_gap"] >= 7
-                                else "Bien suivi !"
+                                else tr.t("well_followed")
                             ),
                         )
 
                     st.divider()
 
                     # Graphiques
-                    charts = create_charts(df_photos)
+                    charts = create_charts(df_photos, tr)
 
                     if charts:
                         # Graphique en barres
@@ -1199,32 +1345,32 @@ def main():
                         # Alertes visuelles pour les gaps
                         gaps = find_gaps(df_photos)
                         if gaps:
-                            st.subheader("⚠️ Alertes temporelles")
+                            st.subheader(tr.t("temporal_alerts"))
                             for gap_start, gap_end, gap_days in gaps:
                                 if gap_days >= 5:
                                     st.warning(
-                                        f"Gap de {gap_days} jours : du {gap_start.strftime('%d/%m/%Y')} au {gap_end.strftime('%d/%m/%Y')}"
+                                        tr.t("gap_alert", days=gap_days, start=gap_start.strftime('%d/%m/%Y'), end=gap_end.strftime('%d/%m/%Y'))
                                     )
 
             with tab4:
                 st.markdown(
-                    '<div class="trex-message">🦖 <strong>Insights</strong><br>Découvertes sur vos habitudes photo !</div>',
+                    f'<div class="trex-message">{tr.t("insights_title")}</div>',
                     unsafe_allow_html=True,
                 )
 
                 # Réutiliser les données déjà extraites si possible
                 if "df_photos" not in locals():
-                    with st.spinner("🦖 Fouille dans vos données..."):
+                    with st.spinner(tr.t("searching_data")):
                         df_photos = extract_photo_data(organiseur)
                         metrics = calculate_metrics(df_photos, type_fichiers)
 
                 # Messages d'insights
                 insights = generate_insights(
-                    df_photos, metrics, organiseur.date_naissance, type_fichiers
+                    df_photos, metrics, organiseur.date_naissance, type_fichiers, tr
                 )
 
                 if insights:
-                    st.markdown("### 🎯 Découvertes")
+                    st.markdown(tr.t("discoveries"))
                     for insight in insights:
                         st.markdown(
                             f'<div class="insight-bubble">{insight}</div>',
@@ -1235,78 +1381,81 @@ def main():
 
                     # Section détails si il y a des données
                     if not df_photos.empty:
-                        st.subheader("📋 Analyse détaillée")
+                        st.subheader(tr.t("detailed_analysis"))
 
                         col1, col2 = st.columns(2)
 
                         with col1:
-                            st.write("**🗓️ Répartition mensuelle**")
+                            st.write(tr.t("monthly_distribution"))
                             photos_par_mois = df_photos.groupby("age_mois").size()
                             for mois, nb in photos_par_mois.head(5).items():
-                                st.write(f"• {mois}-{mois+1} mois : {nb} photos")
+                                st.write(tr.t("months_pattern", start=mois, end=mois+1, count=nb))
                             if len(photos_par_mois) > 5:
                                 st.write(
-                                    f"... et {len(photos_par_mois) - 5} autres mois"
+                                    tr.t("and_other_months", count=len(photos_par_mois) - 5)
                                 )
 
                         with col2:
-                            st.write("**📅 Jours favoris**")
-                            jours_fr_map = {
-                                "Monday": "Lundi",
-                                "Tuesday": "Mardi",
-                                "Wednesday": "Mercredi",
-                                "Thursday": "Jeudi",
-                                "Friday": "Vendredi",
-                                "Saturday": "Samedi",
-                                "Sunday": "Dimanche",
-                            }
+                            st.write(tr.t("favorite_days"))
+                            if tr.language == "fr":
+                                jours_map = {
+                                    "Monday": "Lundi",
+                                    "Tuesday": "Mardi",
+                                    "Wednesday": "Mercredi",
+                                    "Thursday": "Jeudi",
+                                    "Friday": "Vendredi",
+                                    "Saturday": "Samedi",
+                                    "Sunday": "Dimanche",
+                                }
+                            else:
+                                jours_map = {
+                                    "Monday": "Monday",
+                                    "Tuesday": "Tuesday",
+                                    "Wednesday": "Wednesday",
+                                    "Thursday": "Thursday",
+                                    "Friday": "Friday",
+                                    "Saturday": "Saturday",
+                                    "Sunday": "Sunday",
+                                }
                             photos_par_jour = (
                                 df_photos.groupby("jour_semaine")
                                 .size()
                                 .sort_values(ascending=False)
                             )
                             for jour_en, nb in photos_par_jour.head(3).items():
-                                jour_fr = jours_fr_map.get(jour_en, jour_en)
-                                st.write(f"• {jour_fr} : {nb} photos")
+                                jour_localized = jours_map.get(jour_en, jour_en)
+                                st.write(tr.t("photos_count", day=jour_localized, count=nb))
 
                         # Suggestions d'amélioration
-                        st.subheader("💡 Suggestions")
+                        st.subheader(tr.t("suggestions"))
 
                         gaps = find_gaps(df_photos, min_gap_days=7)
                         if gaps:
-                            st.write("📸 **Pour ne rien rater :**")
-                            st.write(
-                                "• Pensez à prendre des photos pendant la semaine aussi"
-                            )
-                            st.write("• Essayez de capturer les moments du quotidien")
+                            st.write(tr.t("not_to_miss"))
+                            st.write(tr.t("think_weekday_photos"))
+                            st.write(tr.t("capture_daily_moments"))
 
                         if metrics["moyenne_par_mois"] < 10:
-                            st.write("📈 **Pour enrichir vos souvenirs :**")
-                            st.write(
-                                "• Quelques photos de plus par mois donneraient un bel aperçu de l'évolution"
-                            )
-                            st.write(
-                                "• Les petits moments comptent autant que les grands!"
-                            )
+                            st.write(tr.t("enrich_memories"))
+                            st.write(tr.t("more_photos_evolution"))
+                            st.write(tr.t("small_moments_matter"))
                     else:
-                        st.info("Analysez d'abord vos photos pour voir les insights!")
+                        st.info(tr.t("analyze_first"))
         else:
-            st.error(
-                f"❌ Le dossier photos '{sous_dossier_photos}' n'existe pas dans {dossier_racine}"
-            )
+            st.error(tr.t("folder_not_exist", folder=sous_dossier_photos, root=dossier_racine))
     else:
         if dossier_racine:
-            st.error("❌ Le dossier principal spécifié n'existe pas")
+            st.error(tr.t("root_not_exist"))
         else:
-            st.info("👈 Configurez le dossier principal dans la barre latérale")
+            st.info(tr.t("configure_root"))
 
     # 🦖 Footer T-Rex avec personnalité
     st.markdown(
-        """
+        f"""
         <div class="trex-footer">
-            <p>Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur</p>
-            <p><strong>🦖 MomentKeeper v1.0</strong></p>
-            <p><em>"Du Chaos à la Chronologie, une photo à la fois"</em></p>
+            <p>{temp_tr.t("footer_love")}</p>
+            <p><strong>{temp_tr.t("footer_version")}</strong></p>
+            <p><em>{temp_tr.t("footer_tagline")}</em></p>
         </div>
     """,
         unsafe_allow_html=True,
