@@ -118,6 +118,14 @@ TRANSLATIONS = {
         "contrast_months": "📊 Contraste : {max_month} vs {min_month} = {ratio}x plus de photos",
         "intense_weekend": "🎯 Weekend intense : {ratio}x plus de photos par jour le weekend",
         "active_weekdays": "💼 Semaine active : {ratio}x plus de photos par jour en semaine",
+        "prefer_photos": "📸 Vous préférez clairement les photos aux vidéos!",
+        "true_videographer": "🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo",
+        "perfect_balance": "⚖️ Équilibre parfait entre photos et vidéos!",
+        "capture_weekends": "📅 Vous capturez bien les week-ends en famille!",
+        "sunday_champion": "🌅 Champion du dimanche!",
+        "yearly_projection": "📈 À ce rythme, vous aurez ~{count} photos par an!",
+        "trend_increasing": "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖",
+        "trend_decreasing": "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!",
         
         # Analytics - Alertes
         "temporal_alerts": "⚠️ Alertes temporelles",
@@ -141,6 +149,11 @@ TRANSLATIONS = {
         "months_pattern": "• {start}-{end} mois : {count} photos",
         "and_other_months": "... et {count} autres mois",
         "photos_count": "• {day} : {count} photos",
+        
+        # Messages additionnels
+        "errors_encountered": "❌ Erreurs rencontrées:",
+        "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
+        "files_reset": "✅ {count} fichiers remis dans le dossier photos",
     },
     
     "en": {
@@ -260,6 +273,14 @@ TRANSLATIONS = {
         "contrast_months": "📊 Contrast: {max_month} vs {min_month} = {ratio}x more photos",
         "intense_weekend": "🎯 Intense weekend: {ratio}x more photos per day on weekends",
         "active_weekdays": "💼 Active weekdays: {ratio}x more photos per day on weekdays",
+        "prefer_photos": "📸 You clearly prefer photos to videos!",
+        "true_videographer": "🎬 A true videographer! You mostly capture in video",
+        "perfect_balance": "⚖️ Perfect balance between photos and videos!",
+        "capture_weekends": "📅 You capture family weekends well!",
+        "sunday_champion": "🌅 Sunday champion!",
+        "yearly_projection": "📈 At this rate, you'll have ~{count} photos per year!",
+        "trend_increasing": "📈 Recent trend: You're photographing your 🦖 more and more",
+        "trend_decreasing": "📉 Recent trend: Fewer photos - normal as 🦖 grows!",
         
         # Analytics - Alerts
         "temporal_alerts": "⚠️ Temporal alerts",
@@ -283,6 +304,11 @@ TRANSLATIONS = {
         "months_pattern": "• {start}-{end} months: {count} photos",
         "and_other_months": "... and {count} other months",
         "photos_count": "• {day}: {count} photos",
+        
+        # Additional messages
+        "errors_encountered": "❌ Errors encountered:",
+        "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
+        "files_reset": "✅ {count} files put back in the photos folder",
     }
 }
 

@@ -282,15 +282,9 @@ def generate_temporal_comparisons(
         if len(valeurs) == 3:
             tendance = (valeurs[2] - valeurs[0]) / 2
             if tendance > INSIGHTS_THRESHOLDS["trend_increase_threshold"]:
-                comparisons.append(
-                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖" if tr.language == "fr"
-                    else "📈 Recent trend: You're photographing your 🦖 more and more"
-                )
+                comparisons.append(tr.t("trend_increasing"))
             elif tendance < INSIGHTS_THRESHOLDS["trend_decrease_threshold"]:
-                comparisons.append(
-                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!" if tr.language == "fr"
-                    else "📉 Recent trend: Fewer photos - normal as 🦖 grows!"
-                )
+                comparisons.append(tr.t("trend_decreasing"))
 
     return comparisons
 
@@ -322,20 +316,11 @@ def generate_insights(
         if metrics["total_videos"] > 0:
             ratio = metrics["total_photos"] / metrics["total_videos"]
             if ratio > 5:
-                insights.append(
-                    "📸 Vous préférez clairement les photos aux vidéos!" if tr.language == "fr" 
-                    else "📸 You clearly prefer photos to videos!"
-                )
+                insights.append(tr.t("prefer_photos"))
             elif ratio < 0.2:
-                insights.append(
-                    "🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo" if tr.language == "fr"
-                    else "🎬 A true videographer! You mostly capture in video"
-                )
+                insights.append(tr.t("true_videographer"))
             elif 0.8 < ratio < 1.2:
-                insights.append(
-                    "⚖️ Équilibre parfait entre photos et vidéos!" if tr.language == "fr"
-                    else "⚖️ Perfect balance between photos and videos!"
-                )
+                insights.append(tr.t("perfect_balance"))
     else:
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
@@ -373,15 +358,9 @@ def generate_insights(
     if not photos_par_jour_semaine.empty:
         jour_favori = photos_par_jour_semaine.idxmax()
         if jour_favori in ["Saturday", "Sunday"]:
-            insights.append(
-                "📅 Vous capturez bien les week-ends en famille!" if tr.language == "fr" 
-                else "📅 You capture family weekends well!"
-            )
+            insights.append(tr.t("capture_weekends"))
         elif jour_favori == "Sunday":
-            insights.append(
-                "🌅 Champion du dimanche!" if tr.language == "fr"
-                else "🌅 Sunday champion!"
-            )
+            insights.append(tr.t("sunday_champion"))
 
     # Record de photos en une journée
     if metrics["jour_record"] >= INSIGHTS_THRESHOLDS["burst_mode_threshold"]:
@@ -421,10 +400,7 @@ def generate_insights(
     # Projection future
     if metrics["moyenne_par_mois"] > 0:
         projection_annuelle = metrics["moyenne_par_mois"] * 12
-        insights.append(
-            f"📈 À ce rythme, vous aurez ~{int(projection_annuelle)} photos par an!" if tr.language == "fr"
-            else f"📈 At this rate, you'll have ~{int(projection_annuelle)} photos per year!"
-        )
+        insights.append(tr.t("yearly_projection", count=int(projection_annuelle)))
 
     # Détection de moments spéciaux
     special_moments = detect_special_moments(df, metrics["jour_record"], tr)

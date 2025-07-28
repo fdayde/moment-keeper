@@ -195,10 +195,10 @@ def main():
 
                 if nb_fichiers > 0:
                     st.success(
-                        f"✅ {nb_fichiers} fichiers remis dans le dossier photos"
+                        tr.t("files_reset", count=nb_fichiers)
                     )
                 if erreurs:
-                    st.error("❌ Erreurs rencontrées:")
+                    st.error(tr.t("errors_encountered"))
                     for erreur in erreurs:
                         st.error(erreur)
 
@@ -206,7 +206,7 @@ def main():
         dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
         if dossier_photos_complet.exists():
             if type_fichiers is None:
-                st.error("❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)")
+                st.error(tr.t("select_file_type"))
             else:
                 organiseur = OrganisateurPhotos(
                     Path(dossier_racine),
