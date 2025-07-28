@@ -200,6 +200,12 @@ moment-keeper/
 └── requirements*.txt        # Dependencies
 ```
 
+## 📝 License
+
+This project is licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
+
+If you use MomentKeeper in your project, a mention would be appreciated! 🦖
+
 ---
 
 *Built with ❤️ for preserving precious family moments*
