@@ -23,13 +23,20 @@ Transform thousands of media files from chaos to chronological perfection in min
 
 </div>
 
+## 🎮 Demo
+
+Want to try MomentKeeper without your own photos? Check out our [demo setup guide](data/test/README.md) for a ready-to-use test environment with sample photos.
+
 ## ✨ Features
 
 - **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
 - **Media Support**: Handles photos (.jpg, .jpeg, .png, .heic, .webp) and videos (.mp4, .mov, .avi, .mkv, .m4v, .3gp, .wmv)
 - **Date Intelligence**: Extracts dates from filename patterns (`YYYYMMDD_description.jpg`)
-- **Multilingual Interface**: Available in French and English
+- **Multilingual Interface**: Available in French and English with persistent language preference
 - **Analytics Dashboard**: Track your photo habits with insights and visualizations
+- **Gallery View**: Browse organized photos with multiple viewing modes (random, chronological, highlights, timeline)
+- **Baby's Name Personalization**: Add your baby's name for personalized messages and insights
+- **Configuration Persistence**: Settings are saved automatically and restored on next launch
 - **Safe Operation**: Simulation mode before actual organization
 - **Reset Capability**: Undo organization if needed
 - **Error Handling**: Robust handling of invalid dates and file formats
@@ -42,6 +49,7 @@ Transform thousands of media files from chaos to chronological perfection in min
 - `PhotoCopier`: Safe file operations with move/copy capabilities
 - `Analytics`: Photo statistics, insights generation, and visualizations
 - `Config`: Centralized configuration management
+- `ConfigManager`: Persistent configuration storage in JSON format
 - `Theme`: UI styling and color palette
 - `Translations`: Multilingual support (FR/EN)
 
@@ -101,37 +109,6 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## 🖥️ Usage
-
-### Streamlit Web Interface
-1. **Configure paths**: Select root directory and photos subfolder using browse buttons
-2. **Set birth date**: Choose baby's birth date with date picker
-3. **Simulate**: Preview organization with "Analyser les photos"
-4. **Organize**: Confirm and run actual organization
-5. **Reset**: Undo organization if needed
-
-
-## 🔧 Configuration
-
-- **Root Directory**: Main project folder containing photos subfolder
-- **Photos Subfolder**: Subdirectory with photos to organize (default: "photos")
-- **Birth Date**: Baby's birth date for precise age calculations
-- **File Pattern**: Supports `YYYYMMDD_description.ext` format for all media types
-- **File Types**: Choose between photos only, videos only, or both
-
-## 🎨 User Interface
-
-**Streamlit Web App Features:**
-- Native folder browsing with tkinter dialogs
-- Dual path configuration (root + subfolder)
-- Date picker with validation
-- Real-time simulation preview
-- Progress tracking and detailed error reporting
-- Debug information for ignored files
-- One-click reset functionality
-- Analytics dashboard with charts and insights
-- Language selector (FR/EN)
-- T-Rex themed UI with pastel colors
 
 ## 🛡️ Safety Features
 
@@ -141,13 +118,6 @@ streamlit run app.py
 - **Error Recovery**: Graceful handling of edge cases and file conflicts
 - **Rollback Capability**: Complete reset to original state
 
-## 📋 Development Status
-
-- ✅ Core organization logic with accurate age calculation
-- ✅ Cross-platform path handling
-- ✅ Complete Streamlit interface
-- ✅ Jupyter notebook integration
-- ✅ Advanced error handling and debugging
 
 ## 💡 Use Cases
 
@@ -178,7 +148,7 @@ streamlit run app.py
 ### Known Limitations
 - Filename pattern must include `YYYYMMDD_description` format
 - Date extraction from filenames only (EXIF support planned for v2.0)
-- Requires Python 3.8+ and dependencies listed in requirements.txt
+- Requires Python 3.9+ and dependencies listed in requirements.txt
 
 > 💡 **Benchmark results** based on real testing with the included benchmark scripts in `/scripts/`
 
@@ -214,6 +184,7 @@ moment-keeper/
 │   ├── photo_copier.py      # File operations
 │   ├── analytics.py         # Statistics and insights
 │   ├── config.py            # Configuration constants
+│   ├── config_manager.py    # Persistent configuration
 │   ├── theme.py             # UI theming
 │   └── translations.py      # i18n support
 ├── app.py                   # Streamlit web interface

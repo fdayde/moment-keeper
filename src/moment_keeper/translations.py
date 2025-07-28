@@ -15,6 +15,8 @@ TRANSLATIONS = {
         "source_folder": "📂 Dossier source",
         "source_folder_help": "Dossier contenant les fichiers non triés",
         "browse_subfolder": "Parcourir sous-dossier",
+        "baby_name": "🦖 Prénom du bébé",
+        "baby_name_placeholder": "Lucas, Emma, Noah...",
         "birth_date": "🦖 Date de naissance",
         "file_types": "📹 Type de fichiers",
         "photos": "📸 Photos",
@@ -28,6 +30,7 @@ TRANSLATIONS = {
         "tab_organization": "🗂️ Organisation",
         "tab_analytics": "📊 Analytics",
         "tab_insights": "🦖 Insights",
+        "tab_gallery": "🖼️ Galerie",
         # Simulation
         "simulation_title": "🦖 <strong>Simulation de l'organisation</strong><br>Prévisualisez sans déplacer vos fichiers !",
         "analyze_button": "🦖 Analyser les photos",
@@ -58,6 +61,26 @@ TRANSLATIONS = {
         "longest_gap": "⏱️ Plus long silence",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Découvertes sur vos habitudes photo !",
+        # Galerie
+        "gallery_title": "🖼️ <strong>Galerie</strong><br>Explorez vos souvenirs de 🦖 par mois !",
+        "select_month": "📅 Sélectionner le mois",
+        "all_months": "Tous les mois",
+        "photos_to_show": "📸 Nombre de photos à afficher",
+        "refresh_gallery": "🔄 Nouvelles photos",
+        "no_photos_month": "Aucune photo trouvée pour ce mois",
+        "photos_found": "{count} photos trouvées",
+        "photos_found_with_name": "{count} photos de {name} trouvées",
+        "months_growth_available": "{count} mois de croissance de {name} disponibles",
+        "months_growth_available_no_name": "{count} mois de croissance disponibles",
+        "month_pattern": "{start}-{end} mois",
+        "view_mode": "👁️ Mode d'affichage",
+        "view_mode_help": "🎲 Aléatoire: Sélection aléatoire de photos\n⏰ Chronologique: Du plus récent au plus ancien\n📸 Moments forts: Photos des jours les plus actifs\n📈 Timeline croissance: Une photo par mois pour voir l'évolution",
+        "mode_random": "🎲 Aléatoire",
+        "mode_chronological": "⏰ Chronologique",
+        "mode_highlights": "📸 Moments forts",
+        "mode_timeline": "📈 Timeline croissance",
+        "age_months": "{age} mois",
+        "age_days": "{age} jours",
         "searching_data": "🦖 Fouille dans vos données...",
         "discoveries": "### 🎯 Découvertes",
         "analyze_first": "Analysez d'abord vos photos pour voir les insights!",
@@ -90,6 +113,8 @@ TRANSLATIONS = {
         # Messages dynamiques
         "success_simulation": "🦖 Rawr de satisfaction ! {photos} photos analysées et prêtes à être organisées !",
         "success_simulation_mixed": "🦖 Rawr de satisfaction ! {photos} 📸 photos et {videos} 🎬 vidéos analysées !",
+        "success_simulation_with_size": "🦖 Rawr de satisfaction ! {photos} photos analysées ({size:.1f} GB) !",
+        "success_simulation_mixed_with_size": "🦖 Rawr de satisfaction ! {photos} 📸 photos et {videos} 🎬 vidéos analysées ({size:.1f} GB) !",
         "success_organize": "🦖 Rawr de victoire ! {count} {type} parfaitement organisées !",
         "reset_success": "✅ {count} fichiers remis dans le dossier photos",
         # Unités
@@ -149,7 +174,12 @@ TRANSLATIONS = {
         # Messages additionnels
         "errors_encountered": "❌ Erreurs rencontrées:",
         "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
+        "configure_settings_first": "ℹ️ Configurez d'abord les paramètres dans la barre latérale pour utiliser cette fonctionnalité",
         "files_reset": "✅ {count} fichiers remis dans le dossier photos",
+        "load_test_config": "Charger la démo",
+        "load_test_config_help": "Charge une configuration de test avec des photos d'exemple",
+        "test_config_loaded": "✅ Configuration de test chargée avec succès !",
+        "test_config_not_found": "❌ Configuration de test introuvable",
     },
     "en": {
         # App principale
@@ -165,6 +195,8 @@ TRANSLATIONS = {
         "source_folder": "📂 Source folder",
         "source_folder_help": "Folder containing unsorted files",
         "browse_subfolder": "Browse subfolder",
+        "baby_name": "🦖 Baby's name",
+        "baby_name_placeholder": "Lucas, Emma, Noah...",
         "birth_date": "🦖 Birth date",
         "file_types": "📹 File types",
         "photos": "📸 Photos",
@@ -178,6 +210,7 @@ TRANSLATIONS = {
         "tab_organization": "🗂️ Organization",
         "tab_analytics": "📊 Analytics",
         "tab_insights": "🦖 Insights",
+        "tab_gallery": "🖼️ Gallery",
         # Simulation
         "simulation_title": "🦖 <strong>Organization simulation</strong><br>Preview without moving your files!",
         "analyze_button": "🦖 Analyze photos",
@@ -208,6 +241,26 @@ TRANSLATIONS = {
         "longest_gap": "⏱️ Longest gap",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Discoveries about your photo habits!",
+        # Galerie
+        "gallery_title": "🖼️ <strong>Gallery</strong><br>Explore your 🦖 memories by month!",
+        "select_month": "📅 Select month",
+        "all_months": "All months",
+        "photos_to_show": "📸 Number of photos to display",
+        "refresh_gallery": "🔄 New photos",
+        "no_photos_month": "No photos found for this month",
+        "photos_found": "{count} photos found",
+        "photos_found_with_name": "{count} photos of {name} found",
+        "months_growth_available": "{count} months of {name}'s growth available",
+        "months_growth_available_no_name": "{count} months of growth available",
+        "month_pattern": "{start}-{end} months",
+        "view_mode": "👁️ View mode",
+        "view_mode_help": "🎲 Random: Random selection of photos\n⏰ Chronological: From newest to oldest\n📸 Highlights: Photos from most active days\n📈 Growth timeline: One photo per month to see evolution",
+        "mode_random": "🎲 Random",
+        "mode_chronological": "⏰ Chronological",
+        "mode_highlights": "📸 Highlights",
+        "mode_timeline": "📈 Growth timeline",
+        "age_months": "{age} months",
+        "age_days": "{age} days",
         "searching_data": "🦖 Digging through your data...",
         "discoveries": "### 🎯 Discoveries",
         "analyze_first": "Analyze your photos first to see insights!",
@@ -240,6 +293,8 @@ TRANSLATIONS = {
         # Messages dynamiques
         "success_simulation": "🦖 Satisfaction roar! {photos} photos analyzed and ready to be organized!",
         "success_simulation_mixed": "🦖 Satisfaction roar! {photos} 📸 photos and {videos} 🎬 videos analyzed!",
+        "success_simulation_with_size": "🦖 Satisfaction roar! {photos} photos analyzed ({size:.1f} GB)!",
+        "success_simulation_mixed_with_size": "🦖 Satisfaction roar! {photos} 📸 photos and {videos} 🎬 videos analyzed ({size:.1f} GB)!",
         "success_organize": "🦖 Victory roar! {count} {type} perfectly organized!",
         "reset_success": "✅ {count} files put back in the photos folder",
         # Units
@@ -299,7 +354,12 @@ TRANSLATIONS = {
         # Additional messages
         "errors_encountered": "❌ Errors encountered:",
         "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
+        "configure_settings_first": "ℹ️ First configure the settings in the sidebar to use this feature",
         "files_reset": "✅ {count} files put back in the photos folder",
+        "load_test_config": "Load demo",
+        "load_test_config_help": "Load a test configuration with sample photos",
+        "test_config_loaded": "✅ Test configuration loaded successfully!",
+        "test_config_not_found": "❌ Test configuration not found",
     },
 }
 

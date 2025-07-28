@@ -154,6 +154,7 @@ def get_css_styles() -> str:
 .trex-success {{
     background: linear-gradient(135deg, {COLORS['success']} 0%, {COLORS['primary']} 100%);
     border-left-color: #4CAF50;
+    color: {COLORS['text_dark']} !important;
 }}
 
 .trex-warning {{
@@ -172,11 +173,17 @@ def get_css_styles() -> str:
 }}
 
 /* Onglets personnalisés */
+.stTabs {{
+    margin-top: -0.5rem;
+}}
+
 .stTabs [data-baseweb="tab-list"] {{
     gap: 8px;
     background: rgba(255,255,255,0.1);
     border-radius: 15px;
     padding: 0.5rem;
+    width: 100%;
+    display: flex;
 }}
 
 .stTabs [data-baseweb="tab"] {{
@@ -187,6 +194,11 @@ def get_css_styles() -> str:
     font-weight: 500;
     border: none;
     transition: all 0.3s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
 }}
 
 .stTabs [aria-selected="true"] {{
@@ -328,6 +340,33 @@ def get_css_styles() -> str:
     background: rgba(255,255,255,0.7);
     border: 2px solid {COLORS['primary']};
     color: {COLORS['text_light']};
+}}
+
+/* Badge d'âge pour les photos */
+.age-badge {{
+    display: inline-block;
+    background: #2C3E50;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    border: 1px solid #34495E;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}}
+
+/* Container pour légende photo avec badge */
+.photo-caption {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    color: {COLORS['text_dark']};
 }}
 </style>
 """

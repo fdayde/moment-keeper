@@ -8,6 +8,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        args: ['--maxkb=2000']  # Allow up to 2MB for test photos
       - id: check-merge-conflict
       - id: check-toml
       - id: debug-statements

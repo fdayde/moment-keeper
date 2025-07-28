@@ -1,7 +1,8 @@
 """Module d'analyse et de statistiques pour MomentKeeper."""
 
+import random
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -48,7 +49,7 @@ def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     return pd.DataFrame(photos_data)
 
 
-def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
+def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> dict:
     """Calcule toutes les métriques pour l'onglet Analytics."""
     if df.empty:
         return {
@@ -107,7 +108,7 @@ def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
 
 def find_gaps(
     df: pd.DataFrame, min_gap_days: int = None
-) -> List[Tuple[datetime, datetime, int]]:
+) -> list[tuple[datetime, datetime, int]]:
     """Trouve les gaps temporels dans les photos."""
     if min_gap_days is None:
         min_gap_days = INSIGHTS_THRESHOLDS["min_gap_days"]
@@ -169,7 +170,7 @@ def age_to_month_name(
 
 def detect_special_moments(
     df: pd.DataFrame, jour_record_existant: int, tr: Translator
-) -> List[str]:
+) -> list[str]:
     """Détecte les moments spéciaux basés sur les pics de photos."""
     special_insights = []
 
@@ -237,7 +238,7 @@ def detect_special_moments(
 
 def generate_temporal_comparisons(
     df: pd.DataFrame, date_naissance: datetime, tr: Translator
-) -> List[str]:
+) -> list[str]:
     """Génère des comparaisons temporelles."""
     comparisons = []
 
@@ -335,11 +336,11 @@ def generate_temporal_comparisons(
 
 def generate_insights(
     df: pd.DataFrame,
-    metrics: Dict,
+    metrics: dict,
     date_naissance: datetime,
     type_fichiers: str = None,
     tr: Translator = None,
-) -> List[str]:
+) -> list[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
 
@@ -490,7 +491,7 @@ def generate_insights(
     return insights
 
 
-def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
+def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     """Crée tous les graphiques pour l'onglet Analytics."""
     charts = {}
 
@@ -648,3 +649,225 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
     charts["heatmap"] = fig_heatmap
 
     return charts
+
+
+def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
+    """Obtient les photos organisées par mois pour la galerie."""
+    gallery_data = {}
+
+    # Parcourir tous les dossiers du projet
+    for dossier in organiseur.dossier_racine.iterdir():
+        if dossier.is_dir():
+            photos = []
+            for fichier in dossier.iterdir():
+                if (
+                    fichier.is_file()
+                    and fichier.suffix.lower() in organiseur.extensions_actives
+                    and organiseur.get_file_type(fichier)
+                    == "photo"  # Seulement les photos pour la galerie
+                ):
+                    # Vérifier que c'est une photo avec une date valide
+                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+                    if date_photo and date_photo >= organiseur.date_naissance:
+                        photos.append(fichier)
+
+            if photos:
+                # Utiliser le nom du dossier comme clé, ou calculer l'âge pour le dossier source
+                if dossier.name == organiseur.dossier_source.name:
+                    # Photos non organisées dans le dossier source
+                    gallery_data["Photos non triées"] = photos
+                else:
+                    # Photos déjà organisées dans les dossiers mensuels
+                    gallery_data[dossier.name] = photos
+
+    return gallery_data
+
+
+def get_photos_by_mode(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    mode: str,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos selon le mode sélectionné."""
+    if mode == "🎲 Aléatoire" or mode == "🎲 Random":
+        return get_random_photos_for_month(gallery_data, selected_month, num_photos)
+    elif mode == "⏰ Chronologique" or mode == "⏰ Chronological":
+        return get_chronological_photos(
+            gallery_data, organiseur, selected_month, num_photos
+        )
+    elif mode == "📸 Moments forts" or mode == "📸 Highlights":
+        return get_highlight_photos(
+            gallery_data, organiseur, selected_month, num_photos
+        )
+    elif mode == "📈 Timeline croissance" or mode == "📈 Growth timeline":
+        return get_timeline_photos(gallery_data, organiseur, num_photos)
+    else:
+        return get_random_photos_for_month(gallery_data, selected_month, num_photos)
+
+
+def get_random_photos_for_month(
+    gallery_data: dict[str, list[Path]], selected_month: str, num_photos: int = 6
+) -> list[Path]:
+    """Obtient un échantillon aléatoire de photos pour un mois donné."""
+    if selected_month == "Tous les mois":
+        # Mélanger toutes les photos de tous les mois
+        all_photos = []
+        for photos in gallery_data.values():
+            all_photos.extend(photos)
+        return (
+            random.sample(all_photos, min(num_photos, len(all_photos)))
+            if all_photos
+            else []
+        )
+
+    photos = gallery_data.get(selected_month, [])
+    return random.sample(photos, min(num_photos, len(photos))) if photos else []
+
+
+def get_chronological_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos triées chronologiquement (plus récent → plus ancien)."""
+    if selected_month == "Tous les mois":
+        # Collecter toutes les photos avec leur date
+        all_photos_with_dates = []
+        for photos in gallery_data.values():
+            for photo in photos:
+                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                if date_photo:
+                    all_photos_with_dates.append((photo, date_photo))
+
+        # Trier par date décroissante (plus récent en premier)
+        all_photos_with_dates.sort(key=lambda x: x[1], reverse=True)
+        return [photo for photo, _ in all_photos_with_dates[:num_photos]]
+
+    # Pour un mois spécifique
+    photos = gallery_data.get(selected_month, [])
+    photos_with_dates = []
+    for photo in photos:
+        date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+        if date_photo:
+            photos_with_dates.append((photo, date_photo))
+
+    # Trier par date décroissante
+    photos_with_dates.sort(key=lambda x: x[1], reverse=True)
+    return [photo for photo, _ in photos_with_dates[:num_photos]]
+
+
+def get_highlight_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    selected_month: str,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient les photos des journées avec le plus de photos (moments forts)."""
+    if selected_month == "Tous les mois":
+        # Collecter toutes les photos avec leur date
+        all_photos_with_dates = []
+        for photos in gallery_data.values():
+            for photo in photos:
+                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                if date_photo:
+                    all_photos_with_dates.append((photo, date_photo.date()))
+    else:
+        # Pour un mois spécifique
+        photos = gallery_data.get(selected_month, [])
+        all_photos_with_dates = []
+        for photo in photos:
+            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            if date_photo:
+                all_photos_with_dates.append((photo, date_photo.date()))
+
+    if not all_photos_with_dates:
+        return []
+
+    # Grouper par jour et compter les photos
+    from collections import defaultdict
+
+    photos_par_jour = defaultdict(list)
+    for photo, date in all_photos_with_dates:
+        photos_par_jour[date].append(photo)
+
+    # Trier les jours par nombre de photos (moments forts)
+    jours_tries = sorted(photos_par_jour.items(), key=lambda x: len(x[1]), reverse=True)
+
+    # Sélectionner des photos des jours les plus actifs
+    selected_photos = []
+    for _, photos_du_jour in jours_tries:
+        if len(selected_photos) >= num_photos:
+            break
+        # Prendre une photo aléatoire de ce jour fort
+        selected_photos.append(random.choice(photos_du_jour))
+
+    return selected_photos[:num_photos]
+
+
+def get_timeline_photos(
+    gallery_data: dict[str, list[Path]],
+    organiseur: OrganisateurPhotos,
+    num_photos: int = 6,
+) -> list[Path]:
+    """Obtient une photo aléatoire par mois pour montrer la timeline de croissance."""
+    # Ignorer "Photos non triées" et ne prendre que les dossiers mensuels
+    monthly_folders = {
+        k: v for k, v in gallery_data.items() if k != "Photos non triées" and "-" in k
+    }
+
+    if not monthly_folders:
+        return []
+
+    # Fonction pour extraire le nombre du début du nom de dossier
+    def extract_month_number(folder_name):
+        try:
+            return int(folder_name.split("-")[0])
+        except:
+            return 999
+
+    # Trier les mois par ordre chronologique
+    sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
+
+    # Prendre une photo aléatoire par mois (limité par num_photos)
+    timeline_photos = []
+    for month in sorted_months[:num_photos]:
+        month_photos = monthly_folders[month]
+        if month_photos:
+            timeline_photos.append(random.choice(month_photos))
+
+    return timeline_photos
+
+
+def get_photo_caption_with_age(
+    photo_path: Path, organiseur: OrganisateurPhotos, tr
+) -> str:
+    """Génère une légende de photo avec badge d'âge."""
+    # Extraire la date de la photo
+    date_photo = organiseur.extraire_date_nom_fichier(photo_path.name)
+
+    if not date_photo or date_photo < organiseur.date_naissance:
+        return photo_path.name
+
+    # Calculer l'âge en mois
+    age_mois = organiseur.calculer_age_mois(date_photo)
+
+    # Créer le badge d'âge
+    if age_mois < 1:
+        # Pour les photos de moins d'1 mois, afficher en jours
+        age_jours = (date_photo.date() - organiseur.date_naissance.date()).days
+        age_text = tr.t("age_days", age=age_jours)
+    else:
+        age_text = tr.t("age_months", age=age_mois)
+
+    # Créer la légende HTML avec badge
+    caption_html = f"""
+    <div class="photo-caption">
+        <span>{photo_path.name}</span>
+        <span class="age-badge">🦖 {age_text}</span>
+    </div>
+    """
+
+    return caption_html

@@ -98,21 +98,15 @@ photos/
 test_photos/
 output/
 
-# Test data - keep structure but ignore actual media files
-test-data/photos/*.jpg
-test-data/photos/*.jpeg
-test-data/photos/*.png
-test-data/photos/*.heic
-test-data/photos/*.webp
-test-data/photos/*.mp4
-test-data/photos/*.mov
-test-data/photos/*.avi
-test-data/photos/*.mkv
-test-data/photos/*.m4v
-test-data/photos/*.3gp
-test-data/photos/*.wmv
+# User configuration only (not test data)
+data/user-config/
 
 # Exception: Allow documentation screenshots
 !docs/images/*.png
 !docs/images/*.jpg
 !docs/images/*.jpeg
+
+# Exception: Allow test photos for demo
+!data/test/photos/*.jpg
+!data/test/photos/*.jpeg
+!data/test/photos/*.png

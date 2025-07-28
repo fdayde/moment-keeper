@@ -1,11 +1,19 @@
 """Application Streamlit pour MomentKeeper."""
 
+import importlib
+import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog
 
 import streamlit as st
+
+# Force reload des modules en développement
+if "src.moment_keeper.analytics" in sys.modules:
+    importlib.reload(sys.modules["src.moment_keeper.analytics"])
+if "src.moment_keeper.translations" in sys.modules:
+    importlib.reload(sys.modules["src.moment_keeper.translations"])
 
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
@@ -14,6 +22,9 @@ from src.moment_keeper.analytics import (
     extract_photo_data,
     find_gaps,
     generate_insights,
+    get_gallery_data,
+    get_photo_caption_with_age,
+    get_photos_by_mode,
 )
 from src.moment_keeper.config import (
     FILE_TYPES,
@@ -23,6 +34,7 @@ from src.moment_keeper.config import (
     MAX_IGNORED_FILES_DISPLAY,
     PAGE_CONFIG,
 )
+from src.moment_keeper.config_manager import ConfigManager
 from src.moment_keeper.organizer import OrganisateurPhotos
 from src.moment_keeper.theme import get_css_styles
 from src.moment_keeper.translations import Translator
@@ -40,6 +52,26 @@ def selectionner_dossier():
     return dossier
 
 
+def save_configuration(config_manager: ConfigManager):
+    """Sauvegarde la configuration actuelle."""
+    config = {
+        "dossier_path": st.session_state.get("dossier_path", ""),
+        "sous_dossier_photos": st.session_state.get("sous_dossier_photos", "photos"),
+        "language": st.session_state.get("language", "fr"),
+        "baby_name": st.session_state.get("baby_name", ""),
+        "photos_selected": st.session_state.get("photos_selected", True),
+        "videos_selected": st.session_state.get("videos_selected", True),
+    }
+
+    # Ajouter la date de naissance si elle existe
+    if "date_naissance" in st.session_state:
+        config["date_naissance"] = datetime.combine(
+            st.session_state.date_naissance, datetime.min.time()
+        )
+
+    config_manager.save_config(config)
+
+
 def main():
     # 🦖 Configuration T-Rex Pastel
     st.set_page_config(**PAGE_CONFIG)
@@ -51,30 +83,53 @@ def main():
     if "sidebar_state" not in st.session_state:
         st.session_state.sidebar_state = "expanded"
 
-    # Initialiser la session state
+    # Initialiser le gestionnaire de configuration
+    config_manager = ConfigManager()
+
+    # Charger la configuration sauvegardée au premier chargement
+    if "config_loaded" not in st.session_state:
+        saved_config = config_manager.load_config()
+        if saved_config:
+            st.session_state.dossier_path = saved_config.get("dossier_path", "")
+            st.session_state.sous_dossier_photos = saved_config.get(
+                "sous_dossier_photos", "photos"
+            )
+            st.session_state.language = saved_config.get("language", "fr")
+            if "date_naissance" in saved_config:
+                st.session_state.date_naissance = saved_config["date_naissance"]
+            if "baby_name" in saved_config:
+                st.session_state.baby_name = saved_config.get("baby_name", "")
+            if "photos_selected" in saved_config:
+                st.session_state.photos_selected = saved_config.get(
+                    "photos_selected", True
+                )
+            if "videos_selected" in saved_config:
+                st.session_state.videos_selected = saved_config.get(
+                    "videos_selected", True
+                )
+        st.session_state.config_loaded = True
+
+    # Initialiser la session state avec les valeurs par défaut si nécessaire
     if "dossier_path" not in st.session_state:
         st.session_state.dossier_path = ""
+    if "sous_dossier_photos" not in st.session_state:
+        st.session_state.sous_dossier_photos = "photos"
     if "language" not in st.session_state:
         st.session_state.language = "fr"
     if "page_loaded" not in st.session_state:
         st.session_state.page_loaded = False
+    if "baby_name" not in st.session_state:
+        st.session_state.baby_name = ""
+    if "photos_selected" not in st.session_state:
+        st.session_state.photos_selected = True
+    if "videos_selected" not in st.session_state:
+        st.session_state.videos_selected = True
 
     # Traducteur temporaire pour le header et footer
     temp_lang = st.session_state.get("language", "fr")
     temp_tr = Translator(temp_lang)
 
-    # 🦖 Header principal avec style T-Rex - seulement à l'accueil
-    if not st.session_state.page_loaded:
-        st.markdown(
-            f"""
-            <div class="main-header">
-                <h1>{temp_tr.t("app_title")}</h1>
-                <p><strong>{temp_tr.t("tagline")}</strong></p>
-                <p>{temp_tr.t("subtitle")}</p>
-            </div>
-        """,
-            unsafe_allow_html=True,
-        )
+    # Le header principal sera maintenant dans l'onglet Accueil
 
     with st.sidebar:
         # Titre compact dans la sidebar
@@ -88,13 +143,16 @@ def main():
         tr = Translator(st.session_state.language)
 
         st.subheader(tr.t("main_folder"))
-        col1, col2 = st.columns([1, 5], gap="small")
+        col1, col2 = st.columns([1, 8])
         with col1:
-            if st.button("📁", help=tr.t("browse"), key="browse_root"):
+            if st.button(
+                "📁", help=tr.t("browse"), key="browse_root", use_container_width=True
+            ):
                 st.session_state.page_loaded = True
                 dossier_selectionne = selectionner_dossier()
                 if dossier_selectionne:
                     st.session_state.dossier_path = dossier_selectionne
+                    save_configuration(config_manager)
                     st.rerun()
 
         with col2:
@@ -104,15 +162,22 @@ def main():
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
                 help=tr.t("main_folder_help"),
+                key="dossier_racine_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
                 st.session_state.dossier_path = dossier_racine
+                save_configuration(config_manager)
 
         st.subheader(tr.t("source_folder"))
-        col3, col4 = st.columns([1, 5], gap="small")
+        col3, col4 = st.columns([1, 8])
         with col3:
-            if st.button("📁", help=tr.t("browse_subfolder"), key="browse_sub"):
+            if st.button(
+                "📁",
+                help=tr.t("browse_subfolder"),
+                key="browse_sub",
+                use_container_width=True,
+            ):
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
@@ -122,6 +187,7 @@ def main():
                                 Path(dossier_racine)
                             )
                             st.session_state.sous_dossier_photos = str(chemin_relatif)
+                            save_configuration(config_manager)
                             st.rerun()
                         except ValueError:
                             st.error(tr.t("folder_must_be_in_root"))
@@ -138,22 +204,56 @@ def main():
                 value=st.session_state.sous_dossier_photos,
                 help=tr.t("source_folder_help"),
                 label_visibility="collapsed",
+                key="sous_dossier_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if sous_dossier_photos != st.session_state.sous_dossier_photos:
                 st.session_state.sous_dossier_photos = sous_dossier_photos
+                save_configuration(config_manager)
+
+        # Champ prénom du bébé
+        baby_name = st.text_input(
+            tr.t("baby_name"),
+            placeholder=tr.t("baby_name_placeholder"),
+            help="Optionnel : permet de personnaliser l'affichage",
+            value=st.session_state.baby_name,
+            key="baby_name_input",
+        )
+        if baby_name != st.session_state.baby_name:
+            st.session_state.baby_name = baby_name
+            save_configuration(config_manager)
 
         date_naissance = st.date_input(
             tr.t("birth_date"),
             min_value=datetime(2000, 1, 1).date(),
             max_value=datetime.now().date(),
+            value=st.session_state.get("date_naissance", datetime.now().date()),
+            key="date_naissance_input",
         )
+        if date_naissance != st.session_state.get("date_naissance"):
+            st.session_state.date_naissance = date_naissance
+            save_configuration(config_manager)
 
         st.subheader(tr.t("file_types"))
 
         # Checkboxes pour photos et vidéos
-        photos_selected = st.checkbox(tr.t("photos"), value=True)
-        videos_selected = st.checkbox(tr.t("videos"), value=True)
+        photos_selected = st.checkbox(
+            tr.t("photos"),
+            value=st.session_state.photos_selected,
+            key="photos_checkbox",
+        )
+        if photos_selected != st.session_state.photos_selected:
+            st.session_state.photos_selected = photos_selected
+            save_configuration(config_manager)
+
+        videos_selected = st.checkbox(
+            tr.t("videos"),
+            value=st.session_state.videos_selected,
+            key="videos_checkbox",
+        )
+        if videos_selected != st.session_state.videos_selected:
+            st.session_state.videos_selected = videos_selected
+            save_configuration(config_manager)
 
         # Déterminer le type de fichiers basé sur les checkboxes
         if photos_selected and videos_selected:
@@ -191,8 +291,39 @@ def main():
                     for erreur in erreurs:
                         st.error(erreur)
 
-        # Séparateur avant les boutons de langue
-        st.markdown("---")
+        # Bouton pour charger la configuration de test
+        if st.button(
+            "🦖 " + tr.t("load_test_config"),
+            help=tr.t("load_test_config_help"),
+            type="secondary",
+            use_container_width=True,
+        ):
+            test_config_path = (
+                Path(__file__).parent / "data" / "user-config" / "test_config.json"
+            )
+            if test_config_path.exists():
+                test_config_manager = ConfigManager("test_config.json")
+                test_config = test_config_manager.load_config()
+                if test_config:
+                    # Mettre à jour la session state avec la config de test
+                    st.session_state.dossier_path = test_config.get("dossier_path", "")
+                    st.session_state.sous_dossier_photos = test_config.get(
+                        "sous_dossier_photos", "docs/images"
+                    )
+                    st.session_state.language = test_config.get("language", "fr")
+                    st.session_state.baby_name = test_config.get("baby_name", "TestRex")
+                    st.session_state.photos_selected = test_config.get(
+                        "photos_selected", True
+                    )
+                    st.session_state.videos_selected = test_config.get(
+                        "videos_selected", True
+                    )
+                    if "date_naissance" in test_config:
+                        st.session_state.date_naissance = test_config["date_naissance"]
+                    st.success(tr.t("test_config_loaded"))
+                    st.rerun()
+            else:
+                st.error(tr.t("test_config_not_found"))
 
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
@@ -208,6 +339,7 @@ def main():
             ):
                 if current_lang != "fr":
                     st.session_state.language = "fr"
+                    save_configuration(config_manager)
                     st.rerun()
 
         with col2:
@@ -220,95 +352,114 @@ def main():
             ):
                 if current_lang != "en":
                     st.session_state.language = "en"
+                    save_configuration(config_manager)
                     st.rerun()
 
-    # Afficher les onglets si la page a été chargée au moins une fois
-    if st.session_state.page_loaded or (
-        dossier_racine and Path(dossier_racine).exists()
-    ):
-        # Créer les onglets avec Accueil en premier
-        tab_list = [tr.t("tab_home")]
-        if dossier_racine and Path(dossier_racine).exists():
-            dossier_photos_complet = Path(dossier_racine) / sous_dossier_photos
-            if dossier_photos_complet.exists() and type_fichiers is not None:
-                tab_list.extend(
-                    [
-                        tr.t("tab_simulation"),
-                        tr.t("tab_organization"),
-                        tr.t("tab_analytics"),
-                        tr.t("tab_insights"),
-                    ]
+    # Toujours afficher tous les onglets
+    tab_list = [
+        tr.t("tab_home"),
+        tr.t("tab_simulation"),
+        tr.t("tab_organization"),
+        tr.t("tab_analytics"),
+        tr.t("tab_insights"),
+        tr.t("tab_gallery"),
+    ]
+
+    tabs = st.tabs(tab_list)
+
+    # Onglet Accueil
+    with tabs[0]:
+        # 🦖 Header principal avec style T-Rex
+        st.markdown(
+            f"""
+            <div class="main-header">
+                <h1>{temp_tr.t("app_title")}</h1>
+                <p><strong>{temp_tr.t("tagline")}</strong></p>
+                <p>{temp_tr.t("subtitle")}</p>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+        # Zone d'explication de l'application
+        st.markdown(
+            f"""
+            <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
+                <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
+                <ul style="color: #7F8C8D; margin-left: 1.5rem;">
+                    <li>{temp_tr.t("welcome_feature_1")}</li>
+                    <li>{temp_tr.t("welcome_feature_2")}</li>
+                    <li>{temp_tr.t("welcome_feature_3")}</li>
+                    <li>{temp_tr.t("welcome_feature_4")}</li>
+                    <li>{temp_tr.t("welcome_feature_5")}</li>
+                </ul>
+            </div>
+
+            <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
+                <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">{temp_tr.t("welcome_steps_title")}</h4>
+                <div style="color: #7F8C8D; line-height: 1.8;">
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_1")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_2")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_3")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_4")}</p>
+                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_5")}</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if not dossier_racine:
+            st.info(tr.t("configure_root"))
+        elif not Path(dossier_racine).exists():
+            st.error(tr.t("root_not_exist"))
+        elif not (Path(dossier_racine) / sous_dossier_photos).exists():
+            st.error(
+                tr.t(
+                    "folder_not_exist",
+                    folder=sous_dossier_photos,
+                    root=dossier_racine,
                 )
+            )
+        elif type_fichiers is None:
+            st.error(tr.t("select_file_type"))
 
-        tabs = st.tabs(tab_list)
+        # Vérifier si la configuration est complète
+        config_complete = (
+            dossier_racine
+            and Path(dossier_racine).exists()
+            and (Path(dossier_racine) / sous_dossier_photos).exists()
+            and type_fichiers is not None
+        )
 
-        # Onglet Accueil
-        with tabs[0]:
-            # Zone d'explication de l'application
+        if config_complete:
+            organiseur = OrganisateurPhotos(
+                Path(dossier_racine),
+                sous_dossier_photos,
+                datetime.combine(date_naissance, datetime.min.time()),
+                type_fichiers,
+            )
+
+        with tabs[1]:
             st.markdown(
-                f"""
-                <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                    <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
-                    <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
-                    <ul style="color: #7F8C8D; margin-left: 1.5rem;">
-                        <li>{temp_tr.t("welcome_feature_1")}</li>
-                        <li>{temp_tr.t("welcome_feature_2")}</li>
-                        <li>{temp_tr.t("welcome_feature_3")}</li>
-                        <li>{temp_tr.t("welcome_feature_4")}</li>
-                        <li>{temp_tr.t("welcome_feature_5")}</li>
-                    </ul>
-                </div>
-
-                <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
-                    <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">{temp_tr.t("welcome_steps_title")}</h4>
-                    <div style="color: #7F8C8D; line-height: 1.8;">
-                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_1")}</p>
-                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_2")}</p>
-                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_3")}</p>
-                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_4")}</p>
-                        <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_5")}</p>
-                    </div>
-                </div>
-                """,
+                f'<div class="trex-message">{tr.t("simulation_title")}</div>',
                 unsafe_allow_html=True,
             )
 
-            if not dossier_racine:
-                st.info(tr.t("configure_root"))
-            elif not Path(dossier_racine).exists():
-                st.error(tr.t("root_not_exist"))
-            elif not dossier_photos_complet.exists():
-                st.error(
-                    tr.t(
-                        "folder_not_exist",
-                        folder=sous_dossier_photos,
-                        root=dossier_racine,
-                    )
-                )
-            elif type_fichiers is None:
-                st.error(tr.t("select_file_type"))
-
-        # Autres onglets si disponibles
-        if len(tab_list) > 1:
-            if type_fichiers is not None:
-                organiseur = OrganisateurPhotos(
-                    Path(dossier_racine),
-                    sous_dossier_photos,
-                    datetime.combine(date_naissance, datetime.min.time()),
-                    type_fichiers,
-                )
-
-            with tabs[1]:
-                st.markdown(
-                    f'<div class="trex-message">{tr.t("simulation_title")}</div>',
-                    unsafe_allow_html=True,
-                )
-
+            if not config_complete:
+                st.info(tr.t("configure_settings_first"))
+            else:
                 if st.button(tr.t("analyze_button")):
                     # Marquer la page comme chargée après la première interaction
                     st.session_state.page_loaded = True
                     with st.spinner(tr.t("analyzing")):
                         repartition, erreurs = organiseur.simuler_organisation()
+                        taille_dossier_gb = (
+                            organiseur.calculer_taille_fichiers_organises(repartition)
+                            if repartition
+                            else 0
+                        )
 
                     if repartition:
                         total_photos = sum(len(f) for f in repartition.values())
@@ -336,14 +487,23 @@ def main():
                                 for fichiers in repartition.values()
                             )
                             message = tr.t(
-                                "success_simulation_mixed",
+                                "success_simulation_mixed_with_size",
                                 photos=total_photos_count,
                                 videos=total_videos_count,
+                                size=taille_dossier_gb,
                             )
                         elif "Photos" in type_fichiers:
-                            message = tr.t("success_simulation", photos=total_photos)
+                            message = tr.t(
+                                "success_simulation_with_size",
+                                photos=total_photos,
+                                size=taille_dossier_gb,
+                            )
                         else:
-                            message = tr.t("success_simulation", photos=total_photos)
+                            message = tr.t(
+                                "success_simulation_with_size",
+                                photos=total_photos,
+                                size=taille_dossier_gb,
+                            )
 
                         st.markdown(
                             f'<div class="trex-success">{message}</div>',
@@ -451,11 +611,15 @@ def main():
                         for erreur in erreurs:
                             st.warning(erreur)
 
-            with tabs[2]:
-                st.markdown(
-                    f'<div class="trex-message">{tr.t("organization_title")}</div>',
-                    unsafe_allow_html=True,
-                )
+        with tabs[2]:
+            st.markdown(
+                f'<div class="trex-message">{tr.t("organization_title")}</div>',
+                unsafe_allow_html=True,
+            )
+
+            if not config_complete:
+                st.info(tr.t("configure_settings_first"))
+            else:
                 st.markdown(
                     f'<div class="trex-warning">{tr.t("organization_warning")}</div>',
                     unsafe_allow_html=True,
@@ -501,12 +665,15 @@ def main():
                             for erreur in erreurs:
                                 st.error(erreur)
 
-            with tabs[3]:
-                st.markdown(
-                    f'<div class="trex-message">{tr.t("analytics_title")}</div>',
-                    unsafe_allow_html=True,
-                )
+        with tabs[3]:
+            st.markdown(
+                f'<div class="trex-message">{tr.t("analytics_title")}</div>',
+                unsafe_allow_html=True,
+            )
 
+            if not config_complete:
+                st.info(tr.t("configure_settings_first"))
+            else:
                 # Extraire les données des photos
                 with st.spinner(tr.t("calculating_stats")):
                     df_photos = extract_photo_data(organiseur)
@@ -653,12 +820,15 @@ def main():
                                         )
                                     )
 
-            with tabs[4]:
-                st.markdown(
-                    f'<div class="trex-message">{tr.t("insights_title")}</div>',
-                    unsafe_allow_html=True,
-                )
+        with tabs[4]:
+            st.markdown(
+                f'<div class="trex-message">{tr.t("insights_title")}</div>',
+                unsafe_allow_html=True,
+            )
 
+            if not config_complete:
+                st.info(tr.t("configure_settings_first"))
+            else:
                 # Réutiliser les données déjà extraites si possible
                 if "df_photos" not in locals():
                     with st.spinner(tr.t("searching_data")):
@@ -754,36 +924,171 @@ def main():
                             st.write(tr.t("small_moments_matter"))
                     else:
                         st.info(tr.t("analyze_first"))
-    else:
-        # Page d'accueil initiale (sans onglets)
-        # Zone d'explication de l'application
-        st.markdown(
-            f"""
-            <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
-                <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
-                <ul style="color: #7F8C8D; margin-left: 1.5rem;">
-                    <li>{temp_tr.t("welcome_feature_1")}</li>
-                    <li>{temp_tr.t("welcome_feature_2")}</li>
-                    <li>{temp_tr.t("welcome_feature_3")}</li>
-                    <li>{temp_tr.t("welcome_feature_4")}</li>
-                    <li>{temp_tr.t("welcome_feature_5")}</li>
-                </ul>
-            </div>
 
-            <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
-                <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">🚀 Étapes pour commencer :</h4>
-                <div style="color: #7F8C8D; line-height: 1.8;">
-                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_1")}</p>
-                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_2")}</p>
-                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_3")}</p>
-                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_4")}</p>
-                    <p style="margin: 0.3rem 0;">{temp_tr.t("welcome_step_5")}</p>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        with tabs[5]:
+            st.markdown(
+                f'<div class="trex-message">{tr.t("gallery_title")}</div>',
+                unsafe_allow_html=True,
+            )
+
+            if not config_complete:
+                st.info(tr.t("configure_settings_first"))
+            else:
+                # Obtenir les données de la galerie
+                with st.spinner(tr.t("searching_data")):
+                    gallery_data = get_gallery_data(organiseur)
+
+                if not gallery_data:
+                    st.info(tr.t("no_photos_month"))
+                else:
+                    # Contrôles de l'interface
+                    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+
+                    with col1:
+                        # Fonction pour extraire le nombre du début du nom de dossier
+                        def extract_month_number(folder_name):
+                            try:
+                                return int(folder_name.split("-")[0])
+                            except:
+                                return 999  # Pour "Photos non triées" et autres
+
+                        # Trier les mois disponibles
+                        months_available = ["Tous les mois"] + sorted(
+                            gallery_data.keys(), key=extract_month_number
+                        )
+
+                        selected_month = st.selectbox(
+                            tr.t("select_month"), months_available, index=0
+                        )
+
+                    with col2:
+                        # Sélecteur de mode d'affichage
+                        view_modes = [
+                            tr.t("mode_random"),
+                            tr.t("mode_chronological"),
+                            tr.t("mode_highlights"),
+                            tr.t("mode_timeline"),
+                        ]
+
+                        view_mode = st.selectbox(
+                            tr.t("view_mode"),
+                            view_modes,
+                            index=0,
+                            help=tr.t("view_mode_help"),
+                        )
+
+                    with col3:
+                        # Calculer l'âge actuel du bébé pour définir le max
+                        age_actuel_mois = organiseur.calculer_age_mois(datetime.now())
+                        max_photos = max(
+                            6, age_actuel_mois
+                        )  # Minimum 6 pour les très jeunes bébés
+
+                        num_photos = st.slider(
+                            tr.t("photos_to_show"),
+                            min_value=1,
+                            max_value=max_photos,
+                            value=min(6, max_photos),
+                            step=1,
+                        )
+
+                    with col4:
+                        if st.button(tr.t("refresh_gallery"), type="secondary"):
+                            st.rerun()
+
+                    # Afficher le nombre de photos trouvées
+                    if view_mode == tr.t("mode_timeline"):
+                        # Pour le mode timeline, afficher le nombre de mois disponibles
+                        monthly_folders = {
+                            k: v
+                            for k, v in gallery_data.items()
+                            if k != "Photos non triées" and "-" in k
+                        }
+                        if baby_name.strip():
+                            message = tr.t(
+                                "months_growth_available",
+                                count=len(monthly_folders),
+                                name=baby_name.strip(),
+                            )
+                            st.info(f"📈 {message}")
+                        else:
+                            message = tr.t(
+                                "months_growth_available_no_name",
+                                count=len(monthly_folders),
+                            )
+                            st.info(f"📈 {message}")
+                    elif selected_month == "Tous les mois":
+                        total_photos = sum(
+                            len(photos) for photos in gallery_data.values()
+                        )
+                        if baby_name.strip():
+                            message = tr.t(
+                                "photos_found_with_name",
+                                count=total_photos,
+                                name=baby_name.strip(),
+                            )
+                            st.info(message)
+                        else:
+                            st.info(tr.t("photos_found", count=total_photos))
+                    else:
+                        month_photos = len(gallery_data.get(selected_month, []))
+                        if baby_name.strip():
+                            message = tr.t(
+                                "photos_found_with_name",
+                                count=month_photos,
+                                name=baby_name.strip(),
+                            )
+                            st.info(message)
+                        else:
+                            st.info(tr.t("photos_found", count=month_photos))
+
+                    # Obtenir et afficher les photos selon le mode sélectionné
+                    selected_photos = get_photos_by_mode(
+                        gallery_data, organiseur, view_mode, selected_month, num_photos
+                    )
+
+                    if selected_photos:
+                        # Afficher les photos in une grille
+                        cols_per_row = 3
+                        rows = [
+                            selected_photos[i : i + cols_per_row]
+                            for i in range(0, len(selected_photos), cols_per_row)
+                        ]
+
+                        for row in rows:
+                            cols = st.columns(cols_per_row)
+                            for idx, photo_path in enumerate(row):
+                                with cols[idx]:
+                                    try:
+                                        # Afficher l'image sans caption par défaut
+                                        st.image(
+                                            str(photo_path),
+                                            use_container_width=True,
+                                        )
+                                        # Afficher la légende personnalisée avec badge d'âge
+                                        caption_html = get_photo_caption_with_age(
+                                            photo_path, organiseur, tr
+                                        )
+                                        st.markdown(
+                                            caption_html, unsafe_allow_html=True
+                                        )
+                                    except Exception as e:
+                                        st.error(
+                                            f"Erreur lors du chargement de {photo_path.name}: {str(e)}"
+                                        )
+
+                            # Remplir les colonnes vides s'il y en a moins que cols_per_row
+                            for idx in range(len(row), cols_per_row):
+                                with cols[idx]:
+                                    st.empty()
+
+                            # Ajouter un espace entre les rangées
+                            st.markdown(
+                                "<div style='margin-bottom: 1rem;'></div>",
+                                unsafe_allow_html=True,
+                            )
+                    else:
+                        st.warning(tr.t("no_photos_month"))
 
     # 🦖 Footer T-Rex avec personnalité
     st.markdown(
