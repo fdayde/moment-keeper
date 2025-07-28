@@ -23,6 +23,10 @@ Transform thousands of media files from chaos to chronological perfection in min
 
 </div>
 
+## 🎮 Demo
+
+Want to try MomentKeeper without your own photos? Check out our [demo setup guide](data/test/README.md) for a ready-to-use test environment with sample photos.
+
 ## ✨ Features
 
 - **Smart Organization**: Automatically sorts photos and videos into monthly folders (0-1months, 1-2months, etc.)
@@ -105,55 +109,6 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## 🖥️ Usage
-
-### Streamlit Web Interface
-1. **Configure paths**: Select root directory and photos subfolder using browse buttons
-2. **Set birth date**: Choose baby's birth date with date picker
-3. **Add baby's name** (optional): Personalize messages and insights
-4. **Select file types**: Choose to organize photos, videos, or both
-5. **Simulate**: Preview organization with "Analyser les photos"
-6. **Organize**: Confirm and run actual organization
-7. **Explore Analytics**: View statistics and insights about your photo collection
-8. **Browse Gallery**: View organized photos with different display modes
-9. **Reset**: Undo organization if needed
-
-All settings are automatically saved and restored on next launch.
-
-
-## 🔧 Configuration
-
-- **Root Directory**: Main project folder containing photos subfolder
-- **Photos Subfolder**: Subdirectory with photos to organize (default: "photos")
-- **Birth Date**: Baby's birth date for precise age calculations
-- **Baby's Name** (optional): Personalize the experience with your baby's name
-- **File Pattern**: Supports `YYYYMMDD_description.ext` format for all media types
-- **File Types**: Choose between photos only, videos only, or both
-- **Language**: French or English interface (preference saved)
-- **Configuration File**: Settings saved in `~/.momentkeeper/momentkeeper_config.json`
-
-## 🎨 User Interface
-
-**Streamlit Web App Features:**
-- Native folder browsing with tkinter dialogs
-- Dual path configuration (root + subfolder)
-- Date picker with validation
-- Baby name personalization
-- Real-time simulation preview
-- Progress tracking and detailed error reporting
-- Debug information for ignored files
-- One-click reset functionality
-- Analytics dashboard with charts and insights
-- Interactive photo gallery with 4 viewing modes:
-  - Random: Discover forgotten memories
-  - Chronological: View photos in date order
-  - Highlights: See the most photo-heavy days
-  - Timeline: One photo per month showing growth
-- Age badges on gallery photos showing baby's age when taken
-- Adaptive photo count slider based on baby's current age
-- Language selector (FR/EN) with persistent preference
-- T-Rex themed UI with pastel colors
-- All tabs always accessible for better navigation
 
 ## 🛡️ Safety Features
 
@@ -163,13 +118,6 @@ All settings are automatically saved and restored on next launch.
 - **Error Recovery**: Graceful handling of edge cases and file conflicts
 - **Rollback Capability**: Complete reset to original state
 
-## 📋 Development Status
-
-- ✅ Core organization logic with accurate age calculation
-- ✅ Cross-platform path handling
-- ✅ Complete Streamlit interface
-- ✅ Jupyter notebook integration
-- ✅ Advanced error handling and debugging
 
 ## 💡 Use Cases
 
@@ -200,7 +148,7 @@ All settings are automatically saved and restored on next launch.
 ### Known Limitations
 - Filename pattern must include `YYYYMMDD_description` format
 - Date extraction from filenames only (EXIF support planned for v2.0)
-- Requires Python 3.8+ and dependencies listed in requirements.txt
+- Requires Python 3.9+ and dependencies listed in requirements.txt
 
 > 💡 **Benchmark results** based on real testing with the included benchmark scripts in `/scripts/`
 
