@@ -174,6 +174,10 @@ TRANSLATIONS = {
         "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
         "configure_settings_first": "ℹ️ Configurez d'abord les paramètres dans la barre latérale pour utiliser cette fonctionnalité",
         "files_reset": "✅ {count} fichiers remis dans le dossier photos",
+        "load_test_config": "Charger la démo",
+        "load_test_config_help": "Charge une configuration de test avec des photos d'exemple",
+        "test_config_loaded": "✅ Configuration de test chargée avec succès !",
+        "test_config_not_found": "❌ Configuration de test introuvable",
     },
     "en": {
         # App principale
@@ -348,6 +352,10 @@ TRANSLATIONS = {
         "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
         "configure_settings_first": "ℹ️ First configure the settings in the sidebar to use this feature",
         "files_reset": "✅ {count} files put back in the photos folder",
+        "load_test_config": "Load demo",
+        "load_test_config_help": "Load a test configuration with sample photos",
+        "test_config_loaded": "✅ Test configuration loaded successfully!",
+        "test_config_not_found": "❌ Test configuration not found",
     },
 }
 

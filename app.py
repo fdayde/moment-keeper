@@ -287,6 +287,40 @@ def main():
         # Séparateur avant les boutons de langue
         st.markdown("---")
 
+        # Bouton pour charger la configuration de test
+        if st.button(
+            "🦖 " + tr.t("load_test_config"),
+            help=tr.t("load_test_config_help"),
+            type="secondary",
+            use_container_width=True,
+        ):
+            test_config_path = (
+                Path(__file__).parent / "data" / "user-config" / "test_config.json"
+            )
+            if test_config_path.exists():
+                test_config_manager = ConfigManager("test_config.json")
+                test_config = test_config_manager.load_config()
+                if test_config:
+                    # Mettre à jour la session state avec la config de test
+                    st.session_state.dossier_path = test_config.get("dossier_path", "")
+                    st.session_state.sous_dossier_photos = test_config.get(
+                        "sous_dossier_photos", "docs/images"
+                    )
+                    st.session_state.language = test_config.get("language", "fr")
+                    st.session_state.baby_name = test_config.get("baby_name", "TestRex")
+                    st.session_state.photos_selected = test_config.get(
+                        "photos_selected", True
+                    )
+                    st.session_state.videos_selected = test_config.get(
+                        "videos_selected", True
+                    )
+                    if "date_naissance" in test_config:
+                        st.session_state.date_naissance = test_config["date_naissance"]
+                    st.success(tr.t("test_config_loaded"))
+                    st.rerun()
+            else:
+                st.error(tr.t("test_config_not_found"))
+
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
 

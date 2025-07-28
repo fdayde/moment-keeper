@@ -98,6 +98,9 @@ photos/
 test_photos/
 output/
 
+# User configuration
+data/user-config/
+
 # Test data - keep structure but ignore actual media files
 test-data/photos/*.jpg
 test-data/photos/*.jpeg

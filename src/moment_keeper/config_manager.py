@@ -15,8 +15,10 @@ class ConfigManager:
         Args:
             config_file: Nom du fichier de configuration
         """
-        self.config_file = Path.home() / ".momentkeeper" / config_file
-        self.config_file.parent.mkdir(exist_ok=True)
+        # Utiliser le dossier du projet au lieu du dossier utilisateur
+        project_root = Path(__file__).parent.parent.parent
+        self.config_file = project_root / "data" / "user-config" / config_file
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
 
     def save_config(self, config: dict[str, Any]) -> bool:
         """Sauvegarde la configuration dans un fichier JSON.
