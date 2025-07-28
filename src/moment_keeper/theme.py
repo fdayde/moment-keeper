@@ -368,5 +368,29 @@ def get_css_styles() -> str:
     font-size: 0.8rem;
     color: {COLORS['text_dark']};
 }}
+
+/* Images de la galerie en format carré */
+.gallery-image {{
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}}
+
+.gallery-image:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    cursor: pointer;
+}}
+
+/* Container pour l'image de la galerie */
+.gallery-image-container {{
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 10px;
+}}
 </style>
 """
