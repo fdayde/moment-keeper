@@ -51,29 +51,37 @@ def main():
     # 🎨 Appliquer le CSS custom
     st.markdown(get_css_styles(), unsafe_allow_html=True)
 
-    # 🦖 Header principal avec style T-Rex
-    # Traducteur temporaire pour le header (avant la sidebar)
-    temp_lang = st.session_state.get("language", "fr") 
-    temp_tr = Translator(temp_lang)
-    
-    st.markdown(
-        f"""
-        <div class="main-header">
-            <h1>{temp_tr.t("app_title")}</h1>
-            <p><strong>{temp_tr.t("tagline")}</strong></p>
-            <p>{temp_tr.t("subtitle")}</p>
-        </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
     # Initialiser la session state
     if "dossier_path" not in st.session_state:
         st.session_state.dossier_path = ""
     if "language" not in st.session_state:
         st.session_state.language = "fr"
+    if "page_loaded" not in st.session_state:
+        st.session_state.page_loaded = False
+
+    # Traducteur temporaire pour le header et footer
+    temp_lang = st.session_state.get("language", "fr") 
+    temp_tr = Translator(temp_lang)
+    
+    # 🦖 Header principal avec style T-Rex - seulement à l'accueil
+    if not st.session_state.page_loaded:
+        st.markdown(
+            f"""
+            <div class="main-header">
+                <h1>{temp_tr.t("app_title")}</h1>
+                <p><strong>{temp_tr.t("tagline")}</strong></p>
+                <p>{temp_tr.t("subtitle")}</p>
+            </div>
+        """,
+            unsafe_allow_html=True,
+        )
 
     with st.sidebar:
+        # Titre compact dans la sidebar si la page a été naviguée
+        if st.session_state.page_loaded:
+            st.markdown("<h3 style='text-align: center;'>🦖 MomentKeeper</h3>", unsafe_allow_html=True)
+            st.markdown("---")
+        
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
         
@@ -105,6 +113,7 @@ def main():
         col1, col2 = st.columns([1, 5], gap="small")
         with col1:
             if st.button("📁", help=tr.t("browse"), key="browse_root"):
+                st.session_state.page_loaded = True
                 dossier_selectionne = selectionner_dossier()
                 if dossier_selectionne:
                     st.session_state.dossier_path = dossier_selectionne
@@ -229,6 +238,8 @@ def main():
                 )
 
                 if st.button(tr.t("analyze_button")):
+                    # Marquer la page comme chargée après la première interaction
+                    st.session_state.page_loaded = True
                     with st.spinner(tr.t("analyzing")):
                         repartition, erreurs = organiseur.simuler_organisation()
 
@@ -327,6 +338,7 @@ def main():
 
                 with col2:
                     if st.button(tr.t("organize_button"), disabled=not confirmer):
+                        st.session_state.page_loaded = True
                         with st.spinner(tr.t("organizing")):
                             nb_fichiers, erreurs = organiseur.organiser()
 
