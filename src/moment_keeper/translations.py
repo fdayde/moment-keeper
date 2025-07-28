@@ -69,6 +69,7 @@ TRANSLATIONS = {
         "photos_found": "{count} photos trouvées",
         "month_pattern": "{start}-{end} mois",
         "view_mode": "👁️ Mode d'affichage",
+        "view_mode_help": "🎲 Aléatoire: Sélection aléatoire de photos\n⏰ Chronologique: Du plus récent au plus ancien\n📸 Moments forts: Photos des jours les plus actifs\n📈 Timeline croissance: Une photo par mois pour voir l'évolution",
         "mode_random": "🎲 Aléatoire",
         "mode_chronological": "⏰ Chronologique",
         "mode_highlights": "📸 Moments forts",
@@ -193,6 +194,7 @@ TRANSLATIONS = {
         "tab_organization": "🗂️ Organization",
         "tab_analytics": "📊 Analytics",
         "tab_insights": "🦖 Insights",
+        "tab_gallery": "🖼️ Gallery",
         # Simulation
         "simulation_title": "🦖 <strong>Organization simulation</strong><br>Preview without moving your files!",
         "analyze_button": "🦖 Analyze photos",
@@ -233,6 +235,7 @@ TRANSLATIONS = {
         "photos_found": "{count} photos found",
         "month_pattern": "{start}-{end} months",
         "view_mode": "👁️ View mode",
+        "view_mode_help": "🎲 Random: Random selection of photos\n⏰ Chronological: From newest to oldest\n📸 Highlights: Photos from most active days\n📈 Growth timeline: One photo per month to see evolution",
         "mode_random": "🎲 Random",
         "mode_chronological": "⏰ Chronological",
         "mode_highlights": "📸 Highlights",

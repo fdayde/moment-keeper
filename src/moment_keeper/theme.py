@@ -177,6 +177,8 @@ def get_css_styles() -> str:
     background: rgba(255,255,255,0.1);
     border-radius: 15px;
     padding: 0.5rem;
+    width: 100%;
+    display: flex;
 }}
 
 .stTabs [data-baseweb="tab"] {{
@@ -187,6 +189,11 @@ def get_css_styles() -> str:
     font-weight: 500;
     border: none;
     transition: all 0.3s ease;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
 }}
 
 .stTabs [aria-selected="true"] {{

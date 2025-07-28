@@ -806,7 +806,12 @@ def main():
                             tr.t("mode_timeline"),
                         ]
 
-                        view_mode = st.selectbox(tr.t("view_mode"), view_modes, index=0)
+                        view_mode = st.selectbox(
+                            tr.t("view_mode"),
+                            view_modes,
+                            index=0,
+                            help=tr.t("view_mode_help"),
+                        )
 
                     with col3:
                         num_photos = st.slider(
