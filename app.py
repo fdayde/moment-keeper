@@ -1,11 +1,17 @@
 """Application Streamlit pour MomentKeeper."""
 
+import importlib
+import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog
 
 import streamlit as st
+
+# Force reload des modules en développement
+if "src.moment_keeper.analytics" in sys.modules:
+    importlib.reload(sys.modules["src.moment_keeper.analytics"])
 
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
@@ -14,6 +20,8 @@ from src.moment_keeper.analytics import (
     extract_photo_data,
     find_gaps,
     generate_insights,
+    get_gallery_data,
+    get_random_photos_for_month,
 )
 from src.moment_keeper.config import (
     FILE_TYPES,
@@ -237,6 +245,7 @@ def main():
                         tr.t("tab_organization"),
                         tr.t("tab_analytics"),
                         tr.t("tab_insights"),
+                        tr.t("tab_gallery"),
                     ]
                 )
 
@@ -754,6 +763,97 @@ def main():
                             st.write(tr.t("small_moments_matter"))
                     else:
                         st.info(tr.t("analyze_first"))
+
+            with tabs[5]:
+                st.markdown(
+                    f'<div class="trex-message">{tr.t("gallery_title")}</div>',
+                    unsafe_allow_html=True,
+                )
+
+                # Obtenir les données de la galerie
+                with st.spinner(tr.t("searching_data")):
+                    gallery_data = get_gallery_data(organiseur)
+
+                if not gallery_data:
+                    st.info(tr.t("no_photos_month"))
+                else:
+                    # Contrôles de l'interface
+                    col1, col2, col3 = st.columns([2, 1, 1])
+
+                    with col1:
+                        # Fonction pour extraire le nombre du début du nom de dossier
+                        def extract_month_number(folder_name):
+                            try:
+                                return int(folder_name.split("-")[0])
+                            except:
+                                return 999  # Pour "Photos non triées" et autres
+
+                        # Trier les mois disponibles
+                        months_available = ["Tous les mois"] + sorted(
+                            gallery_data.keys(), key=extract_month_number
+                        )
+
+                        selected_month = st.selectbox(
+                            tr.t("select_month"), months_available, index=0
+                        )
+
+                    with col2:
+                        num_photos = st.slider(
+                            tr.t("photos_to_show"),
+                            min_value=1,
+                            max_value=12,
+                            value=6,
+                            step=1,
+                        )
+
+                    with col3:
+                        if st.button(tr.t("refresh_gallery"), type="secondary"):
+                            st.rerun()
+
+                    # Afficher le nombre de photos trouvées
+                    if selected_month == "Tous les mois":
+                        total_photos = sum(
+                            len(photos) for photos in gallery_data.values()
+                        )
+                        st.info(tr.t("photos_found", count=total_photos))
+                    else:
+                        month_photos = len(gallery_data.get(selected_month, []))
+                        st.info(tr.t("photos_found", count=month_photos))
+
+                    # Obtenir et afficher les photos aléatoires
+                    random_photos = get_random_photos_for_month(
+                        gallery_data, selected_month, num_photos
+                    )
+
+                    if random_photos:
+                        # Afficher les photos in une grille
+                        cols_per_row = 3
+                        rows = [
+                            random_photos[i : i + cols_per_row]
+                            for i in range(0, len(random_photos), cols_per_row)
+                        ]
+
+                        for row in rows:
+                            cols = st.columns(cols_per_row)
+                            for idx, photo_path in enumerate(row):
+                                with cols[idx]:
+                                    try:
+                                        st.image(
+                                            str(photo_path),
+                                            caption=photo_path.name,
+                                            use_container_width=True,
+                                        )
+                                    except Exception as e:
+                                        st.error(
+                                            f"Erreur lors du chargement de {photo_path.name}: {str(e)}"
+                                        )
+
+                            # Remplir les colonnes vides s'il y en a moins que cols_per_row
+                            for idx in range(len(row), cols_per_row):
+                                with cols[idx]:
+                                    st.empty()
+                    else:
+                        st.warning(tr.t("no_photos_month"))
     else:
         # Page d'accueil initiale (sans onglets)
         # Zone d'explication de l'application

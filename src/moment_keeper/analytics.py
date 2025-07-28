@@ -1,7 +1,8 @@
 """Module d'analyse et de statistiques pour MomentKeeper."""
 
+import random
 from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
@@ -48,7 +49,7 @@ def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     return pd.DataFrame(photos_data)
 
 
-def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
+def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> dict:
     """Calcule toutes les métriques pour l'onglet Analytics."""
     if df.empty:
         return {
@@ -107,7 +108,7 @@ def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> Dict:
 
 def find_gaps(
     df: pd.DataFrame, min_gap_days: int = None
-) -> List[Tuple[datetime, datetime, int]]:
+) -> list[tuple[datetime, datetime, int]]:
     """Trouve les gaps temporels dans les photos."""
     if min_gap_days is None:
         min_gap_days = INSIGHTS_THRESHOLDS["min_gap_days"]
@@ -169,7 +170,7 @@ def age_to_month_name(
 
 def detect_special_moments(
     df: pd.DataFrame, jour_record_existant: int, tr: Translator
-) -> List[str]:
+) -> list[str]:
     """Détecte les moments spéciaux basés sur les pics de photos."""
     special_insights = []
 
@@ -237,7 +238,7 @@ def detect_special_moments(
 
 def generate_temporal_comparisons(
     df: pd.DataFrame, date_naissance: datetime, tr: Translator
-) -> List[str]:
+) -> list[str]:
     """Génère des comparaisons temporelles."""
     comparisons = []
 
@@ -335,11 +336,11 @@ def generate_temporal_comparisons(
 
 def generate_insights(
     df: pd.DataFrame,
-    metrics: Dict,
+    metrics: dict,
     date_naissance: datetime,
     type_fichiers: str = None,
     tr: Translator = None,
-) -> List[str]:
+) -> list[str]:
     """Génère les messages d'insights contextuels."""
     insights = []
 
@@ -490,7 +491,7 @@ def generate_insights(
     return insights
 
 
-def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
+def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     """Crée tous les graphiques pour l'onglet Analytics."""
     charts = {}
 
@@ -648,3 +649,54 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> Dict:
     charts["heatmap"] = fig_heatmap
 
     return charts
+
+
+def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
+    """Obtient les photos organisées par mois pour la galerie."""
+    gallery_data = {}
+
+    # Parcourir tous les dossiers du projet
+    for dossier in organiseur.dossier_racine.iterdir():
+        if dossier.is_dir():
+            photos = []
+            for fichier in dossier.iterdir():
+                if (
+                    fichier.is_file()
+                    and fichier.suffix.lower() in organiseur.extensions_actives
+                    and organiseur.get_file_type(fichier)
+                    == "photo"  # Seulement les photos pour la galerie
+                ):
+                    # Vérifier que c'est une photo avec une date valide
+                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+                    if date_photo and date_photo >= organiseur.date_naissance:
+                        photos.append(fichier)
+
+            if photos:
+                # Utiliser le nom du dossier comme clé, ou calculer l'âge pour le dossier source
+                if dossier.name == organiseur.dossier_source.name:
+                    # Photos non organisées dans le dossier source
+                    gallery_data["Photos non triées"] = photos
+                else:
+                    # Photos déjà organisées dans les dossiers mensuels
+                    gallery_data[dossier.name] = photos
+
+    return gallery_data
+
+
+def get_random_photos_for_month(
+    gallery_data: dict[str, list[Path]], selected_month: str, num_photos: int = 6
+) -> list[Path]:
+    """Obtient un échantillon aléatoire de photos pour un mois donné."""
+    if selected_month == "Tous les mois":
+        # Mélanger toutes les photos de tous les mois
+        all_photos = []
+        for photos in gallery_data.values():
+            all_photos.extend(photos)
+        return (
+            random.sample(all_photos, min(num_photos, len(all_photos)))
+            if all_photos
+            else []
+        )
+
+    photos = gallery_data.get(selected_month, [])
+    return random.sample(photos, min(num_photos, len(photos))) if photos else []

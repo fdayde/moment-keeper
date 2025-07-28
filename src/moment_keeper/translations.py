@@ -28,6 +28,7 @@ TRANSLATIONS = {
         "tab_organization": "🗂️ Organisation",
         "tab_analytics": "📊 Analytics",
         "tab_insights": "🦖 Insights",
+        "tab_gallery": "🖼️ Galerie",
         # Simulation
         "simulation_title": "🦖 <strong>Simulation de l'organisation</strong><br>Prévisualisez sans déplacer vos fichiers !",
         "analyze_button": "🦖 Analyser les photos",
@@ -58,6 +59,15 @@ TRANSLATIONS = {
         "longest_gap": "⏱️ Plus long silence",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Découvertes sur vos habitudes photo !",
+        # Galerie
+        "gallery_title": "🖼️ <strong>Galerie</strong><br>Explorez vos souvenirs de 🦖 par mois !",
+        "select_month": "📅 Sélectionner le mois",
+        "all_months": "Tous les mois",
+        "photos_to_show": "📸 Nombre de photos à afficher",
+        "refresh_gallery": "🔄 Nouvelles photos",
+        "no_photos_month": "Aucune photo trouvée pour ce mois",
+        "photos_found": "{count} photos trouvées",
+        "month_pattern": "{start}-{end} mois",
         "searching_data": "🦖 Fouille dans vos données...",
         "discoveries": "### 🎯 Découvertes",
         "analyze_first": "Analysez d'abord vos photos pour voir les insights!",
@@ -208,6 +218,15 @@ TRANSLATIONS = {
         "longest_gap": "⏱️ Longest gap",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Discoveries about your photo habits!",
+        # Galerie
+        "gallery_title": "🖼️ <strong>Gallery</strong><br>Explore your 🦖 memories by month!",
+        "select_month": "📅 Select month",
+        "all_months": "All months",
+        "photos_to_show": "📸 Number of photos to display",
+        "refresh_gallery": "🔄 New photos",
+        "no_photos_month": "No photos found for this month",
+        "photos_found": "{count} photos found",
+        "month_pattern": "{start}-{end} months",
         "searching_data": "🦖 Digging through your data...",
         "discoveries": "### 🎯 Discoveries",
         "analyze_first": "Analyze your photos first to see insights!",
