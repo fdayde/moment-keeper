@@ -1,11 +1,17 @@
 """Application Streamlit pour MomentKeeper."""
 
+import importlib
+import sys
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog
 
 import streamlit as st
+
+# Force reload des modules en développement
+if "src.moment_keeper.analytics" in sys.modules:
+    importlib.reload(sys.modules["src.moment_keeper.analytics"])
 
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
@@ -14,6 +20,9 @@ from src.moment_keeper.analytics import (
     extract_photo_data,
     find_gaps,
     generate_insights,
+    get_gallery_data,
+    get_photo_caption_with_age,
+    get_photos_by_mode,
 )
 from src.moment_keeper.config import (
     FILE_TYPES,
@@ -237,6 +246,7 @@ def main():
                         tr.t("tab_organization"),
                         tr.t("tab_analytics"),
                         tr.t("tab_insights"),
+                        tr.t("tab_gallery"),
                     ]
                 )
 
@@ -754,6 +764,142 @@ def main():
                             st.write(tr.t("small_moments_matter"))
                     else:
                         st.info(tr.t("analyze_first"))
+
+            with tabs[5]:
+                st.markdown(
+                    f'<div class="trex-message">{tr.t("gallery_title")}</div>',
+                    unsafe_allow_html=True,
+                )
+
+                # Obtenir les données de la galerie
+                with st.spinner(tr.t("searching_data")):
+                    gallery_data = get_gallery_data(organiseur)
+
+                if not gallery_data:
+                    st.info(tr.t("no_photos_month"))
+                else:
+                    # Contrôles de l'interface
+                    col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+
+                    with col1:
+                        # Fonction pour extraire le nombre du début du nom de dossier
+                        def extract_month_number(folder_name):
+                            try:
+                                return int(folder_name.split("-")[0])
+                            except:
+                                return 999  # Pour "Photos non triées" et autres
+
+                        # Trier les mois disponibles
+                        months_available = ["Tous les mois"] + sorted(
+                            gallery_data.keys(), key=extract_month_number
+                        )
+
+                        selected_month = st.selectbox(
+                            tr.t("select_month"), months_available, index=0
+                        )
+
+                    with col2:
+                        # Sélecteur de mode d'affichage
+                        view_modes = [
+                            tr.t("mode_random"),
+                            tr.t("mode_chronological"),
+                            tr.t("mode_highlights"),
+                            tr.t("mode_timeline"),
+                        ]
+
+                        view_mode = st.selectbox(
+                            tr.t("view_mode"),
+                            view_modes,
+                            index=0,
+                            help=tr.t("view_mode_help"),
+                        )
+
+                    with col3:
+                        # Calculer l'âge actuel du bébé pour définir le max
+                        age_actuel_mois = organiseur.calculer_age_mois(datetime.now())
+                        max_photos = max(
+                            6, age_actuel_mois
+                        )  # Minimum 6 pour les très jeunes bébés
+
+                        num_photos = st.slider(
+                            tr.t("photos_to_show"),
+                            min_value=1,
+                            max_value=max_photos,
+                            value=min(6, max_photos),
+                            step=1,
+                        )
+
+                    with col4:
+                        if st.button(tr.t("refresh_gallery"), type="secondary"):
+                            st.rerun()
+
+                    # Afficher le nombre de photos trouvées
+                    if view_mode == tr.t("mode_timeline"):
+                        # Pour le mode timeline, afficher le nombre de mois disponibles
+                        monthly_folders = {
+                            k: v
+                            for k, v in gallery_data.items()
+                            if k != "Photos non triées" and "-" in k
+                        }
+                        st.info(
+                            f"📈 {len(monthly_folders)} mois de croissance disponibles"
+                        )
+                    elif selected_month == "Tous les mois":
+                        total_photos = sum(
+                            len(photos) for photos in gallery_data.values()
+                        )
+                        st.info(tr.t("photos_found", count=total_photos))
+                    else:
+                        month_photos = len(gallery_data.get(selected_month, []))
+                        st.info(tr.t("photos_found", count=month_photos))
+
+                    # Obtenir et afficher les photos selon le mode sélectionné
+                    selected_photos = get_photos_by_mode(
+                        gallery_data, organiseur, view_mode, selected_month, num_photos
+                    )
+
+                    if selected_photos:
+                        # Afficher les photos in une grille
+                        cols_per_row = 3
+                        rows = [
+                            selected_photos[i : i + cols_per_row]
+                            for i in range(0, len(selected_photos), cols_per_row)
+                        ]
+
+                        for row in rows:
+                            cols = st.columns(cols_per_row)
+                            for idx, photo_path in enumerate(row):
+                                with cols[idx]:
+                                    try:
+                                        # Afficher l'image sans caption par défaut
+                                        st.image(
+                                            str(photo_path),
+                                            use_container_width=True,
+                                        )
+                                        # Afficher la légende personnalisée avec badge d'âge
+                                        caption_html = get_photo_caption_with_age(
+                                            photo_path, organiseur, tr
+                                        )
+                                        st.markdown(
+                                            caption_html, unsafe_allow_html=True
+                                        )
+                                    except Exception as e:
+                                        st.error(
+                                            f"Erreur lors du chargement de {photo_path.name}: {str(e)}"
+                                        )
+
+                            # Remplir les colonnes vides s'il y en a moins que cols_per_row
+                            for idx in range(len(row), cols_per_row):
+                                with cols[idx]:
+                                    st.empty()
+
+                            # Ajouter un espace entre les rangées
+                            st.markdown(
+                                "<div style='margin-bottom: 1rem;'></div>",
+                                unsafe_allow_html=True,
+                            )
+                    else:
+                        st.warning(tr.t("no_photos_month"))
     else:
         # Page d'accueil initiale (sans onglets)
         # Zone d'explication de l'application
