@@ -815,11 +815,17 @@ def main():
                         )
 
                     with col3:
+                        # Calculer l'âge actuel du bébé pour définir le max
+                        age_actuel_mois = organiseur.calculer_age_mois(datetime.now())
+                        max_photos = max(
+                            6, age_actuel_mois
+                        )  # Minimum 6 pour les très jeunes bébés
+
                         num_photos = st.slider(
                             tr.t("photos_to_show"),
                             min_value=1,
-                            max_value=12,
-                            value=6,
+                            max_value=max_photos,
+                            value=min(6, max_photos),
                             step=1,
                         )
 
