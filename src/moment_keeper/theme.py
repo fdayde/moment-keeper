@@ -172,6 +172,10 @@ def get_css_styles() -> str:
 }}
 
 /* Onglets personnalisés */
+.stTabs {{
+    margin-top: -0.5rem;
+}}
+
 .stTabs [data-baseweb="tab-list"] {{
     gap: 8px;
     background: rgba(255,255,255,0.1);
