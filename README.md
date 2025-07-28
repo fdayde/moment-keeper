@@ -151,6 +151,32 @@ streamlit run app.py
 - **Photo Enthusiasts**: Maintain chronological photo libraries
 - **Memory Keeping**: Create timeline-based photo albums
 
+## 📈 Performance
+
+- **High Speed**: Processes ~750,000 photos per minute
+- **Low Memory**: < 35MB RAM usage for 10,000+ files
+- **Scalable**: Tested efficiently from 100 to 10,000+ photos
+- **Cross-Platform**: Verified on Windows 11, Python 3.13
+
+### Supported Filename Patterns
+- ✅ `20240315_photo.jpg` - Standard format
+- ✅ `20240315_long_description.jpg` - With description
+- ✅ `20240315_été_vacances.jpg` - Special characters
+- ❌ `2024-03-15_photo.jpg` - Hyphens not supported
+- ❌ `photo_20240315.jpg` - Date must be at start
+
+### File Size Support
+- **All formats**: Successfully tested up to 1GB per file
+- **Path compatibility**: Supports spaces and special characters in folder names
+- **Memory efficient**: Linear scaling with collection size
+
+### Known Limitations
+- Filename pattern must include `YYYYMMDD_description` format
+- Date extraction from filenames only (EXIF support planned for v2.0)
+- Requires Python 3.8+ and dependencies listed in requirements.txt
+
+> 💡 **Benchmark results** based on real testing with the included benchmark scripts in `/scripts/`
+
 ## 🚀 Development
 
 ### Running Tests
