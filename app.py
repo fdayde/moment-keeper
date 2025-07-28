@@ -321,6 +321,9 @@ def main():
             else:
                 st.error(tr.t("test_config_not_found"))
 
+        # Séparateur avant les boutons de langue
+        st.markdown("---")
+
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
 
