@@ -256,7 +256,7 @@ def main():
                         <li>{temp_tr.t("welcome_feature_5")}</li>
                     </ul>
                 </div>
-                
+
                 <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
                     <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">{temp_tr.t("welcome_steps_title")}</h4>
                     <div style="color: #7F8C8D; line-height: 1.8;">
@@ -768,7 +768,7 @@ def main():
                     <li>{temp_tr.t("welcome_feature_5")}</li>
                 </ul>
             </div>
-            
+
             <div style="background-color: #e8f4f8; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;">
                 <h4 style="color: #2C3E50; margin-bottom: 0.8rem;">🚀 Étapes pour commencer :</h4>
                 <div style="color: #7F8C8D; line-height: 1.8;">

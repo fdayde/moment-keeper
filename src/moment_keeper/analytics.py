@@ -1,7 +1,7 @@
 """Module d'analyse et de statistiques pour MomentKeeper."""
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 import plotly.express as px
@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
 from .organizer import OrganisateurPhotos
-from .theme import BAR_CHART_GRADIENT, CHART_COLORS, COLORS, HEATMAP_COLORSCALE
+from .theme import BAR_CHART_GRADIENT, COLORS, HEATMAP_COLORSCALE
 from .translations import Translator
 
 

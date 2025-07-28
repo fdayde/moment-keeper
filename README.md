@@ -4,7 +4,7 @@
 
 ## 🎯 Overview
 
-MomentKeeper automatically organizes baby photos and videos into monthly folders based on birth date and timestamps extracted from filenames. 
+MomentKeeper automatically organizes baby photos and videos into monthly folders based on birth date and timestamps extracted from filenames.
 Transform thousands of media files from chaos to chronological perfection in minutes.
 
 ## ✨ Features

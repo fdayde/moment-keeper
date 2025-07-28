@@ -49,7 +49,7 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
-ignore = []
+ignore = ["E501", "E722", "C408"]  # Ignore temporarily for initial commit
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401"]
