@@ -113,6 +113,8 @@ TRANSLATIONS = {
         # Messages dynamiques
         "success_simulation": "🦖 Rawr de satisfaction ! {photos} photos analysées et prêtes à être organisées !",
         "success_simulation_mixed": "🦖 Rawr de satisfaction ! {photos} 📸 photos et {videos} 🎬 vidéos analysées !",
+        "success_simulation_with_size": "🦖 Rawr de satisfaction ! {photos} photos analysées ({size:.1f} GB) !",
+        "success_simulation_mixed_with_size": "🦖 Rawr de satisfaction ! {photos} 📸 photos et {videos} 🎬 vidéos analysées ({size:.1f} GB) !",
         "success_organize": "🦖 Rawr de victoire ! {count} {type} parfaitement organisées !",
         "reset_success": "✅ {count} fichiers remis dans le dossier photos",
         # Unités
@@ -291,6 +293,8 @@ TRANSLATIONS = {
         # Messages dynamiques
         "success_simulation": "🦖 Satisfaction roar! {photos} photos analyzed and ready to be organized!",
         "success_simulation_mixed": "🦖 Satisfaction roar! {photos} 📸 photos and {videos} 🎬 videos analyzed!",
+        "success_simulation_with_size": "🦖 Satisfaction roar! {photos} photos analyzed ({size:.1f} GB)!",
+        "success_simulation_mixed_with_size": "🦖 Satisfaction roar! {photos} 📸 photos and {videos} 🎬 videos analyzed ({size:.1f} GB)!",
         "success_organize": "🦖 Victory roar! {count} {type} perfectly organized!",
         "reset_success": "✅ {count} files put back in the photos folder",
         # Units

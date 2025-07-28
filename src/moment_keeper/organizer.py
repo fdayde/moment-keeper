@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from .photo_copier import PhotoCopier
 
@@ -54,7 +54,7 @@ class OrganisateurPhotos:
         """Retourne le nom du dossier pour un âge donné."""
         return f"{age_mois}-{age_mois + 1}months"
 
-    def _get_extensions_actives(self) -> Set[str]:
+    def _get_extensions_actives(self) -> set[str]:
         """Retourne les extensions actives selon le type de fichiers sélectionné."""
         if self.type_fichiers == "📸 Photos uniquement":
             return EXTENSIONS_PHOTOS
@@ -72,7 +72,7 @@ class OrganisateurPhotos:
             return "video"
         return "unknown"
 
-    def analyser_photos(self) -> Dict[str, List[Path]]:
+    def analyser_photos(self) -> dict[str, list[Path]]:
         """Analyse les photos et retourne la répartition par dossier."""
         repartition = {}
         fichiers_ignores = []
@@ -102,7 +102,7 @@ class OrganisateurPhotos:
 
         return repartition
 
-    def simuler_organisation(self) -> Tuple[Dict[str, List[Path]], List[str]]:
+    def simuler_organisation(self) -> tuple[dict[str, list[Path]], list[str]]:
         """Simule l'organisation sans déplacer les fichiers."""
         repartition = self.analyser_photos()
         erreurs = []
@@ -116,7 +116,7 @@ class OrganisateurPhotos:
 
         return repartition, erreurs
 
-    def organiser(self) -> Tuple[int, List[str]]:
+    def organiser(self) -> tuple[int, list[str]]:
         """Organise réellement les photos."""
         repartition = self.analyser_photos()
         compteur = 0
@@ -135,7 +135,7 @@ class OrganisateurPhotos:
 
         return compteur, erreurs
 
-    def reinitialiser(self) -> Tuple[int, List[str]]:
+    def reinitialiser(self) -> tuple[int, list[str]]:
         """Remet tous les fichiers à la racine."""
         compteur = 0
         erreurs = []
@@ -154,3 +154,12 @@ class OrganisateurPhotos:
                     dossier.rmdir()
 
         return compteur, erreurs
+
+    def calculer_taille_fichiers_organises(self, repartition: dict) -> float:
+        """Calcule la taille totale des fichiers qui seront organisés en GB."""
+        taille_totale = 0
+        for fichiers in repartition.values():
+            for fichier in fichiers:
+                if fichier.exists():
+                    taille_totale += fichier.stat().st_size
+        return taille_totale / (1024 * 1024 * 1024)  # Convertir en GB

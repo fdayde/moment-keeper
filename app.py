@@ -455,6 +455,11 @@ def main():
                     st.session_state.page_loaded = True
                     with st.spinner(tr.t("analyzing")):
                         repartition, erreurs = organiseur.simuler_organisation()
+                        taille_dossier_gb = (
+                            organiseur.calculer_taille_fichiers_organises(repartition)
+                            if repartition
+                            else 0
+                        )
 
                     if repartition:
                         total_photos = sum(len(f) for f in repartition.values())
@@ -482,14 +487,23 @@ def main():
                                 for fichiers in repartition.values()
                             )
                             message = tr.t(
-                                "success_simulation_mixed",
+                                "success_simulation_mixed_with_size",
                                 photos=total_photos_count,
                                 videos=total_videos_count,
+                                size=taille_dossier_gb,
                             )
                         elif "Photos" in type_fichiers:
-                            message = tr.t("success_simulation", photos=total_photos)
+                            message = tr.t(
+                                "success_simulation_with_size",
+                                photos=total_photos,
+                                size=taille_dossier_gb,
+                            )
                         else:
-                            message = tr.t("success_simulation", photos=total_photos)
+                            message = tr.t(
+                                "success_simulation_with_size",
+                                photos=total_photos,
+                                size=taille_dossier_gb,
+                            )
 
                         st.markdown(
                             f'<div class="trex-success">{message}</div>',

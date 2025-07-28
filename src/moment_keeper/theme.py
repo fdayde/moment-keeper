@@ -154,6 +154,7 @@ def get_css_styles() -> str:
 .trex-success {{
     background: linear-gradient(135deg, {COLORS['success']} 0%, {COLORS['primary']} 100%);
     border-left-color: #4CAF50;
+    color: {COLORS['text_dark']} !important;
 }}
 
 .trex-warning {{
