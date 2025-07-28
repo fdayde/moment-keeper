@@ -78,6 +78,16 @@ TRANSLATIONS = {
         "folder_must_be_in_root": "Le dossier sélectionné doit être dans le dossier principal",
         "select_root_first": "Sélectionnez d'abord le dossier principal",
         
+        # Page d'accueil
+        "welcome_title": "Comment ça marche ?",
+        "welcome_description": "MomentKeeper organise automatiquement vos photos de bébé par mois d'âge :",
+        "welcome_feature_1": "📸 Lit la date dans le nom de vos fichiers (format obligatoire : YYYYMMDD_...)",
+        "welcome_feature_2": "🗓️ Calcule l'âge de votre bébé à cette date",
+        "welcome_feature_3": "📁 Classe les photos dans des dossiers mensuels (0-1mois, 1-2mois, etc.)",
+        "welcome_feature_4": "📊 Analyse vos habitudes photo avec des statistiques détaillées",
+        "welcome_feature_5": "🦖 Fournit des insights personnalisés sur vos tendances de capture",
+        "welcome_start": "👈 Commencez par configurer le dossier principal dans la barre latérale !",
+        
         # Footer
         "footer_love": "Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur",
         "footer_version": "🦖 MomentKeeper v1.0",
@@ -232,6 +242,16 @@ TRANSLATIONS = {
         "configure_root": "👈 Configure the main folder in the sidebar",
         "folder_must_be_in_root": "The selected folder must be in the main folder",
         "select_root_first": "Select the main folder first",
+        
+        # Welcome page
+        "welcome_title": "How does it work?",
+        "welcome_description": "MomentKeeper automatically organizes your baby photos by age in months:",
+        "welcome_feature_1": "📸 Reads the date from your file names (required format: YYYYMMDD_...)",
+        "welcome_feature_2": "🗓️ Calculates your baby's age on that date",
+        "welcome_feature_3": "📁 Sorts photos into monthly folders (0-1months, 1-2months, etc.)",
+        "welcome_feature_4": "📊 Analyzes your photo habits with detailed statistics",
+        "welcome_feature_5": "🦖 Provides personalized insights on your capture trends",
+        "welcome_start": "👈 Start by configuring the main folder in the sidebar!",
         
         # Footer
         "footer_love": "Created with ❤️ for a 🦖 with tiny arms but a big heart",

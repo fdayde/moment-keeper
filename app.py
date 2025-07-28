@@ -599,7 +599,24 @@ def main():
         if dossier_racine:
             st.error(tr.t("root_not_exist"))
         else:
-            st.info(tr.t("configure_root"))
+            # Zone d'explication de l'application
+            st.markdown(
+                f"""
+                <div style="background-color: #f0f8ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                    <h3 style="color: #2C3E50; margin-bottom: 0.5rem;">🤔 {temp_tr.t("welcome_title")}</h3>
+                    <p style="color: #7F8C8D; margin-bottom: 0.8rem;">{temp_tr.t("welcome_description")}</p>
+                    <ul style="color: #7F8C8D; margin-left: 1.5rem;">
+                        <li>{temp_tr.t("welcome_feature_1")}</li>
+                        <li>{temp_tr.t("welcome_feature_2")}</li>
+                        <li>{temp_tr.t("welcome_feature_3")}</li>
+                        <li>{temp_tr.t("welcome_feature_4")}</li>
+                        <li>{temp_tr.t("welcome_feature_5")}</li>
+                    </ul>
+                    <p style="color: #7F8C8D; margin-top: 0.8rem; margin-bottom: 0;"><strong>{temp_tr.t("welcome_start")}</strong></p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
     # 🦖 Footer T-Rex avec personnalité
     st.markdown(

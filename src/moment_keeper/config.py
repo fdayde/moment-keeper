@@ -24,7 +24,7 @@ PAGE_CONFIG = {
     "page_title": "🦖 MomentKeeper",
     "page_icon": "🦖",
     "layout": "wide",
-    "initial_sidebar_state": "collapsed"
+    "initial_sidebar_state": "expanded"
 }
 
 # Limites d'affichage
