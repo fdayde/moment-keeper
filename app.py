@@ -77,23 +77,21 @@ def main():
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
         
-        col1, col2, col3 = st.columns([1, 0.2, 1])
+        col1, col2 = st.columns(2)
         with col1:
             if st.button("FR", key="lang_fr_mini", 
                         type="primary" if current_lang == "fr" else "secondary",
-                        help="Français"):
+                        help="Français",
+                        use_container_width=True):
                 if current_lang != "fr":
                     st.session_state.language = "fr"
                     st.rerun()
         
         with col2:
-            st.markdown("<p style='text-align: center; margin: 0.5rem 0; color: #7F8C8D;'>|</p>", 
-                       unsafe_allow_html=True)
-        
-        with col3:
             if st.button("EN", key="lang_en_mini",
                         type="primary" if current_lang == "en" else "secondary", 
-                        help="English"):
+                        help="English",
+                        use_container_width=True):
                 if current_lang != "en":
                     st.session_state.language = "en"
                     st.rerun()
@@ -104,7 +102,7 @@ def main():
         st.header(tr.t("config_header"))
 
         st.subheader(tr.t("main_folder"))
-        col1, col2 = st.columns([1, 3])
+        col1, col2 = st.columns([1, 5], gap="small")
         with col1:
             if st.button("📁", help=tr.t("browse"), key="browse_root"):
                 dossier_selectionne = selectionner_dossier()
@@ -125,7 +123,7 @@ def main():
                 st.session_state.dossier_path = dossier_racine
 
         st.subheader(tr.t("source_folder"))
-        col3, col4 = st.columns([1, 3])
+        col3, col4 = st.columns([1, 5], gap="small")
         with col3:
             if st.button("📁", help=tr.t("browse_subfolder"), key="browse_sub"):
                 if dossier_racine and Path(dossier_racine).exists():
