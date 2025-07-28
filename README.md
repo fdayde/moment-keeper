@@ -195,28 +195,11 @@ moment-keeper/
 
 ## 🤝 Contributing
 
-We welcome contributions! To maintain code quality:
-
-### Setup
-```bash
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Install pre-commit hooks (required)
-pre-commit install
-```
-
-### Before submitting
-- ✅ Run `pre-commit run --all-files` to check formatting and linting
-- ✅ Ensure all tests pass (when available)
-- ✅ Follow existing code patterns and conventions
-- ✅ Update documentation if needed
-
-### Code quality tools
-- **black**: Code formatting
-- **isort**: Import sorting
-- **ruff**: Fast Python linting
-- **pre-commit**: Automated checks before commit
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+- Development setup
+- Code style and quality standards
+- Submitting pull requests
+- Running tests
 
 ## 📝 License
 
