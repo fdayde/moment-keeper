@@ -461,13 +461,22 @@ def generate_insights(
                     else "📸 You clearly prefer photos to videos!"
                 )
             elif ratio < 0.2:
-                insights.append("🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo")
+                insights.append(
+                    "🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo" if tr.language == "fr"
+                    else "🎬 A true videographer! You mostly capture in video"
+                )
             elif 0.8 < ratio < 1.2:
-                insights.append("⚖️ Équilibre parfait entre photos et vidéos!")
+                insights.append(
+                    "⚖️ Équilibre parfait entre photos et vidéos!" if tr.language == "fr"
+                    else "⚖️ Perfect balance between photos and videos!"
+                )
     else:
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
-        type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
+        if tr.language == "fr":
+            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
+        else:
+            type_nom = "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
         type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
         
         if total > 100:
@@ -475,7 +484,10 @@ def generate_insights(
                 tr.t("magnificent_collection", total=total, type=type_nom)
             )
         elif total > 50:
-            insights.append(f"{type_emoji} Belle collection de {total} {type_nom}!")
+            insights.append(
+                f"{type_emoji} Belle collection de {total} {type_nom}!" if tr.language == "fr"
+                else f"{type_emoji} Nice collection of {total} {type_nom}!"
+            )
 
     # Analyse des mois les plus photographiés
     photos_par_mois = df.groupby("age_mois").size()
@@ -484,7 +496,7 @@ def generate_insights(
         nb_photos_champion = photos_par_mois.max()
 
         # Convertir l'âge en nom de mois calendaire
-        mois_nom = age_to_month_name(mois_champion, date_naissance)
+        mois_nom = age_to_month_name(mois_champion, date_naissance, tr.language)
 
         insights.append(
             tr.t("record_period", start=mois_champion, end=mois_champion+1, month=mois_nom, count=nb_photos_champion)
@@ -500,7 +512,10 @@ def generate_insights(
                 else "📅 You capture family weekends well!"
             )
         elif jour_favori == "Sunday":
-            insights.append("🌅 Champion du dimanche!")
+            insights.append(
+                "🌅 Champion du dimanche!" if tr.language == "fr"
+                else "🌅 Sunday champion!"
+            )
 
     # Record de photos en une journée
     if metrics["jour_record"] >= 10:
@@ -613,25 +628,42 @@ def detect_special_moments(df: pd.DataFrame, jour_record_existant: int, tr) -> L
     return special_insights
 
 
-def age_to_month_name(age_mois: int, date_naissance: datetime) -> str:
+def age_to_month_name(age_mois: int, date_naissance: datetime, language: str = "fr") -> str:
     """Convertit un âge en mois vers le nom du mois calendaire correspondant."""
     mois_cible = date_naissance + timedelta(
         days=age_mois * 30.44
     )  # 30.44 jours par mois en moyenne
-    mois_noms = [
-        "Janvier",
-        "Février",
-        "Mars",
-        "Avril",
-        "Mai",
-        "Juin",
-        "Juillet",
-        "Août",
-        "Septembre",
-        "Octobre",
-        "Novembre",
-        "Décembre",
-    ]
+    
+    if language == "fr":
+        mois_noms = [
+            "Janvier",
+            "Février",
+            "Mars",
+            "Avril",
+            "Mai",
+            "Juin",
+            "Juillet",
+            "Août",
+            "Septembre",
+            "Octobre",
+            "Novembre",
+            "Décembre",
+        ]
+    else:
+        mois_noms = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
     return mois_noms[mois_cible.month - 1]
 
 
@@ -661,14 +693,15 @@ def generate_temporal_comparisons(
             photos_premier = photos_par_mois.loc[premier_mois]
             photos_dernier = photos_par_mois.loc[dernier_mois]
 
-            premier_nom = age_to_month_name(premier_mois, date_naissance)
-            dernier_nom = age_to_month_name(dernier_mois, date_naissance)
+            premier_nom = age_to_month_name(premier_mois, date_naissance, tr.language)
+            dernier_nom = age_to_month_name(dernier_mois, date_naissance, tr.language)
 
             if photos_premier > 0:
                 evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
                 if evolution > 50:
                     comparisons.append(
-                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
+                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}" if tr.language == "fr"
+                        else f"📈 Growing evolution: +{evolution:.0f}% between {premier_nom} and {dernier_nom}"
                     )
                 elif evolution < -40:
                     comparisons.append(
@@ -683,8 +716,8 @@ def generate_temporal_comparisons(
             photos_min = photos_par_mois.min()
             photos_max = photos_par_mois.max()
 
-            mois_min_nom = age_to_month_name(mois_min, date_naissance)
-            mois_max_nom = age_to_month_name(mois_max, date_naissance)
+            mois_min_nom = age_to_month_name(mois_min, date_naissance, tr.language)
+            mois_max_nom = age_to_month_name(mois_max, date_naissance, tr.language)
 
             if photos_min > 0 and mois_min != mois_max:
                 ratio = photos_max / photos_min
@@ -725,11 +758,13 @@ def generate_temporal_comparisons(
             tendance = (valeurs[2] - valeurs[0]) / 2  # Pente moyenne
             if tendance > 8:
                 comparisons.append(
-                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖"
+                    "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖" if tr.language == "fr"
+                    else "📈 Recent trend: You're photographing your 🦖 more and more"
                 )
             elif tendance < -8:
                 comparisons.append(
-                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!"
+                    "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!" if tr.language == "fr"
+                    else "📉 Recent trend: Fewer photos - normal as 🦖 grows!"
                 )
 
     return comparisons
@@ -823,7 +858,10 @@ def create_charts(df: pd.DataFrame, tr):
         "Saturday",
         "Sunday",
     ]
-    jours_fr = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    if tr.language == "fr":
+        jours_display = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+    else:
+        jours_display = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     photos_par_jour = (
         df.groupby("jour_semaine").size().reindex(jours_ordre, fill_value=0)
@@ -842,7 +880,7 @@ def create_charts(df: pd.DataFrame, tr):
     fig_heatmap = go.Figure(
         data=go.Heatmap(
             z=[photos_par_jour.values],
-            x=jours_fr,
+            x=jours_display,
             y=["🦖 Activité"],
             colorscale=trex_colorscale,
             showscale=True,
@@ -1197,10 +1235,11 @@ def main():
                     with col1:
                         if type_fichiers == "📸🎬 Photos et Vidéos":
                             st.metric(
-                                "📸 Photos",
+                                "📸 Photos" if tr.language == "fr" else "📸 Photos",
                                 metrics["total_photos"],
                                 delta=(
-                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
+                                    else f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% of total"
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
@@ -1229,10 +1268,11 @@ def main():
                     with col2:
                         if type_fichiers == "📸🎬 Photos et Vidéos":
                             st.metric(
-                                "🎬 Vidéos",
+                                "🎬 Vidéos" if tr.language == "fr" else "🎬 Videos",
                                 metrics["total_videos"],
                                 delta=(
-                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total"
+                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total" if tr.language == "fr"
+                                    else f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% of total"
                                     if metrics["total_fichiers"] > 0
                                     else None
                                 ),
@@ -1305,11 +1345,11 @@ def main():
                         # Alertes visuelles pour les gaps
                         gaps = find_gaps(df_photos)
                         if gaps:
-                            st.subheader("⚠️ Alertes temporelles")
+                            st.subheader(tr.t("temporal_alerts"))
                             for gap_start, gap_end, gap_days in gaps:
                                 if gap_days >= 5:
                                     st.warning(
-                                        f"Gap de {gap_days} jours : du {gap_start.strftime('%d/%m/%Y')} au {gap_end.strftime('%d/%m/%Y')}"
+                                        tr.t("gap_alert", days=gap_days, start=gap_start.strftime('%d/%m/%Y'), end=gap_end.strftime('%d/%m/%Y'))
                                     )
 
             with tab4:
@@ -1341,59 +1381,64 @@ def main():
 
                     # Section détails si il y a des données
                     if not df_photos.empty:
-                        st.subheader("📋 Analyse détaillée")
+                        st.subheader(tr.t("detailed_analysis"))
 
                         col1, col2 = st.columns(2)
 
                         with col1:
-                            st.write("**🗓️ Répartition mensuelle**")
+                            st.write(tr.t("monthly_distribution"))
                             photos_par_mois = df_photos.groupby("age_mois").size()
                             for mois, nb in photos_par_mois.head(5).items():
-                                st.write(f"• {mois}-{mois+1} mois : {nb} photos")
+                                st.write(tr.t("months_pattern", start=mois, end=mois+1, count=nb))
                             if len(photos_par_mois) > 5:
                                 st.write(
-                                    f"... et {len(photos_par_mois) - 5} autres mois"
+                                    tr.t("and_other_months", count=len(photos_par_mois) - 5)
                                 )
 
                         with col2:
-                            st.write("**📅 Jours favoris**")
-                            jours_fr_map = {
-                                "Monday": "Lundi",
-                                "Tuesday": "Mardi",
-                                "Wednesday": "Mercredi",
-                                "Thursday": "Jeudi",
-                                "Friday": "Vendredi",
-                                "Saturday": "Samedi",
-                                "Sunday": "Dimanche",
-                            }
+                            st.write(tr.t("favorite_days"))
+                            if tr.language == "fr":
+                                jours_map = {
+                                    "Monday": "Lundi",
+                                    "Tuesday": "Mardi",
+                                    "Wednesday": "Mercredi",
+                                    "Thursday": "Jeudi",
+                                    "Friday": "Vendredi",
+                                    "Saturday": "Samedi",
+                                    "Sunday": "Dimanche",
+                                }
+                            else:
+                                jours_map = {
+                                    "Monday": "Monday",
+                                    "Tuesday": "Tuesday",
+                                    "Wednesday": "Wednesday",
+                                    "Thursday": "Thursday",
+                                    "Friday": "Friday",
+                                    "Saturday": "Saturday",
+                                    "Sunday": "Sunday",
+                                }
                             photos_par_jour = (
                                 df_photos.groupby("jour_semaine")
                                 .size()
                                 .sort_values(ascending=False)
                             )
                             for jour_en, nb in photos_par_jour.head(3).items():
-                                jour_fr = jours_fr_map.get(jour_en, jour_en)
-                                st.write(f"• {jour_fr} : {nb} photos")
+                                jour_localized = jours_map.get(jour_en, jour_en)
+                                st.write(tr.t("photos_count", day=jour_localized, count=nb))
 
                         # Suggestions d'amélioration
-                        st.subheader("💡 Suggestions")
+                        st.subheader(tr.t("suggestions"))
 
                         gaps = find_gaps(df_photos, min_gap_days=7)
                         if gaps:
-                            st.write("📸 **Pour ne rien rater :**")
-                            st.write(
-                                "• Pensez à prendre des photos pendant la semaine aussi"
-                            )
-                            st.write("• Essayez de capturer les moments du quotidien")
+                            st.write(tr.t("not_to_miss"))
+                            st.write(tr.t("think_weekday_photos"))
+                            st.write(tr.t("capture_daily_moments"))
 
                         if metrics["moyenne_par_mois"] < 10:
-                            st.write("📈 **Pour enrichir vos souvenirs :**")
-                            st.write(
-                                "• Quelques photos de plus par mois donneraient un bel aperçu de l'évolution"
-                            )
-                            st.write(
-                                "• Les petits moments comptent autant que les grands!"
-                            )
+                            st.write(tr.t("enrich_memories"))
+                            st.write(tr.t("more_photos_evolution"))
+                            st.write(tr.t("small_moments_matter"))
                     else:
                         st.info(tr.t("analyze_first"))
         else:

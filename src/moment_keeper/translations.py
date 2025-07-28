@@ -118,6 +118,29 @@ TRANSLATIONS = {
         "contrast_months": "📊 Contraste : {max_month} vs {min_month} = {ratio}x plus de photos",
         "intense_weekend": "🎯 Weekend intense : {ratio}x plus de photos par jour le weekend",
         "active_weekdays": "💼 Semaine active : {ratio}x plus de photos par jour en semaine",
+        
+        # Analytics - Alertes
+        "temporal_alerts": "⚠️ Alertes temporelles",
+        "gap_alert": "Gap de {days} jours : du {start} au {end}",
+        
+        # Insights - Sections
+        "detailed_analysis": "📋 Analyse détaillée",
+        "monthly_distribution": "**🗓️ Répartition mensuelle**",
+        "favorite_days": "**📅 Jours favoris**",
+        "suggestions": "💡 Suggestions",
+        "not_to_miss": "📸 **Pour ne rien rater :**",
+        "enrich_memories": "📈 **Pour enrichir vos souvenirs :**",
+        
+        # Insights - Suggestions détaillées
+        "think_weekday_photos": "• Pensez à prendre des photos pendant la semaine aussi",
+        "capture_daily_moments": "• Essayez de capturer les moments du quotidien",
+        "more_photos_evolution": "• Quelques photos de plus par mois donneraient un bel aperçu de l'évolution",
+        "small_moments_matter": "• Les petits moments comptent autant que les grands!",
+        
+        # Insights - Répartition
+        "months_pattern": "• {start}-{end} mois : {count} photos",
+        "and_other_months": "... et {count} autres mois",
+        "photos_count": "• {day} : {count} photos",
     },
     
     "en": {
@@ -237,6 +260,29 @@ TRANSLATIONS = {
         "contrast_months": "📊 Contrast: {max_month} vs {min_month} = {ratio}x more photos",
         "intense_weekend": "🎯 Intense weekend: {ratio}x more photos per day on weekends",
         "active_weekdays": "💼 Active weekdays: {ratio}x more photos per day on weekdays",
+        
+        # Analytics - Alerts
+        "temporal_alerts": "⚠️ Temporal alerts",
+        "gap_alert": "Gap of {days} days: from {start} to {end}",
+        
+        # Insights - Sections
+        "detailed_analysis": "📋 Detailed analysis",
+        "monthly_distribution": "**🗓️ Monthly distribution**",
+        "favorite_days": "**📅 Favorite days**",
+        "suggestions": "💡 Suggestions",
+        "not_to_miss": "📸 **Not to miss:**",
+        "enrich_memories": "📈 **To enrich your memories:**",
+        
+        # Insights - Detailed suggestions
+        "think_weekday_photos": "• Remember to take photos during the week too",
+        "capture_daily_moments": "• Try to capture everyday moments",
+        "more_photos_evolution": "• A few more photos per month would give a nice overview of the evolution",
+        "small_moments_matter": "• Small moments matter as much as big ones!",
+        
+        # Insights - Distribution
+        "months_pattern": "• {start}-{end} months: {count} photos",
+        "and_other_months": "... and {count} other months",
+        "photos_count": "• {day}: {count} photos",
     }
 }
 
