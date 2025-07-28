@@ -111,3 +111,8 @@ test-data/photos/*.mkv
 test-data/photos/*.m4v
 test-data/photos/*.3gp
 test-data/photos/*.wmv
+
+# Exception: Allow documentation screenshots
+!docs/images/*.png
+!docs/images/*.jpg
+!docs/images/*.jpeg
