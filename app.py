@@ -309,8 +309,11 @@ def main():
                 / "test_config.json"
             )
             if test_config_path.exists():
-                test_config_manager = ConfigManager("test_config.json")
-                test_config = test_config_manager.load_config()
+                # Charger directement le fichier JSON de test
+                import json
+
+                with open(test_config_path, encoding="utf-8") as f:
+                    test_config = json.load(f)
                 if test_config:
                     # Mettre à jour la session state avec la config de test
                     st.session_state.dossier_path = test_config.get("dossier_path", "")
@@ -326,7 +329,9 @@ def main():
                         "videos_selected", True
                     )
                     if "date_naissance" in test_config:
-                        st.session_state.date_naissance = test_config["date_naissance"]
+                        st.session_state.date_naissance = datetime.fromisoformat(
+                            test_config["date_naissance"]
+                        ).date()
                     st.success(tr.t("test_config_loaded"))
                     st.rerun()
             else:
