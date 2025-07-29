@@ -180,6 +180,15 @@ TRANSLATIONS = {
         "load_test_config_help": "Charge une configuration de test avec des photos d'exemple",
         "test_config_loaded": "✅ Configuration de test chargée avec succès !",
         "test_config_not_found": "❌ Configuration de test introuvable",
+        "load_saved_config": "Charger ma config",
+        "load_saved_config_help": "Recharge votre dernière configuration sauvegardée",
+        "saved_config_loaded": "✅ Configuration personnelle chargée avec succès !",
+        "no_saved_config": "ℹ️ Aucune configuration sauvegardée trouvée",
+        "configurations": "Configurations",
+        "folder_selection_error": "Impossible d'ouvrir le sélecteur de dossier",
+        "folder_selection_timeout": "Le sélecteur de dossier ne répond pas",
+        "folder_selection_cancelled": "Sélection annulée",
+        "folder_selection_tip": "Vous pouvez taper directement le chemin du dossier dans le champ texte",
     },
     "en": {
         # App principale
@@ -360,6 +369,15 @@ TRANSLATIONS = {
         "load_test_config_help": "Load a test configuration with sample photos",
         "test_config_loaded": "✅ Test configuration loaded successfully!",
         "test_config_not_found": "❌ Test configuration not found",
+        "load_saved_config": "Load my config",
+        "load_saved_config_help": "Reload your last saved configuration",
+        "saved_config_loaded": "✅ Personal configuration loaded successfully!",
+        "no_saved_config": "ℹ️ No saved configuration found",
+        "configurations": "Configurations",
+        "folder_selection_error": "Unable to open folder selector",
+        "folder_selection_timeout": "Folder selector not responding",
+        "folder_selection_cancelled": "Selection cancelled",
+        "folder_selection_tip": "You can type the folder path directly in the text field",
     },
 }
 
