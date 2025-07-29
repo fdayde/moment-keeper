@@ -1,39 +1,26 @@
-# 🦖 Photos de test MomentKeeper
+# 📸 Photos de test MomentKeeper
 
-Ce dossier contient des photos de démonstration pour tester MomentKeeper sans utiliser vos propres photos.
+Ce dossier contient les photos de démonstration pour tester MomentKeeper.
 
-## 📸 Contenu
+## 🖼️ Photos disponibles
 
-4 photos de test avec des dates différentes :
-- `20240701_275-4288x2848.jpg` - 1er juillet 2024 (bébé de 1 mois)
-- `20240705_237-3500x2095.jpg` - 5 juillet 2024 (bébé de 1 mois)
-- `20240901_219-5000x3333.jpg` - 1er septembre 2024 (bébé de 3 mois)
-- `20241101_200-1920x1280.jpg` - 1er novembre 2024 (bébé de 5 mois)
+| Photo | Date | Âge du bébé | Dossier cible |
+|-------|------|-------------|---------------|
+| `20240701_275-4288x2848.jpg` | 1er juillet 2024 | 1 mois | `1-2months` |
+| `20240705_237-3500x2095.jpg` | 5 juillet 2024 | 1 mois | `1-2months` |
+| `20240901_219-5000x3333.jpg` | 1er septembre 2024 | 3 mois | `3-4months` |
+| `20241101_200-1920x1280.jpg` | 1er novembre 2024 | 5 mois | `5-6months` |
 
-## 🎯 Utilisation
+## 📁 Structure après organisation
 
-1. Lancez l'application : `streamlit run app.py`
-2. Cliquez sur **"Charger la démo"** dans la barre latérale
-3. La configuration sera automatiquement chargée :
-   - Prénom : TestRex 🦖
-   - Date de naissance : 1er juin 2024
-   - Les photos seront organisées en 3 dossiers : 1-2months, 3-4months, 5-6months
-
-## 📁 Organisation attendue
-
-Après organisation, les photos seront réparties ainsi :
 ```
-1-2months/
-├── 20240701_275-4288x2848.jpg
-└── 20240705_237-3500x2095.jpg
-
-3-4months/
-└── 20240901_219-5000x3333.jpg
-
-5-6months/
-└── 20241101_200-1920x1280.jpg
+data/test/
+├── photos/         # Vide après organisation
+├── 1-2months/      # 2 photos
+├── 3-4months/      # 1 photo
+└── 5-6months/      # 1 photo
 ```
 
-## ℹ️ Note
+💡 **Astuce** : Utilisez le bouton "Réinitialiser" pour remettre les photos dans `photos/`
 
-Ces photos sont versionnées dans Git pour permettre à tous les utilisateurs de tester l'application immédiatement.
+📝 **Configuration** : Voir `data/user-config/test/` pour les détails de la démo
