@@ -44,15 +44,48 @@ from src.moment_keeper.translations import Translator
 
 
 def selectionner_dossier():
-    """Ouvre une fenêtre de sélection de dossier."""
-    root = tk.Tk()
-    root.withdraw()
-    root.attributes("-topmost", True)
-    dossier = filedialog.askdirectory(
-        title="Sélectionnez le dossier contenant vos photos"
-    )
-    root.destroy()
-    return dossier
+    """Ouvre une fenêtre de sélection de dossier avec gestion d'erreur robuste."""
+    try:
+        import queue
+        import threading
+
+        # Utiliser une queue pour récupérer le résultat du thread
+        result_queue = queue.Queue()
+
+        def _select_folder():
+            try:
+                root = tk.Tk()
+                root.withdraw()
+                root.attributes("-topmost", True)
+                dossier = filedialog.askdirectory(
+                    title="Sélectionnez le dossier contenant vos photos"
+                )
+                root.destroy()
+                result_queue.put(dossier if dossier else "")
+            except Exception as e:
+                result_queue.put(f"ERROR:{str(e)}")
+
+        # Exécuter dans un thread séparé pour éviter les conflits avec Streamlit
+        thread = threading.Thread(target=_select_folder)
+        thread.start()
+        thread.join(timeout=5)  # Timeout réduit à 5 secondes
+
+        if thread.is_alive():
+            # Le thread n'a pas fini dans le temps imparti
+            return "TIMEOUT"
+
+        # Récupérer le résultat
+        try:
+            result = result_queue.get_nowait()
+            if result.startswith("ERROR:"):
+                return result
+            return result if result else None
+        except queue.Empty:
+            return "EMPTY"
+
+    except Exception as e:
+        # Erreur lors de l'import ou autre problème
+        return f"ERROR:{str(e)}"
 
 
 def save_configuration(config_manager: ConfigManager):
@@ -153,10 +186,24 @@ def main():
             ):
                 st.session_state.page_loaded = True
                 dossier_selectionne = selectionner_dossier()
+
                 if dossier_selectionne:
-                    st.session_state.dossier_path = dossier_selectionne
-                    save_configuration(config_manager)
-                    st.rerun()
+                    if dossier_selectionne.startswith("ERROR:"):
+                        st.error(
+                            "❌ "
+                            + tr.t("folder_selection_error")
+                            + f" ({dossier_selectionne[6:]})"
+                        )
+                        st.info("💡 " + tr.t("folder_selection_tip"))
+                    elif dossier_selectionne == "TIMEOUT":
+                        st.warning("⏱️ " + tr.t("folder_selection_timeout"))
+                        st.info("💡 " + tr.t("folder_selection_tip"))
+                    elif dossier_selectionne == "EMPTY":
+                        st.warning("⚠️ " + tr.t("folder_selection_cancelled"))
+                    else:
+                        st.session_state.dossier_path = dossier_selectionne
+                        save_configuration(config_manager)
+                        st.rerun()
 
         with col2:
             dossier_racine = st.text_input(
@@ -193,16 +240,31 @@ def main():
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
-                        # Extraire seulement le nom du sous-dossier relatif au dossier principal
-                        try:
-                            chemin_relatif = Path(dossier_selectionne).relative_to(
-                                Path(dossier_racine)
+                        if dossier_selectionne.startswith("ERROR:"):
+                            st.error(
+                                "❌ "
+                                + tr.t("folder_selection_error")
+                                + f" ({dossier_selectionne[6:]})"
                             )
-                            st.session_state.sous_dossier_photos = str(chemin_relatif)
-                            save_configuration(config_manager)
-                            st.rerun()
-                        except ValueError:
-                            st.error(tr.t("folder_must_be_in_root"))
+                            st.info("💡 " + tr.t("folder_selection_tip"))
+                        elif dossier_selectionne == "TIMEOUT":
+                            st.warning("⏱️ " + tr.t("folder_selection_timeout"))
+                            st.info("💡 " + tr.t("folder_selection_tip"))
+                        elif dossier_selectionne == "EMPTY":
+                            st.warning("⚠️ " + tr.t("folder_selection_cancelled"))
+                        else:
+                            # Extraire seulement le nom du sous-dossier relatif au dossier principal
+                            try:
+                                chemin_relatif = Path(dossier_selectionne).relative_to(
+                                    Path(dossier_racine)
+                                )
+                                st.session_state.sous_dossier_photos = str(
+                                    chemin_relatif
+                                )
+                                save_configuration(config_manager)
+                                st.rerun()
+                            except ValueError:
+                                st.error(tr.t("folder_must_be_in_root"))
                 else:
                     st.error(tr.t("select_root_first"))
 
@@ -302,6 +364,38 @@ def main():
                     st.error(tr.t("errors_encountered"))
                     for erreur in erreurs:
                         st.error(erreur)
+
+        # Bouton pour charger la configuration utilisateur sauvegardée
+        if st.button(
+            "💾 " + tr.t("load_saved_config"),
+            help=tr.t("load_saved_config_help"),
+            type="secondary",
+            use_container_width=True,
+        ):
+            saved_config = config_manager.load_config()
+            if saved_config:
+                # Mettre à jour la session state avec la config sauvegardée
+                st.session_state.dossier_path = saved_config.get("dossier_path", "")
+                st.session_state.sous_dossier_photos = saved_config.get(
+                    "sous_dossier_photos", "photos"
+                )
+                st.session_state.language = saved_config.get("language", "fr")
+                if "date_naissance" in saved_config:
+                    st.session_state.date_naissance = saved_config["date_naissance"]
+                if "baby_name" in saved_config:
+                    st.session_state.baby_name = saved_config.get("baby_name", "")
+                if "photos_selected" in saved_config:
+                    st.session_state.photos_selected = saved_config.get(
+                        "photos_selected", True
+                    )
+                if "videos_selected" in saved_config:
+                    st.session_state.videos_selected = saved_config.get(
+                        "videos_selected", True
+                    )
+                st.success(tr.t("saved_config_loaded"))
+                st.rerun()
+            else:
+                st.info(tr.t("no_saved_config"))
 
         # Bouton pour charger la configuration de test
         if st.button(
