@@ -316,9 +316,14 @@ def main():
                     test_config = json.load(f)
                 if test_config:
                     # Mettre à jour la session state avec la config de test
-                    st.session_state.dossier_path = test_config.get("dossier_path", "")
+                    # Résoudre les chemins relatifs par rapport au répertoire du projet
+                    project_root = Path(__file__).parent
+                    dossier_path = test_config.get("dossier_path", "")
+                    if dossier_path and not Path(dossier_path).is_absolute():
+                        dossier_path = str(project_root / dossier_path)
+                    st.session_state.dossier_path = dossier_path
                     st.session_state.sous_dossier_photos = test_config.get(
-                        "sous_dossier_photos", "docs/images"
+                        "sous_dossier_photos", "photos"
                     )
                     st.session_state.language = test_config.get("language", "fr")
                     st.session_state.baby_name = test_config.get("baby_name", "TestRex")
