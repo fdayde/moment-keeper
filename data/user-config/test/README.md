@@ -1,33 +1,34 @@
-# 🦖 Configuration utilisateur MomentKeeper
+# ⚙️ Configuration de test MomentKeeper
 
-Ce dossier contient les fichiers de configuration pour MomentKeeper.
+Ce dossier contient la configuration de démonstration pour tester MomentKeeper.
 
-## 📁 Fichiers
-
-- `momentkeeper_config.json` : Votre configuration personnelle (créée automatiquement)
-- `test_config.json` : Configuration de démonstration
-
-## 🎯 Utilisation de la démo
-
-Pour tester MomentKeeper sans vos propres photos :
+## 🎯 Utilisation rapide
 
 1. Lancez l'application : `streamlit run app.py`
-2. Dans la barre latérale, cliquez sur **"Charger la démo"**
-3. La configuration suivante sera chargée :
-   - **Dossier racine** : Le répertoire du projet
-   - **Dossier source** : `data/test/photos`
-   - **Prénom** : TestRex 🦖
-   - **Date de naissance** : 1er juin 2024
-   - **Langue** : Français
+2. Cliquez sur **"Charger config test"** dans la sidebar
+3. Tout est prêt ! 🦖
+
+## 📝 Configuration de la démo (`test_config.json`)
+
+```json
+{
+  "dossier_path": "data/test",        // Chemin relatif au projet
+  "sous_dossier_photos": "photos",     // Dossier source des photos
+  "language": "fr",                    // Interface en français
+  "baby_name": "TestRex",              // Prénom du bébé T-Rex
+  "photos_selected": true,             // Photos activées
+  "videos_selected": true,             // Vidéos activées
+  "date_naissance": "2024-06-01"       // Né le 1er juin 2024
+}
+```
+
+## ✨ Avantages
+
+- **Portable** : Chemins relatifs, fonctionne partout
+- **Prêt à l'emploi** : Un clic et c'est parti
+- **Sans risque** : Vos vraies photos restent intactes
+- **Réversible** : Bouton "Réinitialiser" disponible
 
 ## 📸 Photos de test
 
-Les photos de test sont dans `data/test/photos/` :
-- `20240701275-4288x2848.jpg` - 1er juillet 2024 (1 mois)
-- `20240705-237-3500x2095.jpg` - 5 juillet 2024 (1 mois)
-- `20240901-219-5000x3333.jpg` - 1er septembre 2024 (3 mois)
-- `20241101-200-1920x1280.jpg` - 1er novembre 2024 (5 mois)
-
-## ⚠️ Note
-
-Ce dossier est ignoré par Git pour protéger votre configuration personnelle.
+Voir `data/test/README.md` pour la liste des photos disponibles.
