@@ -302,7 +302,11 @@ def main():
             use_container_width=True,
         ):
             test_config_path = (
-                Path(__file__).parent / "data" / "user-config" / "test_config.json"
+                Path(__file__).parent
+                / "data"
+                / "user-config"
+                / "test"
+                / "test_config.json"
             )
             if test_config_path.exists():
                 test_config_manager = ConfigManager("test_config.json")
