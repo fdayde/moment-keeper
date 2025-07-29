@@ -99,7 +99,9 @@ test_photos/
 output/
 
 # User configuration only (not test data)
-data/user-config/
+data/user-config/*
+# But keep test configuration
+!data/user-config/test/
 
 # Exception: Allow documentation screenshots
 !docs/images/*.png
