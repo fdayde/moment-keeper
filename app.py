@@ -170,6 +170,15 @@ def main():
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
                 st.session_state.dossier_path = dossier_racine
+                # Réinitialiser le sous-dossier si on change de racine
+                if dossier_racine and Path(dossier_racine).exists():
+                    # Vérifier si l'ancien sous-dossier existe dans le nouveau dossier
+                    nouveau_chemin_photos = (
+                        Path(dossier_racine) / st.session_state.sous_dossier_photos
+                    )
+                    if not nouveau_chemin_photos.exists():
+                        # Réinitialiser à "photos" par défaut
+                        st.session_state.sous_dossier_photos = "photos"
                 save_configuration(config_manager)
 
         st.subheader(tr.t("source_folder"))
@@ -451,12 +460,27 @@ def main():
         )
 
         if config_complete:
-            organiseur = OrganisateurPhotos(
-                Path(dossier_racine),
-                sous_dossier_photos,
-                datetime.combine(date_naissance, datetime.min.time()),
-                type_fichiers,
-            )
+            # Valider que les chemins existent avant de créer l'organisateur
+            try:
+                chemin_racine = Path(dossier_racine)
+                chemin_photos = chemin_racine / sous_dossier_photos
+
+                if not chemin_racine.exists():
+                    st.error(f"Le dossier racine n'existe pas : {dossier_racine}")
+                    config_complete = False
+                elif not chemin_photos.exists():
+                    st.error(f"Le dossier source n'existe pas : {chemin_photos}")
+                    config_complete = False
+                else:
+                    organiseur = OrganisateurPhotos(
+                        chemin_racine,
+                        sous_dossier_photos,
+                        datetime.combine(date_naissance, datetime.min.time()),
+                        type_fichiers,
+                    )
+            except Exception as e:
+                st.error(f"Erreur lors de la validation des chemins : {str(e)}")
+                config_complete = False
 
         with tabs[1]:
             st.markdown(
@@ -470,13 +494,23 @@ def main():
                 if st.button(tr.t("analyze_button")):
                     # Marquer la page comme chargée après la première interaction
                     st.session_state.page_loaded = True
-                    with st.spinner(tr.t("analyzing")):
-                        repartition, erreurs = organiseur.simuler_organisation()
-                        taille_dossier_gb = (
-                            organiseur.calculer_taille_fichiers_organises(repartition)
-                            if repartition
-                            else 0
+                    try:
+                        with st.spinner(tr.t("analyzing")):
+                            repartition, erreurs = organiseur.simuler_organisation()
+                            taille_dossier_gb = (
+                                organiseur.calculer_taille_fichiers_organises(
+                                    repartition
+                                )
+                                if repartition
+                                else 0
+                            )
+                    except Exception as e:
+                        st.error(f"Erreur lors de l'analyse : {str(e)}")
+                        st.info(
+                            "Vérifiez que les dossiers existent et contiennent des photos au bon format (YYYYMMDD_*.jpg)"
                         )
+                        repartition = None
+                        erreurs = []
 
                     if repartition:
                         total_photos = sum(len(f) for f in repartition.values())
