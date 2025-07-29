@@ -1,6 +1,6 @@
 {
-  "dossier_path": "C:/Users/Florent/Documents/data_science/moment-keeper",
-  "sous_dossier_photos": "data/test/photos",
+  "dossier_path": "data/test",
+  "sous_dossier_photos": "photos",
   "language": "fr",
   "baby_name": "TestRex",
   "photos_selected": true,
