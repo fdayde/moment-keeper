@@ -92,7 +92,7 @@ project-folder/           (root directory)
 ```bash
 # Windows
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\Activate.ps1
 
 # Linux/MacOS
 python -m venv venv
