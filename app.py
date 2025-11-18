@@ -182,9 +182,7 @@ def main():
         st.subheader(tr.t("main_folder"))
         col1, col2 = st.columns([1, 8])
         with col1:
-            if st.button(
-                "📁", help=tr.t("browse"), key="browse_root", use_container_width=True
-            ):
+            if st.button("📁", help=tr.t("browse"), key="browse_root", width="stretch"):
                 st.session_state.page_loaded = True
                 dossier_selectionne = selectionner_dossier()
 
@@ -236,7 +234,7 @@ def main():
                 "📁",
                 help=tr.t("browse_subfolder"),
                 key="browse_sub",
-                use_container_width=True,
+                width="stretch",
             ):
                 if dossier_racine and Path(dossier_racine).exists():
                     dossier_selectionne = selectionner_dossier()
@@ -348,7 +346,7 @@ def main():
             tr.t("reset_button"),
             help=tr.t("reset_help"),
             type="secondary",
-            use_container_width=True,
+            width="stretch",
         ):
             if dossier_racine and Path(dossier_racine).exists():
                 organiseur = OrganisateurPhotos(
@@ -371,7 +369,7 @@ def main():
             "💾 " + tr.t("load_saved_config"),
             help=tr.t("load_saved_config_help"),
             type="secondary",
-            use_container_width=True,
+            width="stretch",
         ):
             saved_config = config_manager.load_config()
             if saved_config:
@@ -403,7 +401,7 @@ def main():
             "🦖 " + tr.t("load_test_config"),
             help=tr.t("load_test_config_help"),
             type="secondary",
-            use_container_width=True,
+            width="stretch",
         ):
             test_config_path = (
                 Path(__file__).parent
@@ -456,7 +454,7 @@ def main():
                 key="lang_fr_mini",
                 type="primary" if current_lang == "fr" else "secondary",
                 help="Français",
-                use_container_width=True,
+                width="stretch",
             ):
                 if current_lang != "fr":
                     st.session_state.language = "fr"
@@ -469,7 +467,7 @@ def main():
                 key="lang_en_mini",
                 type="primary" if current_lang == "en" else "secondary",
                 help="English",
-                use_container_width=True,
+                width="stretch",
             ):
                 if current_lang != "en":
                     st.session_state.language = "en"
@@ -926,22 +924,18 @@ def main():
                     if charts:
                         # Graphique en barres
                         if "barres" in charts:
-                            st.plotly_chart(charts["barres"], use_container_width=True)
+                            st.plotly_chart(charts["barres"], width="stretch")
 
                         # Timeline et heatmap en colonnes
                         col1, col2 = st.columns(2)
 
                         with col1:
                             if "timeline" in charts:
-                                st.plotly_chart(
-                                    charts["timeline"], use_container_width=True
-                                )
+                                st.plotly_chart(charts["timeline"], width="stretch")
 
                         with col2:
                             if "heatmap" in charts:
-                                st.plotly_chart(
-                                    charts["heatmap"], use_container_width=True
-                                )
+                                st.plotly_chart(charts["heatmap"], width="stretch")
 
                         # Alertes visuelles pour les gaps
                         gaps = find_gaps(df_photos)
