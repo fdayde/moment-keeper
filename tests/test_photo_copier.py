@@ -1,8 +1,10 @@
 """Tests unitaires pour le module photo_copier."""
+
 import tempfile
 from pathlib import Path
 
 import pytest
+
 from moment_keeper.photo_copier import PhotoCopier
 
 

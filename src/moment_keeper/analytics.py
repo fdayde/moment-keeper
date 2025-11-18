@@ -14,6 +14,7 @@ from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
 from .organizer import OrganisateurPhotos
 from .theme import BAR_CHART_GRADIENT, COLORS, HEATMAP_COLORSCALE
 from .translations import Translator
+from .utils import extract_month_number
 
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
@@ -317,7 +318,7 @@ def generate_temporal_comparisons(
                 )
             elif multiplicateur <= INSIGHTS_THRESHOLDS["weekend_intensity_low"]:
                 comparisons.append(
-                    tr.t("active_weekdays", ratio=f"{1/multiplicateur:.1f}")
+                    tr.t("active_weekdays", ratio=f"{1 / multiplicateur:.1f}")
                 )
 
     # 3. Tendance sur les derniers mois
@@ -822,13 +823,6 @@ def get_timeline_photos(
 
     if monthly_folders:
         # Si on a des dossiers mensuels, utiliser la logique existante
-        # Fonction pour extraire le nombre du début du nom de dossier
-        def extract_month_number(folder_name):
-            try:
-                return int(folder_name.split("-")[0])
-            except:
-                return 999
-
         # Trier les mois par ordre chronologique
         sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
 

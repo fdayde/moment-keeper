@@ -6,7 +6,6 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 import psutil
 
@@ -16,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.moment_keeper.organizer import OrganisateurPhotos  # noqa: E402
 
 
-def create_test_files(temp_dir: Path, count: int) -> List[Path]:
+def create_test_files(temp_dir: Path, count: int) -> list[Path]:
     """Crée des fichiers de test avec format YYYYMMDD."""
     test_files = []
     photos_dir = temp_dir / "photos"

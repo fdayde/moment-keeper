@@ -4,11 +4,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from .config import EXTENSIONS_PHOTOS, EXTENSIONS_VIDEOS
 from .photo_copier import PhotoCopier
-
-# Extensions supportées
-EXTENSIONS_PHOTOS = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
-EXTENSIONS_VIDEOS = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv"}
 
 
 class OrganisateurPhotos:

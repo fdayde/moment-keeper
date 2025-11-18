@@ -1,10 +1,12 @@
 """Configuration des fixtures pour les tests pytest."""
+
 import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
 
 import pytest
+
 from moment_keeper.organizer import OrganisateurPhotos
 
 

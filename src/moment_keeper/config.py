@@ -1,11 +1,9 @@
 """Configuration centralisée pour MomentKeeper."""
 
-from typing import Set
-
 # Extensions de fichiers supportées
-EXTENSIONS_PHOTOS: Set[str] = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
-EXTENSIONS_VIDEOS: Set[str] = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv"}
-ALL_EXTENSIONS: Set[str] = EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
+EXTENSIONS_PHOTOS: set[str] = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
+EXTENSIONS_VIDEOS: set[str] = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv"}
+ALL_EXTENSIONS: set[str] = EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
 
 # Types de fichiers pour l'interface
 FILE_TYPES = {

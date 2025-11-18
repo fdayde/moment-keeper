@@ -41,6 +41,7 @@ from src.moment_keeper.config_manager import ConfigManager
 from src.moment_keeper.organizer import OrganisateurPhotos
 from src.moment_keeper.theme import get_css_styles
 from src.moment_keeper.translations import Translator
+from src.moment_keeper.utils import extract_month_number
 
 
 def selectionner_dossier():
@@ -655,14 +656,6 @@ def main():
                             unsafe_allow_html=True,
                         )
 
-                        # Fonction pour extraire le nombre du début du nom de dossier
-                        def extract_month_number(folder_name):
-                            # Extrait le premier nombre du nom du dossier (ex: "0-1months" -> 0)
-                            try:
-                                return int(folder_name.split("-")[0])
-                            except:
-                                return 999  # Valeur par défaut pour les dossiers non standards
-
                         for dossier, fichiers in sorted(
                             repartition.items(),
                             key=lambda x: extract_month_number(x[0]),
@@ -1090,13 +1083,6 @@ def main():
                     col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
 
                     with col1:
-                        # Fonction pour extraire le nombre du début du nom de dossier
-                        def extract_month_number(folder_name):
-                            try:
-                                return int(folder_name.split("-")[0])
-                            except:
-                                return 999  # Pour "Photos non triées" et autres
-
                         # Trier les mois disponibles
                         months_available = ["Tous les mois"] + sorted(
                             gallery_data.keys(), key=extract_month_number

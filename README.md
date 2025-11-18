@@ -87,7 +87,25 @@ project-folder/           (root directory)
 
 ## 🚀 Quick Start
 
-### Create a virtual environment
+### Option 1: With UV (Recommended) ⚡
+
+[UV](https://docs.astral.sh/uv/) is a fast Python package manager that handles virtual environments and dependencies automatically.
+
+```bash
+# Install UV (if not already installed)
+# See: https://docs.astral.sh/uv/getting-started/installation/
+
+# Install the project and dependencies
+uv sync
+
+# Run the Streamlit interface
+uv run streamlit run app.py
+
+# Or use the CLI launcher
+uv run moment-keeper
+```
+
+### Option 2: Traditional Setup
 
 ```bash
 # Windows
@@ -97,13 +115,9 @@ venv\Scripts\Activate.ps1
 # Linux/MacOS
 python -m venv venv
 source venv/bin/activate
-```
 
-### Install and run
-
-```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -e ".[dev]"
 
 # Run the Streamlit web interface
 streamlit run app.py

@@ -65,7 +65,7 @@ class ConfigManager:
             if "date_naissance" in config and isinstance(config["date_naissance"], str):
                 config["date_naissance"] = datetime.fromisoformat(
                     config["date_naissance"]
-                ).date()
+                )
 
             return config
         except Exception as e:

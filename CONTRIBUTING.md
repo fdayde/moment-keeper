@@ -49,12 +49,12 @@ isort src/
 
 ### 📋 Pull Request Checklist
 
-- [ ] Code follows project style (Black, isort, PEP8)  
-- [ ] Functions have clear docstrings  
-- [ ] No code duplication (DRY principle)  
-- [ ] Changes are focused and minimal (KISS principle)  
-- [ ] Pre-commit checks pass  
-- [ ] Manual testing completed  
+- [ ] Code follows project style (Black, isort, PEP8)
+- [ ] Functions have clear docstrings
+- [ ] No code duplication (DRY principle)
+- [ ] Changes are focused and minimal (KISS principle)
+- [ ] Pre-commit checks pass
+- [ ] Manual testing completed
 
 ### 🚀 Quick Fixes Welcome
 
