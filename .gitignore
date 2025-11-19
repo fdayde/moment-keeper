@@ -100,7 +100,8 @@ output/
 
 # User configuration only (not test data)
 data/user-config/*
-# But keep test configuration
+# But keep example config and test configuration
+!data/user-config/*.example.json
 !data/user-config/test/
 
 # Exception: Allow documentation screenshots

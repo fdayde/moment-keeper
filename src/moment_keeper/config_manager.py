@@ -1,6 +1,8 @@
 """Gestionnaire de configuration persistante pour MomentKeeper."""
 
 import json
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -12,13 +14,62 @@ class ConfigManager:
     def __init__(self, config_file: str = "momentkeeper_config.json"):
         """Initialise le gestionnaire de configuration.
 
+        La configuration est stockée dans l'emplacement système approprié :
+        - Windows: %APPDATA%/momentkeeper/
+        - macOS: ~/Library/Application Support/momentkeeper/
+        - Linux: ~/.config/momentkeeper/
+
+        En développement, vérifie d'abord un fichier local dans data/user-config/
+        pour faciliter le développement.
+
         Args:
             config_file: Nom du fichier de configuration
         """
-        # Utiliser le dossier du projet au lieu du dossier utilisateur
-        project_root = Path(__file__).parent.parent.parent
-        self.config_file = project_root / "data" / "user-config" / config_file
-        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        # Priorité 1 : Config locale (développement seulement)
+        local_config = self._get_local_config_path() / config_file
+
+        # Priorité 2 : Config système (production)
+        system_config = self._get_system_config_path() / config_file
+
+        # Utiliser config locale si elle existe (dev), sinon système (prod/exe)
+        if local_config.exists() and not getattr(sys, "frozen", False):
+            self.config_file = local_config
+        else:
+            self.config_file = system_config
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+
+    def _get_local_config_path(self) -> Path:
+        """Retourne le chemin de configuration local (développement).
+
+        Returns:
+            Path vers data/user-config/ dans le repo (dev uniquement)
+        """
+        if getattr(sys, "frozen", False):
+            # En exécutable, pas de config locale
+            return Path()
+        try:
+            # En développement, dans le repo
+            return Path(__file__).parent.parent.parent / "data" / "user-config"
+        except Exception:
+            return Path()
+
+    def _get_system_config_path(self) -> Path:
+        """Retourne le chemin de configuration système selon l'OS.
+
+        Returns:
+            Path vers le dossier de config système approprié
+        """
+        if sys.platform == "win32":
+            # Windows: %APPDATA%/momentkeeper/
+            base = Path(os.environ.get("APPDATA", str(Path.home())))
+        elif sys.platform == "darwin":
+            # macOS: ~/Library/Application Support/momentkeeper/
+            base = Path.home() / "Library" / "Application Support"
+        else:
+            # Linux/Unix: ~/.config/momentkeeper/
+            base = Path.home() / ".config"
+
+        return base / "momentkeeper"
 
     def save_config(self, config: dict[str, Any]) -> bool:
         """Sauvegarde la configuration dans un fichier JSON.
