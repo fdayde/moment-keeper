@@ -7,6 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+from .logger import setup_logger
+
+logger = setup_logger(__name__)
+
 
 class ConfigManager:
     """Gère la sauvegarde et le chargement de la configuration."""
@@ -96,7 +100,9 @@ class ConfigManager:
 
             return True
         except Exception as e:
-            print(f"Erreur lors de la sauvegarde de la configuration: {e}")
+            logger.error(
+                f"Erreur lors de la sauvegarde de la configuration: {e}", exc_info=True
+            )
             return False
 
     def load_config(self) -> Optional[dict[str, Any]]:
@@ -120,7 +126,9 @@ class ConfigManager:
 
             return config
         except Exception as e:
-            print(f"Erreur lors du chargement de la configuration: {e}")
+            logger.error(
+                f"Erreur lors du chargement de la configuration: {e}", exc_info=True
+            )
             return None
 
     def delete_config(self) -> bool:
@@ -134,5 +142,7 @@ class ConfigManager:
                 self.config_file.unlink()
             return True
         except Exception as e:
-            print(f"Erreur lors de la suppression de la configuration: {e}")
+            logger.error(
+                f"Erreur lors de la suppression de la configuration: {e}", exc_info=True
+            )
             return False

@@ -11,10 +11,13 @@ import streamlit as st
 from PIL import Image, ImageOps
 
 from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
+from .logger import setup_logger
 from .organizer import OrganisateurPhotos
 from .theme import BAR_CHART_GRADIENT, COLORS, HEATMAP_COLORSCALE
 from .translations import Translator
 from .utils import extract_month_number
+
+logger = setup_logger(__name__)
 
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
@@ -914,5 +917,5 @@ def get_image_with_correct_orientation(image_path: str) -> Image.Image:
         return image
     except Exception as e:
         # En cas d'erreur, retourner l'image sans transformation
-        print(f"Erreur lors du chargement de l'image {image_path}: {e}")
+        logger.warning(f"Erreur lors de la rotation EXIF de l'image {image_path}: {e}")
         return Image.open(image_path)

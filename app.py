@@ -11,11 +11,12 @@ from tkinter import filedialog
 
 import streamlit as st
 
-# Force reload des modules en développement
-if "src.moment_keeper.analytics" in sys.modules:
-    importlib.reload(sys.modules["src.moment_keeper.analytics"])
-if "src.moment_keeper.translations" in sys.modules:
-    importlib.reload(sys.modules["src.moment_keeper.translations"])
+# Force reload des modules UNIQUEMENT en développement (pas dans un exe)
+if not getattr(sys, "frozen", False):
+    if "src.moment_keeper.analytics" in sys.modules:
+        importlib.reload(sys.modules["src.moment_keeper.analytics"])
+    if "src.moment_keeper.translations" in sys.modules:
+        importlib.reload(sys.modules["src.moment_keeper.translations"])
 
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
@@ -180,6 +181,7 @@ def main():
         tr = Translator(st.session_state.language)
 
         st.subheader(tr.t("main_folder"))
+
         col1, col2 = st.columns([1, 8])
         with col1:
             if st.button("📁", help=tr.t("browse"), key="browse_root", width="stretch"):
@@ -188,19 +190,30 @@ def main():
 
                 if dossier_selectionne:
                     if dossier_selectionne.startswith("ERROR:"):
-                        st.error(
-                            "❌ "
-                            + tr.t("folder_selection_error")
-                            + f" ({dossier_selectionne[6:]})"
-                        )
-                        st.info("💡 " + tr.t("folder_selection_tip"))
+                        st.session_state.root_folder_messages = [
+                            (
+                                "error",
+                                "❌ "
+                                + tr.t("folder_selection_error")
+                                + f" ({dossier_selectionne[6:]})",
+                            ),
+                            ("info", "💡 " + tr.t("folder_selection_tip")),
+                        ]
+                        st.rerun()
                     elif dossier_selectionne == "TIMEOUT":
-                        st.warning("⏱️ " + tr.t("folder_selection_timeout"))
-                        st.info("💡 " + tr.t("folder_selection_tip"))
+                        st.session_state.root_folder_messages = [
+                            ("warning", "⏱️ " + tr.t("folder_selection_timeout")),
+                            ("info", "💡 " + tr.t("folder_selection_tip")),
+                        ]
+                        st.rerun()
                     elif dossier_selectionne == "EMPTY":
-                        st.warning("⚠️ " + tr.t("folder_selection_cancelled"))
+                        st.session_state.root_folder_messages = [
+                            ("warning", "⚠️ " + tr.t("folder_selection_cancelled"))
+                        ]
+                        st.rerun()
                     else:
                         st.session_state.dossier_path = dossier_selectionne
+                        st.session_state.root_folder_messages = []  # Effacer les anciens messages
                         save_configuration(config_manager)
                         st.rerun()
 
@@ -211,7 +224,6 @@ def main():
                 value=st.session_state.dossier_path,
                 label_visibility="collapsed",
                 help=tr.t("main_folder_help"),
-                key="dossier_racine_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if dossier_racine != st.session_state.dossier_path:
@@ -227,7 +239,23 @@ def main():
                         st.session_state.sous_dossier_photos = "photos"
                 save_configuration(config_manager)
 
+        # Afficher les messages du dossier racine en dehors des colonnes
+        if (
+            "root_folder_messages" in st.session_state
+            and st.session_state.root_folder_messages
+        ):
+            for msg_type, msg_text in st.session_state.root_folder_messages:
+                if msg_type == "error":
+                    st.error(msg_text)
+                elif msg_type == "warning":
+                    st.warning(msg_text)
+                elif msg_type == "info":
+                    st.info(msg_text)
+            # Effacer les messages après affichage pour éviter qu'ils persistent
+            st.session_state.root_folder_messages = []
+
         st.subheader(tr.t("source_folder"))
+
         col3, col4 = st.columns([1, 8])
         with col3:
             if st.button(
@@ -240,17 +268,27 @@ def main():
                     dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
                         if dossier_selectionne.startswith("ERROR:"):
-                            st.error(
-                                "❌ "
-                                + tr.t("folder_selection_error")
-                                + f" ({dossier_selectionne[6:]})"
-                            )
-                            st.info("💡 " + tr.t("folder_selection_tip"))
+                            st.session_state.subfolder_messages = [
+                                (
+                                    "error",
+                                    "❌ "
+                                    + tr.t("folder_selection_error")
+                                    + f" ({dossier_selectionne[6:]})",
+                                ),
+                                ("info", "💡 " + tr.t("folder_selection_tip")),
+                            ]
+                            st.rerun()
                         elif dossier_selectionne == "TIMEOUT":
-                            st.warning("⏱️ " + tr.t("folder_selection_timeout"))
-                            st.info("💡 " + tr.t("folder_selection_tip"))
+                            st.session_state.subfolder_messages = [
+                                ("warning", "⏱️ " + tr.t("folder_selection_timeout")),
+                                ("info", "💡 " + tr.t("folder_selection_tip")),
+                            ]
+                            st.rerun()
                         elif dossier_selectionne == "EMPTY":
-                            st.warning("⚠️ " + tr.t("folder_selection_cancelled"))
+                            st.session_state.subfolder_messages = [
+                                ("warning", "⚠️ " + tr.t("folder_selection_cancelled"))
+                            ]
+                            st.rerun()
                         else:
                             # Extraire seulement le nom du sous-dossier relatif au dossier principal
                             try:
@@ -260,12 +298,19 @@ def main():
                                 st.session_state.sous_dossier_photos = str(
                                     chemin_relatif
                                 )
+                                st.session_state.subfolder_messages = []  # Effacer les anciens messages
                                 save_configuration(config_manager)
                                 st.rerun()
                             except ValueError:
-                                st.error(tr.t("folder_must_be_in_root"))
+                                st.session_state.subfolder_messages = [
+                                    ("error", tr.t("folder_must_be_in_root"))
+                                ]
+                                st.rerun()
                 else:
-                    st.error(tr.t("select_root_first"))
+                    st.session_state.subfolder_messages = [
+                        ("error", "⚠️ " + tr.t("select_root_first"))
+                    ]
+                    st.rerun()
 
         with col4:
             # Initialiser la session state pour le sous-dossier
@@ -277,12 +322,26 @@ def main():
                 value=st.session_state.sous_dossier_photos,
                 help=tr.t("source_folder_help"),
                 label_visibility="collapsed",
-                key="sous_dossier_input",
             )
             # Mettre à jour la session state si l'utilisateur tape directement
             if sous_dossier_photos != st.session_state.sous_dossier_photos:
                 st.session_state.sous_dossier_photos = sous_dossier_photos
                 save_configuration(config_manager)
+
+        # Afficher les messages du sous-dossier en dehors des colonnes
+        if (
+            "subfolder_messages" in st.session_state
+            and st.session_state.subfolder_messages
+        ):
+            for msg_type, msg_text in st.session_state.subfolder_messages:
+                if msg_type == "error":
+                    st.error(msg_text)
+                elif msg_type == "warning":
+                    st.warning(msg_text)
+                elif msg_type == "info":
+                    st.info(msg_text)
+            # Effacer les messages après affichage pour éviter qu'ils persistent
+            st.session_state.subfolder_messages = []
 
         # Champ prénom du bébé
         baby_name = st.text_input(
@@ -290,7 +349,6 @@ def main():
             placeholder=tr.t("baby_name_placeholder"),
             help="Optionnel : permet de personnaliser l'affichage",
             value=st.session_state.baby_name,
-            key="baby_name_input",
         )
         if baby_name != st.session_state.baby_name:
             st.session_state.baby_name = baby_name
@@ -301,7 +359,6 @@ def main():
             min_value=datetime(2000, 1, 1).date(),
             max_value=datetime.now().date(),
             value=st.session_state.get("date_naissance", datetime.now().date()),
-            key="date_naissance_input",
         )
         if date_naissance != st.session_state.get("date_naissance"):
             st.session_state.date_naissance = date_naissance
@@ -313,7 +370,6 @@ def main():
         photos_selected = st.checkbox(
             tr.t("photos"),
             value=st.session_state.photos_selected,
-            key="photos_checkbox",
         )
         if photos_selected != st.session_state.photos_selected:
             st.session_state.photos_selected = photos_selected
@@ -322,7 +378,6 @@ def main():
         videos_selected = st.checkbox(
             tr.t("videos"),
             value=st.session_state.videos_selected,
-            key="videos_checkbox",
         )
         if videos_selected != st.session_state.videos_selected:
             st.session_state.videos_selected = videos_selected
@@ -364,38 +419,6 @@ def main():
                     for erreur in erreurs:
                         st.error(erreur)
 
-        # Bouton pour charger la configuration utilisateur sauvegardée
-        if st.button(
-            "💾 " + tr.t("load_saved_config"),
-            help=tr.t("load_saved_config_help"),
-            type="secondary",
-            width="stretch",
-        ):
-            saved_config = config_manager.load_config()
-            if saved_config:
-                # Mettre à jour la session state avec la config sauvegardée
-                st.session_state.dossier_path = saved_config.get("dossier_path", "")
-                st.session_state.sous_dossier_photos = saved_config.get(
-                    "sous_dossier_photos", "photos"
-                )
-                st.session_state.language = saved_config.get("language", "fr")
-                if "date_naissance" in saved_config:
-                    st.session_state.date_naissance = saved_config["date_naissance"]
-                if "baby_name" in saved_config:
-                    st.session_state.baby_name = saved_config.get("baby_name", "")
-                if "photos_selected" in saved_config:
-                    st.session_state.photos_selected = saved_config.get(
-                        "photos_selected", True
-                    )
-                if "videos_selected" in saved_config:
-                    st.session_state.videos_selected = saved_config.get(
-                        "videos_selected", True
-                    )
-                st.success(tr.t("saved_config_loaded"))
-                st.rerun()
-            else:
-                st.info(tr.t("no_saved_config"))
-
         # Bouton pour charger la configuration de test
         if st.button(
             "🦖 " + tr.t("load_test_config"),
@@ -417,32 +440,48 @@ def main():
                 with open(test_config_path, encoding="utf-8") as f:
                     test_config = json.load(f)
                 if test_config:
-                    # Mettre à jour la session state avec la config de test
                     # Résoudre les chemins relatifs par rapport au répertoire du projet
                     project_root = Path(__file__).parent
                     dossier_path = test_config.get("dossier_path", "")
                     if dossier_path and not Path(dossier_path).is_absolute():
                         dossier_path = str(project_root / dossier_path)
-                    st.session_state.dossier_path = dossier_path
-                    st.session_state.sous_dossier_photos = test_config.get(
-                        "sous_dossier_photos", "photos"
-                    )
-                    st.session_state.language = test_config.get("language", "fr")
-                    st.session_state.baby_name = test_config.get("baby_name", "TestRex")
-                    st.session_state.photos_selected = test_config.get(
-                        "photos_selected", True
-                    )
-                    st.session_state.videos_selected = test_config.get(
-                        "videos_selected", True
-                    )
+
+                    # Créer la configuration de test complète
+                    test_config_to_save = {
+                        "dossier_path": dossier_path,
+                        "sous_dossier_photos": test_config.get(
+                            "sous_dossier_photos", "photos"
+                        ),
+                        "language": test_config.get("language", "fr"),
+                        "baby_name": test_config.get("baby_name", "TestRex"),
+                        "photos_selected": test_config.get("photos_selected", True),
+                        "videos_selected": test_config.get("videos_selected", True),
+                    }
+
                     if "date_naissance" in test_config:
-                        st.session_state.date_naissance = datetime.fromisoformat(
-                            test_config["date_naissance"]
-                        ).date()
-                    st.success(tr.t("test_config_loaded"))
+                        test_config_to_save["date_naissance"] = datetime.combine(
+                            datetime.fromisoformat(
+                                test_config["date_naissance"]
+                            ).date(),
+                            datetime.min.time(),
+                        )
+
+                    # Sauvegarder directement la config sur disque
+                    config_manager.save_config(test_config_to_save)
+
+                    # Marquer qu'on vient de charger la config de test
+                    st.session_state.test_config_just_loaded = True
                     st.rerun()
             else:
                 st.error(tr.t("test_config_not_found"))
+
+        # Afficher le message de succès si la config de test vient d'être chargée
+        if st.session_state.get("test_config_just_loaded", False):
+            st.success("✅ " + tr.t("test_config_loaded"))
+            st.info(
+                "🔄 Rechargez la page (F5 ou Ctrl+R) pour appliquer tous les changements."
+            )
+            st.session_state.test_config_just_loaded = False  # Réinitialiser le flag
 
         # Sélecteur de langue ultra-compact
         current_lang = st.session_state.language
@@ -550,6 +589,7 @@ def main():
             and Path(dossier_racine).exists()
             and (Path(dossier_racine) / sous_dossier_photos).exists()
             and type_fichiers is not None
+            and date_naissance is not None
         )
 
         if config_complete:
