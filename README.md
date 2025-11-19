@@ -124,6 +124,28 @@ streamlit run app.py
 ```
 
 
+## 🔒 Privacy & Data Storage
+
+**Your data never leaves your computer:**
+- ✅ All photos and videos stay on your local drive
+- ✅ No internet connection required
+- ✅ No data sent to external servers
+- ✅ Configuration stored locally in your user directory
+
+### Configuration Location
+
+Your settings (baby's name, birth date, folder paths) are stored in:
+
+- **Windows**: `%APPDATA%\momentkeeper\momentkeeper_config.json`
+- **macOS**: `~/Library/Application Support/momentkeeper/momentkeeper_config.json`
+- **Linux**: `~/.config/momentkeeper/momentkeeper_config.json`
+
+This follows OS-standard locations and ensures:
+- ✅ Settings persist between sessions
+- ✅ No configuration in the project repository
+- ✅ Multi-user support on shared computers
+- ✅ Easy backup/restore of preferences
+
 ## 🛡️ Safety Features
 
 - **Simulation First**: Always preview before acting
@@ -131,6 +153,7 @@ streamlit run app.py
 - **Calendar-Accurate Age Calculation**: Proper month-based age calculation
 - **Error Recovery**: Graceful handling of edge cases and file conflicts
 - **Rollback Capability**: Complete reset to original state
+- **Path Security**: Protection against path traversal attacks
 
 
 ## 💡 Use Cases
