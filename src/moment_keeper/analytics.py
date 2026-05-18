@@ -10,7 +10,15 @@ import plotly.graph_objects as go
 import streamlit as st
 from PIL import Image, ImageOps
 
-from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
+from .config import (
+    ALL_MONTHS_SENTINEL,
+    CHART_CONFIG,
+    INSIGHTS_THRESHOLDS,
+    UNSORTED_SENTINEL,
+    includes_photos,
+    includes_videos,
+    is_both,
+)
 from .logger import setup_logger
 from .organizer import OrganisateurPhotos
 from .theme import BAR_CHART_GRADIENT, COLORS, HEATMAP_COLORSCALE
@@ -19,38 +27,55 @@ from .utils import extract_month_number
 
 logger = setup_logger(__name__)
 
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:
+    logger.warning(
+        "pillow-heif non installé : les fichiers .heic ne pourront pas être ouverts."
+    )
+
+
+def _process_folder_for_data(
+    dossier: Path, organiseur: OrganisateurPhotos, photos_data: list
+) -> None:
+    """Ajoute à photos_data les fichiers d'un dossier qui matchent les critères."""
+    for fichier in dossier.iterdir():
+        if (
+            fichier.is_file()
+            and fichier.suffix.lower() in organiseur.extensions_actives
+        ):
+            date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                age_mois = organiseur.calculer_age_mois(date_photo)
+                photos_data.append(
+                    {
+                        "fichier": fichier.name,
+                        "type": organiseur.get_file_type(fichier),
+                        "date": date_photo,
+                        "age_mois": age_mois,
+                        "dossier": dossier.name,
+                        "jour_semaine": date_photo.strftime("%A"),
+                        "semaine": date_photo.isocalendar()[1],
+                        "annee": date_photo.year,
+                    }
+                )
+
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     """Extrait les données des photos pour l'analyse."""
     photos_data = []
 
-    # Parcourir tous les dossiers du projet (source + dossiers mensuels)
+    # Source folder (peut être racine ou un sous-dossier)
+    if organiseur.dossier_source.exists():
+        _process_folder_for_data(organiseur.dossier_source, organiseur, photos_data)
+
+    # Dossiers mensuels au niveau de la racine (on saute le source pour éviter doublons)
+    source_resolved = organiseur.dossier_source.resolve()
     for dossier in organiseur.dossier_racine.iterdir():
-        if dossier.is_dir():
-            for fichier in dossier.iterdir():
-                if (
-                    fichier.is_file()
-                    and fichier.suffix.lower() in organiseur.extensions_actives
-                ):
-                    # Réutiliser la méthode existante pour extraire la date
-                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
-
-                    if date_photo and date_photo >= organiseur.date_naissance:
-                        # Réutiliser la méthode existante pour calculer l'âge
-                        age_mois = organiseur.calculer_age_mois(date_photo)
-
-                        photos_data.append(
-                            {
-                                "fichier": fichier.name,
-                                "type": organiseur.get_file_type(fichier),
-                                "date": date_photo,
-                                "age_mois": age_mois,
-                                "dossier": dossier.name,
-                                "jour_semaine": date_photo.strftime("%A"),
-                                "semaine": date_photo.isocalendar()[1],
-                                "annee": date_photo.year,
-                            }
-                        )
+        if dossier.is_dir() and dossier.resolve() != source_resolved:
+            _process_folder_for_data(dossier, organiseur, photos_data)
 
     return pd.DataFrame(photos_data)
 
@@ -69,18 +94,14 @@ def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> dict:
         }
 
     # Métriques de base avec distinction photo/vidéo si nécessaire
-    if type_fichiers == "📸🎬 Photos et Vidéos" and "type" in df.columns:
+    if is_both(type_fichiers) and "type" in df.columns:
         total_photos = len(df[df["type"] == "photo"])
         total_videos = len(df[df["type"] == "video"])
         total_fichiers = total_photos + total_videos
     else:
         total_fichiers = len(df)
-        total_photos = (
-            total_fichiers if type_fichiers and "Photos" in type_fichiers else 0
-        )
-        total_videos = (
-            total_fichiers if type_fichiers and "Vidéos" in type_fichiers else 0
-        )
+        total_photos = total_fichiers if includes_photos(type_fichiers) else 0
+        total_videos = total_fichiers if includes_videos(type_fichiers) else 0
 
     periode_couverte = df["age_mois"].max() + 1 if not df.empty else 0
     moyenne_par_mois = total_fichiers / periode_couverte if periode_couverte > 0 else 0
@@ -360,7 +381,7 @@ def generate_insights(
         tr = Translator("fr")
 
     # Messages encourageants adaptés au type
-    if type_fichiers == "📸🎬 Photos et Vidéos":
+    if is_both(type_fichiers):
         total = metrics.get("total_fichiers", 0)
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(
@@ -383,15 +404,12 @@ def generate_insights(
     else:
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
+        has_photos = includes_photos(type_fichiers)
         if tr.language == "fr":
-            type_nom = (
-                "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
-            )
+            type_nom = "photos" if has_photos else "vidéos"
         else:
-            type_nom = (
-                "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
-            )
-        type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
+            type_nom = "photos" if has_photos else "videos"
+        type_emoji = "📸" if has_photos else "🎬"
 
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(tr.t("magnificent_collection", total=total, type=type_nom))
@@ -657,34 +675,40 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     return charts
 
 
+def _collect_gallery_photos(
+    dossier: Path, organiseur: OrganisateurPhotos
+) -> list[Path]:
+    """Retourne les photos valides d'un dossier (filtre type photo + date >= naissance)."""
+    photos = []
+    for fichier in dossier.iterdir():
+        if (
+            fichier.is_file()
+            and fichier.suffix.lower() in organiseur.extensions_actives
+            and organiseur.get_file_type(fichier) == "photo"
+        ):
+            date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                photos.append(fichier)
+    return photos
+
+
 def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
     """Obtient les photos organisées par mois pour la galerie."""
-    gallery_data = {}
+    gallery_data: dict[str, list[Path]] = {}
 
-    # Parcourir tous les dossiers du projet
+    # Source folder (peut être racine ou un sous-dossier) → sentinelle "non triées"
+    if organiseur.dossier_source.exists():
+        photos = _collect_gallery_photos(organiseur.dossier_source, organiseur)
+        if photos:
+            gallery_data[UNSORTED_SENTINEL] = photos
+
+    # Dossiers mensuels au niveau de la racine (on saute le source pour éviter doublons)
+    source_resolved = organiseur.dossier_source.resolve()
     for dossier in organiseur.dossier_racine.iterdir():
-        if dossier.is_dir():
-            photos = []
-            for fichier in dossier.iterdir():
-                if (
-                    fichier.is_file()
-                    and fichier.suffix.lower() in organiseur.extensions_actives
-                    and organiseur.get_file_type(fichier)
-                    == "photo"  # Seulement les photos pour la galerie
-                ):
-                    # Vérifier que c'est une photo avec une date valide
-                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
-                    if date_photo and date_photo >= organiseur.date_naissance:
-                        photos.append(fichier)
-
+        if dossier.is_dir() and dossier.resolve() != source_resolved:
+            photos = _collect_gallery_photos(dossier, organiseur)
             if photos:
-                # Utiliser le nom du dossier comme clé, ou calculer l'âge pour le dossier source
-                if dossier.name == organiseur.dossier_source.name:
-                    # Photos non organisées dans le dossier source
-                    gallery_data["Photos non triées"] = photos
-                else:
-                    # Photos déjà organisées dans les dossiers mensuels
-                    gallery_data[dossier.name] = photos
+                gallery_data[dossier.name] = photos
 
     return gallery_data
 
@@ -697,17 +721,17 @@ def get_photos_by_mode(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient les photos selon le mode sélectionné."""
-    if mode == "🎲 Aléatoire" or mode == "🎲 Random":
+    if mode in ("🎲 Aléatoire", "🎲 Random"):
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
-    elif mode == "⏰ Chronologique" or mode == "⏰ Chronological":
+    elif mode in ("⏰ Chronologique", "⏰ Chronological"):
         return get_chronological_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode == "📸 Moments forts" or mode == "📸 Highlights":
+    elif mode in ("📸 Moments forts", "📸 Highlights"):
         return get_highlight_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode == "📈 Timeline croissance" or mode == "📈 Growth timeline":
+    elif mode in ("📈 Timeline croissance", "📈 Growth timeline"):
         return get_timeline_photos(gallery_data, organiseur, num_photos)
     else:
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
@@ -717,7 +741,7 @@ def get_random_photos_for_month(
     gallery_data: dict[str, list[Path]], selected_month: str, num_photos: int = 6
 ) -> list[Path]:
     """Obtient un échantillon aléatoire de photos pour un mois donné."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Mélanger toutes les photos de tous les mois
         all_photos = []
         for photos in gallery_data.values():
@@ -739,7 +763,7 @@ def get_chronological_photos(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient les photos triées chronologiquement (plus récent → plus ancien)."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Collecter toutes les photos avec leur date
         all_photos_with_dates = []
         for photos in gallery_data.values():
@@ -772,7 +796,7 @@ def get_highlight_photos(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient les photos des journées avec le plus de photos (moments forts)."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Collecter toutes les photos avec leur date
         all_photos_with_dates = []
         for photos in gallery_data.values():
@@ -821,7 +845,7 @@ def get_timeline_photos(
     """Obtient une photo aléatoire par mois pour montrer la timeline de croissance."""
     # D'abord essayer avec les dossiers mensuels organisés
     monthly_folders = {
-        k: v for k, v in gallery_data.items() if k != "Photos non triées" and "-" in k
+        k: v for k, v in gallery_data.items() if k != UNSORTED_SENTINEL and "-" in k
     }
 
     if monthly_folders:
@@ -839,8 +863,8 @@ def get_timeline_photos(
         return timeline_photos
 
     # Si pas de dossiers mensuels, créer une timeline à partir des photos non triées
-    elif "Photos non triées" in gallery_data:
-        all_photos = gallery_data["Photos non triées"]
+    elif UNSORTED_SENTINEL in gallery_data:
+        all_photos = gallery_data[UNSORTED_SENTINEL]
 
         # Grouper les photos par mois d'âge
         photos_by_month = {}

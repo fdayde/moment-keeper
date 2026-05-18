@@ -3,7 +3,9 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(uv add *)",
+      "Bash(uv run *)"
     ],
     "deny": []
   }

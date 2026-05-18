@@ -1,11 +1,14 @@
 """Module principal pour l'organisation des photos."""
 
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from .config import EXTENSIONS_PHOTOS, EXTENSIONS_VIDEOS
+from .config import EXTENSIONS_PHOTOS, EXTENSIONS_VIDEOS, FILE_TYPES
 from .photo_copier import PhotoCopier
+
+_MONTH_FOLDER_RE = re.compile(r"^\d+-\d+months$")
 
 
 class OrganisateurPhotos:
@@ -16,8 +19,10 @@ class OrganisateurPhotos:
         dossier_racine: Path,
         sous_dossier_photos: str,
         date_naissance: datetime,
-        type_fichiers: str = "📸🎬 Photos et Vidéos",
+        type_fichiers: str = None,
     ):
+        if type_fichiers is None:
+            type_fichiers = FILE_TYPES["both"]
         self.dossier_racine = Path(dossier_racine)
         self.dossier_source = self.dossier_racine / sous_dossier_photos
         self.date_naissance = date_naissance
@@ -53,11 +58,11 @@ class OrganisateurPhotos:
 
     def _get_extensions_actives(self) -> set[str]:
         """Retourne les extensions actives selon le type de fichiers sélectionné."""
-        if self.type_fichiers == "📸 Photos uniquement":
+        if self.type_fichiers == FILE_TYPES["photos_only"]:
             return EXTENSIONS_PHOTOS
-        elif self.type_fichiers == "🎬 Vidéos uniquement":
+        elif self.type_fichiers == FILE_TYPES["videos_only"]:
             return EXTENSIONS_VIDEOS
-        else:  # 📸🎬 Photos et Vidéos
+        else:  # photos + vidéos (par défaut)
             return EXTENSIONS_PHOTOS | EXTENSIONS_VIDEOS
 
     def get_file_type(self, filepath: Path) -> str:
@@ -138,7 +143,7 @@ class OrganisateurPhotos:
         erreurs = []
 
         for dossier in self.dossier_racine.iterdir():
-            if dossier.is_dir() and "-" in dossier.name and "month" in dossier.name:
+            if dossier.is_dir() and _MONTH_FOLDER_RE.match(dossier.name):
                 for fichier in dossier.iterdir():
                     if fichier.is_file():
                         try:

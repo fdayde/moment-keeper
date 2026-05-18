@@ -1,5 +1,7 @@
 """Configuration centralisée pour MomentKeeper."""
 
+from typing import Optional
+
 # Extensions de fichiers supportées
 EXTENSIONS_PHOTOS: set[str] = {".jpg", ".jpeg", ".png", ".heic", ".webp"}
 EXTENSIONS_VIDEOS: set[str] = {".mp4", ".mov", ".avi", ".mkv", ".m4v", ".3gp", ".wmv"}
@@ -12,10 +14,30 @@ FILE_TYPES = {
     "both": "📸🎬 Photos et Vidéos",
 }
 
+
+def includes_photos(type_fichiers: Optional[str]) -> bool:
+    """True si le mode sélectionné inclut les photos."""
+    return type_fichiers in (FILE_TYPES["photos_only"], FILE_TYPES["both"])
+
+
+def includes_videos(type_fichiers: Optional[str]) -> bool:
+    """True si le mode sélectionné inclut les vidéos."""
+    return type_fichiers in (FILE_TYPES["videos_only"], FILE_TYPES["both"])
+
+
+def is_both(type_fichiers: Optional[str]) -> bool:
+    """True si le mode sélectionné inclut photos ET vidéos."""
+    return type_fichiers == FILE_TYPES["both"]
+
+
 # Configuration par défaut
 DEFAULT_PHOTOS_DIR = "photos"
 DEFAULT_DATE_FORMAT = "%Y%m%d"
 MONTH_FOLDER_PATTERN = "{start}-{end}months"
+
+# Sentinelles internes pour la galerie (jamais affichées telles quelles à l'utilisateur)
+ALL_MONTHS_SENTINEL = "__all_months__"
+UNSORTED_SENTINEL = "__unsorted__"
 
 # Configuration de l'interface
 PAGE_CONFIG = {
