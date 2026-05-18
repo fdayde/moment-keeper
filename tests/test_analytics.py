@@ -98,6 +98,43 @@ def test_calculate_metrics_both_mode(organiseur, temp_test_dir):
     assert metrics["total_fichiers"] == 5
 
 
+def test_get_gallery_data_includes_videos_in_both_mode(temp_test_dir):
+    """En mode 'both', les vidéos apparaissent dans gallery_data."""
+    from moment_keeper.organizer import OrganisateurPhotos
+
+    (temp_test_dir / "photos" / "20240801_test.mp4").touch()
+    org = OrganisateurPhotos(
+        dossier_racine=temp_test_dir,
+        sous_dossier_photos="photos",
+        date_naissance=datetime(2024, 6, 1),
+        type_fichiers=FILE_TYPES["both"],
+    )
+
+    gallery = get_gallery_data(org)
+    all_files = [f for files in gallery.values() for f in files]
+    names = {f.name for f in all_files}
+    assert "20240801_test.mp4" in names
+    assert sum(1 for n in names if n.endswith(".jpg")) == 4
+
+
+def test_get_gallery_data_videos_only_mode(temp_test_dir):
+    """En mode videos_only, gallery_data ne contient que les vidéos."""
+    from moment_keeper.organizer import OrganisateurPhotos
+
+    (temp_test_dir / "photos" / "20240801_test.mp4").touch()
+    org = OrganisateurPhotos(
+        dossier_racine=temp_test_dir,
+        sous_dossier_photos="photos",
+        date_naissance=datetime(2024, 6, 1),
+        type_fichiers=FILE_TYPES["videos_only"],
+    )
+
+    gallery = get_gallery_data(org)
+    all_files = [f for files in gallery.values() for f in files]
+    assert all(f.suffix.lower() == ".mp4" for f in all_files)
+    assert len(all_files) == 1
+
+
 # ---------- find_gaps ----------
 
 

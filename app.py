@@ -68,7 +68,9 @@ def selectionner_dossier():
         # Exécuter dans un thread séparé pour éviter les conflits avec Streamlit
         thread = threading.Thread(target=_select_folder)
         thread.start()
-        thread.join(timeout=5)  # Timeout réduit à 5 secondes
+        # 60s : couvre la lenteur des gros dossiers (miniatures vidéos, disques externes)
+        # tout en gardant un garde-fou si Tk se bloque vraiment.
+        thread.join(timeout=60)
 
         if thread.is_alive():
             # Le thread n'a pas fini dans le temps imparti
@@ -184,7 +186,8 @@ def main():
         with col1:
             if st.button("📁", help=tr.t("browse"), key="browse_root", width="stretch"):
                 st.session_state.page_loaded = True
-                dossier_selectionne = selectionner_dossier()
+                with st.spinner(tr.t("opening_folder_dialog")):
+                    dossier_selectionne = selectionner_dossier()
 
                 if dossier_selectionne:
                     if dossier_selectionne.startswith("ERROR:"):
@@ -263,7 +266,8 @@ def main():
                 width="stretch",
             ):
                 if dossier_racine and Path(dossier_racine).exists():
-                    dossier_selectionne = selectionner_dossier()
+                    with st.spinner(tr.t("opening_folder_dialog")):
+                        dossier_selectionne = selectionner_dossier()
                     if dossier_selectionne:
                         if dossier_selectionne.startswith("ERROR:"):
                             st.session_state.subfolder_messages = [
@@ -1161,6 +1165,15 @@ def main():
                     if st.button(tr.t("refresh_gallery"), type="secondary"):
                         # Bust les caches @st.cache_data pour relire le disque
                         st.cache_data.clear()
+                        # Incrémenter le compteur invalide la sélection en session
+                        # (sinon, en mode aléatoire, on retomberait sur la même)
+                        st.session_state["gallery_refresh_counter"] = (
+                            st.session_state.get("gallery_refresh_counter", 0) + 1
+                        )
+                        # Replier toutes les vidéos qui étaient en cours de lecture
+                        for k in list(st.session_state.keys()):
+                            if k.startswith("play_video::"):
+                                del st.session_state[k]
                         st.rerun()
 
                 # Afficher le nombre de photos trouvées
@@ -1207,10 +1220,27 @@ def main():
                     else:
                         st.info(tr.t("photos_found", count=month_photos))
 
-                # Obtenir et afficher les photos selon le mode sélectionné
-                selected_photos = get_photos_by_mode(
-                    gallery_data, organiseur, view_mode, selected_month, num_photos
+                # Stabiliser la sélection en session_state : sinon les modes
+                # aléatoire/highlights/timeline retirent au sort à chaque rerun
+                # (notamment quand on clique ▶ Lire sur une vidéo), ce qui peut
+                # faire disparaître l'élément cliqué et générer des 500
+                # MediaFileStorageError sur les anciennes URLs.
+                refresh_counter = st.session_state.get("gallery_refresh_counter", 0)
+                selection_key = (
+                    f"gallery_sel::{view_mode}::{selected_month}::"
+                    f"{num_photos}::{refresh_counter}"
                 )
+                if selection_key in st.session_state:
+                    selected_photos = st.session_state[selection_key]
+                else:
+                    selected_photos = get_photos_by_mode(
+                        gallery_data,
+                        organiseur,
+                        view_mode,
+                        selected_month,
+                        num_photos,
+                    )
+                    st.session_state[selection_key] = selected_photos
 
                 if selected_photos:
                     # Afficher les photos in une grille
@@ -1225,30 +1255,55 @@ def main():
                         for idx, photo_path in enumerate(row):
                             with cols[idx]:
                                 try:
-                                    # Image en RGB + thumbnail 600x600, déjà mis en cache
-                                    image = get_image_with_correct_orientation(
-                                        str(photo_path), max_size=(600, 600)
-                                    )
+                                    if organiseur.get_file_type(photo_path) == "video":
+                                        # Carte cliquable : st.video n'est appelé qu'après clic
+                                        # (évite le préchargement de N lecteurs HTML5 + les 500
+                                        # logs Streamlit quand des fichiers sont déplacés)
+                                        state_key = f"play_video::{photo_path}"
+                                        if st.session_state.get(state_key, False):
+                                            st.video(str(photo_path))
+                                        else:
+                                            st.markdown(
+                                                f"""
+                                                <div class="video-card">
+                                                    <div class="video-card-icon">🎬</div>
+                                                    <div class="video-card-filename">{photo_path.name}</div>
+                                                </div>
+                                                """,
+                                                unsafe_allow_html=True,
+                                            )
+                                            if st.button(
+                                                tr.t("play_video"),
+                                                key=f"btn_{state_key}",
+                                                width="stretch",
+                                            ):
+                                                st.session_state[state_key] = True
+                                                st.rerun()
+                                    else:
+                                        # Image en RGB + thumbnail 600x600, déjà mis en cache
+                                        image = get_image_with_correct_orientation(
+                                            str(photo_path), max_size=(600, 600)
+                                        )
 
-                                    # Convertir l'image PIL en base64 pour l'intégrer dans le HTML
-                                    buffered = BytesIO()
-                                    image.save(buffered, format="JPEG", quality=85)
-                                    img_str = base64.b64encode(
-                                        buffered.getvalue()
-                                    ).decode()
+                                        # Convertir l'image PIL en base64 pour l'intégrer dans le HTML
+                                        buffered = BytesIO()
+                                        image.save(buffered, format="JPEG", quality=85)
+                                        img_str = base64.b64encode(
+                                            buffered.getvalue()
+                                        ).decode()
 
-                                    # Créer le HTML pour l'image avec le style carré
-                                    image_html = f"""
-                                    <div class="gallery-image-container">
-                                        <img src="data:image/jpeg;base64,{img_str}"
-                                             class="gallery-image"
-                                             alt="{photo_path.name}"
-                                             loading="lazy">
-                                    </div>
-                                    """
-                                    st.markdown(image_html, unsafe_allow_html=True)
+                                        # Créer le HTML pour l'image avec le style carré
+                                        image_html = f"""
+                                        <div class="gallery-image-container">
+                                            <img src="data:image/jpeg;base64,{img_str}"
+                                                 class="gallery-image"
+                                                 alt="{photo_path.name}"
+                                                 loading="lazy">
+                                        </div>
+                                        """
+                                        st.markdown(image_html, unsafe_allow_html=True)
 
-                                    # Afficher la légende personnalisée avec badge d'âge
+                                    # Légende avec badge d'âge (commune photo/vidéo)
                                     caption_html = get_photo_caption_with_age(
                                         photo_path, organiseur, tr
                                     )

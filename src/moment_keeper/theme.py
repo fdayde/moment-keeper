@@ -392,5 +392,33 @@ def get_css_styles() -> str:
     overflow: hidden;
     border-radius: 10px;
 }}
+
+/* Carte vidéo (placeholder cliquable, pas de préchargement) */
+.video-card {{
+    width: 100%;
+    aspect-ratio: 1/1;
+    background: linear-gradient(135deg, {COLORS["primary"]} 0%, {COLORS["secondary"]} 100%);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 1rem;
+    box-sizing: border-box;
+}}
+
+.video-card-icon {{
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}}
+
+.video-card-filename {{
+    font-size: 0.8rem;
+    color: {COLORS["text_dark"]};
+    text-align: center;
+    word-break: break-word;
+    line-height: 1.2;
+}}
 </style>
 """

@@ -735,13 +735,16 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
 def _collect_gallery_photos(
     dossier: Path, organiseur: OrganisateurPhotos
 ) -> list[Path]:
-    """Retourne les photos valides d'un dossier (filtre type photo + date >= naissance)."""
+    """Retourne les fichiers media valides d'un dossier (extensions actives + date >= naissance).
+
+    Inclut photos ET vidéos quand le mode actif les contient. Le rendu côté UI
+    distingue ensuite via get_file_type().
+    """
     photos = []
     for fichier in dossier.iterdir():
         if (
             fichier.is_file()
             and fichier.suffix.lower() in organiseur.extensions_actives
-            and organiseur.get_file_type(fichier) == "photo"
         ):
             date_photo = organiseur.extraire_date(fichier)
             if date_photo and date_photo >= organiseur.date_naissance:

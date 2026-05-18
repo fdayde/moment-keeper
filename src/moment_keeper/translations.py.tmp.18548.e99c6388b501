@@ -195,7 +195,6 @@ TRANSLATIONS = {
         "folder_selection_cancelled": "Sélection annulée",
         "folder_selection_tip": "Vous pouvez taper directement le chemin du dossier dans le champ texte",
         "opening_folder_dialog": "🦖 Ouverture du sélecteur de dossier... (peut être lent pour les dossiers chargés)",
-        "play_video": "▶ Lire",
     },
     "en": {
         # App principale
@@ -386,8 +385,6 @@ TRANSLATIONS = {
         "folder_selection_timeout": "Folder selector not responding",
         "folder_selection_cancelled": "Selection cancelled",
         "folder_selection_tip": "You can type the folder path directly in the text field",
-        "opening_folder_dialog": "🦖 Opening folder selector... (may be slow on heavy folders)",
-        "play_video": "▶ Play",
     },
 }
 
