@@ -90,6 +90,50 @@ def selectionner_dossier():
         return f"ERROR:{str(e)}"
 
 
+def _open_reset_dialog(
+    racine_str: str,
+    sous_dossier: str,
+    date_naissance_iso: str,
+    type_fichiers: str,
+) -> None:
+    """Ouvre un modal de confirmation et exécute le reset si confirmé.
+
+    Les arguments sont des primitives (str, iso) pour éviter les soucis de
+    sérialisation avec Streamlit lors de l'ouverture du modal.
+    """
+    tr_dlg = Translator(st.session_state.get("language", "fr"))
+
+    @st.dialog(tr_dlg.t("reset_dialog_title"))
+    def _dialog():
+        st.write(tr_dlg.t("reset_dialog_body"))
+        col_a, col_b = st.columns(2)
+        with col_a:
+            if st.button(
+                "✕ " + tr_dlg.t("cancel"),
+                key="reset_dlg_cancel",
+                width="stretch",
+            ):
+                st.rerun()
+        with col_b:
+            if st.button(
+                "⚠️ " + tr_dlg.t("confirm_reset"),
+                key="reset_dlg_confirm",
+                type="primary",
+                width="stretch",
+            ):
+                organiseur = OrganisateurPhotos(
+                    Path(racine_str),
+                    sous_dossier,
+                    datetime.fromisoformat(date_naissance_iso),
+                    type_fichiers,
+                )
+                nb_fichiers, erreurs = organiseur.reinitialiser()
+                st.session_state["reset_result"] = (nb_fichiers, erreurs)
+                st.rerun()
+
+    _dialog()
+
+
 def save_configuration(config_manager: ConfigManager):
     """Sauvegarde la configuration actuelle."""
     config = {
@@ -406,20 +450,23 @@ def main():
             width="stretch",
         ):
             if dossier_racine and Path(dossier_racine).exists():
-                organiseur = OrganisateurPhotos(
-                    Path(dossier_racine),
+                date_dt = datetime.combine(date_naissance, datetime.min.time())
+                _open_reset_dialog(
+                    dossier_racine,
                     sous_dossier_photos,
-                    datetime.combine(date_naissance, datetime.min.time()),
+                    date_dt.isoformat(),
                     type_fichiers,
                 )
-                nb_fichiers, erreurs = organiseur.reinitialiser()
 
-                if nb_fichiers > 0:
-                    st.success(tr.t("files_reset", count=nb_fichiers))
-                if erreurs:
-                    st.error(tr.t("errors_encountered"))
-                    for erreur in erreurs:
-                        st.error(erreur)
+        # Résultat affiché après fermeture du modal
+        if "reset_result" in st.session_state:
+            nb_fichiers, erreurs = st.session_state.pop("reset_result")
+            if nb_fichiers > 0:
+                st.success(tr.t("files_reset", count=nb_fichiers))
+            if erreurs:
+                st.error(tr.t("errors_encountered"))
+                for erreur in erreurs:
+                    st.error(erreur)
 
         # Bouton pour charger la configuration de test
         if st.button(
@@ -624,7 +671,7 @@ def main():
         )
 
         if not config_complete:
-            st.info(tr.t("configure_settings_first"))
+            st.caption(tr.t("config_needed_short"))
         else:
             if st.button(tr.t("analyze_button")):
                 # Marquer la page comme chargée après la première interaction
@@ -788,7 +835,7 @@ def main():
         )
 
         if not config_complete:
-            st.info(tr.t("configure_settings_first"))
+            st.caption(tr.t("config_needed_short"))
         else:
             st.markdown(
                 f'<div class="trex-warning">{tr.t("organization_warning")}</div>',
@@ -839,7 +886,7 @@ def main():
         )
 
         if not config_complete:
-            st.info(tr.t("configure_settings_first"))
+            st.caption(tr.t("config_needed_short"))
         else:
             # Extraire les données des photos
             with st.spinner(tr.t("calculating_stats")):
@@ -988,7 +1035,7 @@ def main():
         )
 
         if not config_complete:
-            st.info(tr.t("configure_settings_first"))
+            st.caption(tr.t("config_needed_short"))
         else:
             # Réutiliser les données déjà extraites si possible
             if "df_photos" not in locals():
@@ -1091,7 +1138,7 @@ def main():
         )
 
         if not config_complete:
-            st.info(tr.t("configure_settings_first"))
+            st.caption(tr.t("config_needed_short"))
         else:
             # Obtenir les données de la galerie
             with st.spinner(tr.t("searching_data")):
@@ -1147,11 +1194,12 @@ def main():
                     )
 
                 with col3:
-                    # Calculer l'âge actuel du bébé pour définir le max
-                    age_actuel_mois = organiseur.calculer_age_mois(datetime.now())
-                    max_photos = max(
-                        6, age_actuel_mois
-                    )  # Minimum 6 pour les très jeunes bébés
+                    # Max basé sur le nombre de médias disponibles, capé à 50
+                    # (au-delà, la galerie devient trop lourde à rendre)
+                    total_available = sum(
+                        len(photos) for photos in gallery_data.values()
+                    )
+                    max_photos = max(6, min(50, total_available))
 
                     num_photos = st.slider(
                         tr.t("photos_to_show"),

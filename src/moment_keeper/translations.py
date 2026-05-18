@@ -28,6 +28,11 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Veuillez sélectionner au moins un type de fichier",
         "reset_button": "🔄 Réinitialiser",
         "reset_help": "Remet tous les fichiers dans le dossier source",
+        "confirm_reset": "Confirmer",
+        "confirm_reset_help": "Déplace les fichiers des dossiers mensuels vers le dossier source",
+        "reset_dialog_title": "🔄 Réinitialiser ?",
+        "reset_dialog_body": "Cette action déplace tous les fichiers des dossiers mensuels vers le dossier source.",
+        "cancel": "Annuler",
         # Tabs
         "tab_home": "🏠 Accueil",
         "tab_simulation": "🔍 Simulation",
@@ -112,7 +117,6 @@ TRANSLATIONS = {
         "welcome_step_5": "5️⃣ Consultez Insights pour des analyses personnalisées de vos habitudes",
         # Footer
         "footer_love": "Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur",
-        "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"Du Chaos à la Chronologie, une photo à la fois"',
         "footer_new_tagline": "Fait avec ❤️ pour organiser les souvenirs qui comptent",
         # Messages dynamiques
@@ -180,6 +184,7 @@ TRANSLATIONS = {
         "errors_encountered": "❌ Erreurs rencontrées:",
         "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
         "configure_settings_first": "ℹ️ Configurez d'abord les paramètres dans la barre latérale pour utiliser cette fonctionnalité",
+        "config_needed_short": "👈 Configurez d'abord la sidebar (détails sur l'onglet Accueil)",
         "files_reset": "✅ {count} fichiers remis dans le dossier photos",
         "load_test_config": "Charger la démo",
         "load_test_config_help": "Charge une configuration de test avec des photos d'exemple",
@@ -220,6 +225,11 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Please select at least one file type",
         "reset_button": "🔄 Reset",
         "reset_help": "Puts all files back in the source folder",
+        "confirm_reset": "Confirm",
+        "confirm_reset_help": "Moves files from monthly folders back to the source folder",
+        "reset_dialog_title": "🔄 Reset ?",
+        "reset_dialog_body": "This will move all files from monthly folders back to the source folder.",
+        "cancel": "Cancel",
         # Tabs
         "tab_home": "🏠 Home",
         "tab_simulation": "🔍 Simulation",
@@ -304,7 +314,6 @@ TRANSLATIONS = {
         "welcome_step_5": "5️⃣ Check Insights for personalized analysis of your habits",
         # Footer
         "footer_love": "Created with ❤️ for a 🦖 with tiny arms but a big heart",
-        "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"From Chaos to Chronology, one photo at a time"',
         "footer_new_tagline": "Made with ❤️ to organize the memories that matter",
         # Messages dynamiques
@@ -372,6 +381,7 @@ TRANSLATIONS = {
         "errors_encountered": "❌ Errors encountered:",
         "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
         "configure_settings_first": "ℹ️ First configure the settings in the sidebar to use this feature",
+        "config_needed_short": "👈 Configure the sidebar first (details on the Home tab)",
         "files_reset": "✅ {count} files put back in the photos folder",
         "load_test_config": "Load demo",
         "load_test_config_help": "Load a test configuration with sample photos",
