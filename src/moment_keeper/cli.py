@@ -28,9 +28,10 @@ def main():
     logger.info(f"Launching Streamlit app from: {app_path}")
 
     try:
-        # Launch streamlit with the app.py file
+        # Launch streamlit via the current Python interpreter (works even if
+        # streamlit n'est pas sur le PATH, ex. dans un venv non activé)
         subprocess.run(
-            ["streamlit", "run", str(app_path)],
+            [sys.executable, "-m", "streamlit", "run", str(app_path)],
             check=True,
         )
     except subprocess.CalledProcessError as e:

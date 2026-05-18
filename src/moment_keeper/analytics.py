@@ -37,6 +37,63 @@ except ImportError:
     )
 
 
+def _cache_signature(organiseur: OrganisateurPhotos) -> tuple:
+    """Calcule une signature pour invalider le cache quand les dossiers/params changent.
+
+    Inclut : params organiseur + mtime de la racine et de ses sous-dossiers
+    directs. Une nouvelle photo ajoutée dans un dossier change son mtime.
+    """
+    racine = organiseur.dossier_racine
+    sigs: list = [
+        (
+            "__params__",
+            str(racine),
+            str(organiseur.dossier_source),
+            organiseur.date_naissance.isoformat(),
+            tuple(sorted(organiseur.extensions_actives)),
+            organiseur.type_fichiers,
+        )
+    ]
+    if racine.exists():
+        try:
+            sigs.append(("__racine_mtime__", racine.stat().st_mtime))
+        except OSError:
+            pass
+        for d in sorted(racine.iterdir()):
+            if d.is_dir():
+                try:
+                    sigs.append((d.name, d.stat().st_mtime))
+                except OSError:
+                    pass
+    return tuple(sigs)
+
+
+@st.cache_data(show_spinner=False)
+def _extract_photo_data_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> pd.DataFrame:
+    return extract_photo_data(_organiseur)
+
+
+def get_photo_data_cached(organiseur: OrganisateurPhotos) -> pd.DataFrame:
+    """Version cachée d'extract_photo_data, invalidée par changement de mtime."""
+    return _extract_photo_data_cached(organiseur, _cache_signature(organiseur))
+
+
+@st.cache_data(show_spinner=False)
+def _get_gallery_data_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> dict[str, list[Path]]:
+    return get_gallery_data(_organiseur)
+
+
+def get_gallery_data_cached(
+    organiseur: OrganisateurPhotos,
+) -> dict[str, list[Path]]:
+    """Version cachée de get_gallery_data, invalidée par changement de mtime."""
+    return _get_gallery_data_cached(organiseur, _cache_signature(organiseur))
+
+
 def _process_folder_for_data(
     dossier: Path, organiseur: OrganisateurPhotos, photos_data: list
 ) -> None:
@@ -920,26 +977,35 @@ def get_photo_caption_with_age(
 
 
 @st.cache_data
-def get_image_with_correct_orientation(image_path: str) -> Image.Image:
+def get_image_with_correct_orientation(
+    image_path: str, max_size: tuple[int, int] = None
+) -> Image.Image:
     """
-    Charge une image en appliquant automatiquement la rotation EXIF.
+    Charge une image, applique la rotation EXIF, et optionnellement un thumbnail.
+
+    Le résultat est mis en cache. Si max_size est fourni, l'image est réduite
+    in-place via PIL.Image.thumbnail (préserve le ratio).
 
     Args:
         image_path: Chemin vers l'image
+        max_size: (width, height) max pour le thumbnail, ou None pour pleine taille
 
     Returns:
-        Image PIL avec l'orientation corrigée
+        Image PIL (en mode RGB) prête pour la galerie
     """
     try:
-        # Ouvrir l'image
         image = Image.open(image_path)
-
-        # Appliquer la rotation EXIF automatiquement
-        # ImageOps.exif_transpose gère tous les cas d'orientation EXIF
         image = ImageOps.exif_transpose(image)
-
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        if max_size is not None:
+            image.thumbnail(max_size)
         return image
     except Exception as e:
-        # En cas d'erreur, retourner l'image sans transformation
-        logger.warning(f"Erreur lors de la rotation EXIF de l'image {image_path}: {e}")
-        return Image.open(image_path)
+        logger.warning(f"Erreur lors du chargement de l'image {image_path}: {e}")
+        fallback = Image.open(image_path)
+        if fallback.mode != "RGB":
+            fallback = fallback.convert("RGB")
+        if max_size is not None:
+            fallback.thumbnail(max_size)
+        return fallback

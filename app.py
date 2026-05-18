@@ -1,8 +1,7 @@
 """Application Streamlit pour MomentKeeper."""
 
 import base64
-import importlib
-import sys
+import re
 import tkinter as tk
 from datetime import datetime
 from io import BytesIO
@@ -11,23 +10,16 @@ from tkinter import filedialog
 
 import streamlit as st
 
-# Force reload des modules UNIQUEMENT en développement (pas dans un exe)
-if not getattr(sys, "frozen", False):
-    if "src.moment_keeper.analytics" in sys.modules:
-        importlib.reload(sys.modules["src.moment_keeper.analytics"])
-    if "src.moment_keeper.translations" in sys.modules:
-        importlib.reload(sys.modules["src.moment_keeper.translations"])
-
 from src.moment_keeper import __version__
 from src.moment_keeper.analytics import (
     calculate_metrics,
     create_charts,
-    extract_photo_data,
     find_gaps,
     generate_insights,
-    get_gallery_data,
+    get_gallery_data_cached,
     get_image_with_correct_orientation,
     get_photo_caption_with_age,
+    get_photo_data_cached,
     get_photos_by_mode,
 )
 from src.moment_keeper.config import (
@@ -47,6 +39,8 @@ from src.moment_keeper.organizer import OrganisateurPhotos
 from src.moment_keeper.theme import get_css_styles
 from src.moment_keeper.translations import Translator
 from src.moment_keeper.utils import extract_month_number
+
+_MONTH_FOLDER_RE = re.compile(r"^(\d+)-(\d+)months$")
 
 
 def selectionner_dossier():
@@ -360,7 +354,7 @@ def main():
 
         date_naissance = st.date_input(
             tr.t("birth_date"),
-            min_value=datetime(2000, 1, 1).date(),
+            min_value=datetime(1980, 1, 1).date(),
             max_value=datetime.now().date(),
             value=st.session_state.get("date_naissance", datetime.now().date()),
         )
@@ -845,7 +839,7 @@ def main():
         else:
             # Extraire les données des photos
             with st.spinner(tr.t("calculating_stats")):
-                df_photos = extract_photo_data(organiseur)
+                df_photos = get_photo_data_cached(organiseur)
                 metrics = calculate_metrics(df_photos, type_fichiers)
 
             if df_photos.empty:
@@ -995,7 +989,7 @@ def main():
             # Réutiliser les données déjà extraites si possible
             if "df_photos" not in locals():
                 with st.spinner(tr.t("searching_data")):
-                    df_photos = extract_photo_data(organiseur)
+                    df_photos = get_photo_data_cached(organiseur)
                     metrics = calculate_metrics(df_photos, type_fichiers)
 
             # Messages d'insights
@@ -1097,7 +1091,7 @@ def main():
         else:
             # Obtenir les données de la galerie
             with st.spinner(tr.t("searching_data")):
-                gallery_data = get_gallery_data(organiseur)
+                gallery_data = get_gallery_data_cached(organiseur)
 
             if not gallery_data:
                 st.info(tr.t("no_photos_month"))
@@ -1116,6 +1110,13 @@ def main():
                             return tr.t("all_months")
                         if m == UNSORTED_SENTINEL:
                             return tr.t("unsorted_label")
+                        match = _MONTH_FOLDER_RE.match(m)
+                        if match:
+                            return tr.t(
+                                "month_pattern",
+                                start=match.group(1),
+                                end=match.group(2),
+                            )
                         return m
 
                     selected_month = st.selectbox(
@@ -1158,6 +1159,8 @@ def main():
 
                 with col4:
                     if st.button(tr.t("refresh_gallery"), type="secondary"):
+                        # Bust les caches @st.cache_data pour relire le disque
+                        st.cache_data.clear()
                         st.rerun()
 
                 # Afficher le nombre de photos trouvées
@@ -1222,14 +1225,10 @@ def main():
                         for idx, photo_path in enumerate(row):
                             with cols[idx]:
                                 try:
-                                    # Charger l'image avec l'orientation EXIF corrigée
+                                    # Image en RGB + thumbnail 600x600, déjà mis en cache
                                     image = get_image_with_correct_orientation(
-                                        str(photo_path)
+                                        str(photo_path), max_size=(600, 600)
                                     )
-
-                                    # JPEG ne supporte pas RGBA / P / LA — convertir avant save
-                                    if image.mode != "RGB":
-                                        image = image.convert("RGB")
 
                                     # Convertir l'image PIL en base64 pour l'intégrer dans le HTML
                                     buffered = BytesIO()

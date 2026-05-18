@@ -1,5 +1,9 @@
 """Module de traductions pour MomentKeeper."""
 
+from .logger import setup_logger
+
+logger = setup_logger(__name__)
+
 TRANSLATIONS = {
     "fr": {
         # App principale
@@ -413,15 +417,27 @@ class Translator:
         Returns:
             Texte traduit
         """
-        text = self.translations.get(self.language, {}).get(key, key)
+        lang_dict = self.translations.get(self.language, {})
+        if key not in lang_dict:
+            logger.warning(
+                "Clé de traduction manquante pour la langue '%s' : %r",
+                self.language,
+                key,
+            )
+            text = key
+        else:
+            text = lang_dict[key]
 
-        # Si des paramètres sont fournis, formater le texte
         if kwargs:
             try:
                 text = text.format(**kwargs)
-            except KeyError:
-                # Si une clé manque, retourner le texte sans formatage
-                pass
+            except KeyError as e:
+                logger.warning(
+                    "Paramètre de format manquant pour la clé %r (langue %s) : %s",
+                    key,
+                    self.language,
+                    e,
+                )
 
         return text
 
