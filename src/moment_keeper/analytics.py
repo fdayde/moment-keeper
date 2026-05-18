@@ -103,7 +103,7 @@ def _process_folder_for_data(
             fichier.is_file()
             and fichier.suffix.lower() in organiseur.extensions_actives
         ):
-            date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+            date_photo = organiseur.extraire_date(fichier)
             if date_photo and date_photo >= organiseur.date_naissance:
                 age_mois = organiseur.calculer_age_mois(date_photo)
                 photos_data.append(
@@ -743,7 +743,7 @@ def _collect_gallery_photos(
             and fichier.suffix.lower() in organiseur.extensions_actives
             and organiseur.get_file_type(fichier) == "photo"
         ):
-            date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
+            date_photo = organiseur.extraire_date(fichier)
             if date_photo and date_photo >= organiseur.date_naissance:
                 photos.append(fichier)
     return photos
@@ -825,7 +825,7 @@ def get_chronological_photos(
         all_photos_with_dates = []
         for photos in gallery_data.values():
             for photo in photos:
-                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                date_photo = organiseur.extraire_date(photo)
                 if date_photo:
                     all_photos_with_dates.append((photo, date_photo))
 
@@ -837,7 +837,7 @@ def get_chronological_photos(
     photos = gallery_data.get(selected_month, [])
     photos_with_dates = []
     for photo in photos:
-        date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+        date_photo = organiseur.extraire_date(photo)
         if date_photo:
             photos_with_dates.append((photo, date_photo))
 
@@ -858,7 +858,7 @@ def get_highlight_photos(
         all_photos_with_dates = []
         for photos in gallery_data.values():
             for photo in photos:
-                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                date_photo = organiseur.extraire_date(photo)
                 if date_photo:
                     all_photos_with_dates.append((photo, date_photo.date()))
     else:
@@ -866,7 +866,7 @@ def get_highlight_photos(
         photos = gallery_data.get(selected_month, [])
         all_photos_with_dates = []
         for photo in photos:
-            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            date_photo = organiseur.extraire_date(photo)
             if date_photo:
                 all_photos_with_dates.append((photo, date_photo.date()))
 
@@ -926,7 +926,7 @@ def get_timeline_photos(
         # Grouper les photos par mois d'âge
         photos_by_month = {}
         for photo in all_photos:
-            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            date_photo = organiseur.extraire_date(photo)
             if date_photo:
                 age_mois = organiseur.calculer_age_mois(date_photo)
                 if age_mois not in photos_by_month:
@@ -949,7 +949,7 @@ def get_photo_caption_with_age(
 ) -> str:
     """Génère une légende de photo avec badge d'âge."""
     # Extraire la date de la photo
-    date_photo = organiseur.extraire_date_nom_fichier(photo_path.name)
+    date_photo = organiseur.extraire_date(photo_path)
 
     if not date_photo or date_photo < organiseur.date_naissance:
         return photo_path.name

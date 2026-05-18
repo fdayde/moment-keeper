@@ -5,10 +5,39 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from PIL import Image
+
 from .config import EXTENSIONS_PHOTOS, EXTENSIONS_VIDEOS, FILE_TYPES
+from .logger import setup_logger
 from .photo_copier import PhotoCopier
 
+logger = setup_logger(__name__)
+
 _MONTH_FOLDER_RE = re.compile(r"^\d+-\d+months$")
+
+# Tags EXIF (cf. PIL.ExifTags.TAGS)
+_EXIF_DATETIME_ORIGINAL = 36867  # DateTimeOriginal — quand la photo a été prise
+_EXIF_DATETIME = 306  # DateTime — dernière modification
+
+
+def _extract_date_from_exif(path: Path) -> Optional[datetime]:
+    """Lit la date EXIF d'une image (DateTimeOriginal en priorité, puis DateTime).
+
+    Retourne None en cas d'échec (pas d'EXIF, fichier corrompu, format invalide).
+    """
+    try:
+        with Image.open(path) as img:
+            exif = img.getexif()
+            if not exif:
+                return None
+            for tag in (_EXIF_DATETIME_ORIGINAL, _EXIF_DATETIME):
+                value = exif.get(tag)
+                if value:
+                    # Format EXIF standard : "YYYY:MM:DD HH:MM:SS"
+                    return datetime.strptime(str(value), "%Y:%m:%d %H:%M:%S")
+    except (OSError, ValueError, KeyError) as e:
+        logger.debug("EXIF illisible pour %s : %s", path.name, e)
+    return None
 
 
 class OrganisateurPhotos:
@@ -38,6 +67,19 @@ class OrganisateurPhotos:
                 return datetime.strptime(date_str, "%Y%m%d")
         except (ValueError, IndexError):
             pass
+        return None
+
+    def extraire_date(self, fichier_path: Path) -> Optional[datetime]:
+        """Extrait la date d'un fichier : nom YYYYMMDD d'abord, puis EXIF en fallback.
+
+        Pour les vidéos, seul le nom est utilisé (pas d'EXIF lisible par PIL).
+        """
+        date_from_name = self.extraire_date_nom_fichier(fichier_path.name)
+        if date_from_name is not None:
+            return date_from_name
+        # EXIF uniquement pour les photos (PIL ne lit pas l'EXIF vidéo)
+        if fichier_path.suffix.lower() in EXTENSIONS_PHOTOS:
+            return _extract_date_from_exif(fichier_path)
         return None
 
     def calculer_age_mois(self, date_photo: datetime) -> int:
@@ -81,7 +123,7 @@ class OrganisateurPhotos:
 
         for fichier in self.dossier_source.iterdir():
             if fichier.is_file() and fichier.suffix.lower() in self.extensions_actives:
-                date_photo = self.extraire_date_nom_fichier(fichier.name)
+                date_photo = self.extraire_date(fichier)
 
                 if date_photo and date_photo >= self.date_naissance:
                     age_mois = self.calculer_age_mois(date_photo)
@@ -96,7 +138,7 @@ class OrganisateurPhotos:
                     )
                 elif not date_photo:
                     fichiers_ignores.append(
-                        (fichier.name, "Format de date non reconnu")
+                        (fichier.name, "Aucune date trouvée (nom ou EXIF)")
                     )
 
         # Stocker les fichiers ignorés pour le débogage

@@ -169,6 +169,6 @@ class TestOrganisateurPhotos:
         # Vérifier les raisons
         raisons = dict(organiseur._fichiers_ignores)
         assert "pas_de_date.jpg" in raisons
-        assert "format" in raisons["pas_de_date.jpg"].lower()
+        assert "date" in raisons["pas_de_date.jpg"].lower()
         assert "20240501_avant_naissance.jpg" in raisons
         assert "naissance" in raisons["20240501_avant_naissance.jpg"].lower()
