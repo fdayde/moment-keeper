@@ -416,7 +416,7 @@ def main():
         baby_name = st.text_input(
             tr.t("baby_name"),
             placeholder=tr.t("baby_name_placeholder"),
-            help="Optionnel : permet de personnaliser l'affichage",
+            help=tr.t("baby_name_help"),
             value=st.session_state.baby_name,
         )
         if baby_name != st.session_state.baby_name:
@@ -551,9 +551,7 @@ def main():
         # Afficher le message de succès si la config de test vient d'être chargée
         if st.session_state.get("test_config_just_loaded", False):
             st.success("✅ " + tr.t("test_config_loaded"))
-            st.info(
-                "🔄 Rechargez la page (F5 ou Ctrl+R) pour appliquer tous les changements."
-            )
+            st.info(tr.t("reload_page_message"))
             st.session_state.test_config_just_loaded = False  # Réinitialiser le flag
 
         # Sélecteur de langue ultra-compact
@@ -672,10 +670,10 @@ def main():
                 chemin_photos = chemin_racine / sous_dossier_photos
 
                 if not chemin_racine.exists():
-                    st.error(f"Le dossier racine n'existe pas : {dossier_racine}")
+                    st.error(tr.t("root_not_exist_path", path=dossier_racine))
                     config_complete = False
                 elif not chemin_photos.exists():
-                    st.error(f"Le dossier source n'existe pas : {chemin_photos}")
+                    st.error(tr.t("source_not_exist_path", path=chemin_photos))
                     config_complete = False
                 else:
                     organiseur = OrganisateurPhotos(
@@ -685,7 +683,7 @@ def main():
                         type_fichiers,
                     )
             except Exception as e:
-                st.error(f"Erreur lors de la validation des chemins : {str(e)}")
+                st.error(tr.t("path_validation_error", error=str(e)))
                 config_complete = False
 
     with tabs[1]:
@@ -709,10 +707,8 @@ def main():
                             else 0
                         )
                 except Exception as e:
-                    st.error(f"Erreur lors de l'analyse : {str(e)}")
-                    st.info(
-                        "Vérifiez que les dossiers existent et contiennent des photos au bon format (YYYYMMDD_*.jpg)"
-                    )
+                    st.error(tr.t("analysis_error", error=str(e)))
+                    st.info(tr.t("check_folders_format"))
                     repartition = None
                     erreurs = []
 
@@ -781,21 +777,27 @@ def main():
                                 f"📁 {dossier} ({len(photos)} 📸 + {len(videos)} 🎬)"
                             ):
                                 if photos:
-                                    st.write("📸 **Photos:**")
+                                    st.write(tr.t("photos_section_label"))
                                     for photo in photos[:MAX_FILES_EXPANDER]:
                                         st.text(f"  📸 {photo.name}")
                                     if len(photos) > MAX_FILES_EXPANDER:
                                         st.text(
-                                            f"  ... et {len(photos) - MAX_FILES_EXPANDER} autres photos"
+                                            tr.t(
+                                                "and_more_photos",
+                                                count=len(photos) - MAX_FILES_EXPANDER,
+                                            )
                                         )
 
                                 if videos:
-                                    st.write("🎬 **Vidéos:**")
+                                    st.write(tr.t("videos_section_label"))
                                     for video in videos[:MAX_FILES_EXPANDER]:
                                         st.text(f"  🎬 {video.name}")
                                     if len(videos) > MAX_FILES_EXPANDER:
                                         st.text(
-                                            f"  ... et {len(videos) - MAX_FILES_EXPANDER} autres vidéos"
+                                            tr.t(
+                                                "and_more_videos",
+                                                count=len(videos) - MAX_FILES_EXPANDER,
+                                            )
                                         )
                         else:
                             # Affichage normal pour un seul type
@@ -844,7 +846,11 @@ def main():
                                 > MAX_IGNORED_FILES_DISPLAY
                             ):
                                 st.text(
-                                    f"  ... et {len(organiseur._fichiers_ignores) - MAX_IGNORED_FILES_DISPLAY} autres"
+                                    tr.t(
+                                        "and_more",
+                                        count=len(organiseur._fichiers_ignores)
+                                        - MAX_IGNORED_FILES_DISPLAY,
+                                    )
                                 )
 
                 if erreurs:
@@ -932,14 +938,10 @@ def main():
                             else None
                         )
                         st.metric(
-                            "📸 Photos" if tr.language == "fr" else "📸 Photos",
+                            tr.t("photos"),
                             metrics["total_photos"],
                             delta=(
-                                (
-                                    f"{pct_photos:.0f}% du total"
-                                    if tr.language == "fr"
-                                    else f"{pct_photos:.0f}% of total"
-                                )
+                                tr.t("pct_of_total", pct=f"{pct_photos:.0f}")
                                 if pct_photos is not None
                                 else None
                             ),
@@ -977,14 +979,10 @@ def main():
                             else None
                         )
                         st.metric(
-                            "🎬 Vidéos" if tr.language == "fr" else "🎬 Videos",
+                            tr.t("videos"),
                             metrics["total_videos"],
                             delta=(
-                                (
-                                    f"{pct_videos:.0f}% du total"
-                                    if tr.language == "fr"
-                                    else f"{pct_videos:.0f}% of total"
-                                )
+                                tr.t("pct_of_total", pct=f"{pct_videos:.0f}")
                                 if pct_videos is not None
                                 else None
                             ),
@@ -992,7 +990,10 @@ def main():
                     else:
                         st.metric(
                             tr.t("growth_period"),
-                            f"{metrics['periode_couverte']} mois",
+                            tr.t(
+                                "metric_months_count",
+                                count=metrics["periode_couverte"],
+                            ),
                             delta=(
                                 tr.t("growing_fast")
                                 if metrics["periode_couverte"] > 6
@@ -1001,7 +1002,7 @@ def main():
                         )
                     st.metric(
                         tr.t("daily_record"),
-                        f"{metrics['jour_record']} photos",
+                        tr.t("metric_photos_count", count=metrics["jour_record"]),
                         delta=(
                             tr.t("burst_mode") if metrics["jour_record"] >= 10 else None
                         ),
@@ -1010,7 +1011,10 @@ def main():
                 with col3:
                     st.metric(
                         tr.t("average_rhythm"),
-                        f"{metrics['moyenne_par_mois']:.1f}/mois",
+                        tr.t(
+                            "metric_per_month",
+                            count=f"{metrics['moyenne_par_mois']:.1f}",
+                        ),
                         delta=(
                             tr.t("regular")
                             if metrics["moyenne_par_mois"] >= 20
@@ -1019,7 +1023,7 @@ def main():
                     )
                     st.metric(
                         tr.t("longest_gap"),
-                        f"{metrics['max_gap']} jours",
+                        tr.t("metric_days_count", count=metrics["max_gap"]),
                         delta=(
                             tr.t("trex_sleeping")
                             if metrics["max_gap"] >= 7
@@ -1358,7 +1362,11 @@ def main():
                             st.markdown(caption_html, unsafe_allow_html=True)
                         except Exception as e:
                             st.error(
-                                f"Erreur lors du chargement de {photo.name}: {str(e)}"
+                                tr.t(
+                                    "error_loading_file",
+                                    name=photo.name,
+                                    error=str(e),
+                                )
                             )
                     # Stop ici pour ne pas exécuter la grille classique
                     selected_photos = None
@@ -1453,7 +1461,11 @@ def main():
                                     st.markdown(caption_html, unsafe_allow_html=True)
                                 except Exception as e:
                                     st.error(
-                                        f"Erreur lors du chargement de {photo_path.name}: {str(e)}"
+                                        tr.t(
+                                            "error_loading_file",
+                                            name=photo_path.name,
+                                            error=str(e),
+                                        )
                                     )
 
                         # Remplir les colonnes vides s'il y en a moins que cols_per_row

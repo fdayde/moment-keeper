@@ -266,9 +266,7 @@ def age_to_month_name(
     return mois_noms[mois_cible.month - 1]
 
 
-def detect_special_moments(
-    df: pd.DataFrame, jour_record_existant: int, tr: Translator
-) -> list[str]:
+def detect_special_moments(df: pd.DataFrame, tr: Translator) -> list[str]:
     """Détecte les moments spéciaux basés sur les pics de photos."""
     special_insights = []
 
@@ -293,9 +291,7 @@ def detect_special_moments(
             dates_str += "..."
 
         special_insights.append(
-            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
-            if tr.language == "fr"
-            else f"🎉 {len(pics)} special events detected ({dates_str})"
+            tr.t("special_events_detected", count=len(pics), dates=dates_str)
         )
 
         # Suggestions d'événements selon les pics
@@ -304,15 +300,11 @@ def detect_special_moments(
 
         if pic_max >= INSIGHTS_THRESHOLDS["major_event_threshold"]:
             special_insights.append(
-                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
-                if tr.language == "fr"
-                else f"🎊 Major event on {date_pic_max.strftime('%d/%m/%Y')} - First vacation? Family visit?"
+                tr.t("major_event", date=date_pic_max.strftime("%d/%m/%Y"))
             )
         elif pic_max >= INSIGHTS_THRESHOLDS["nice_event_threshold"]:
             special_insights.append(
-                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
-                if tr.language == "fr"
-                else f"🎈 Great day on {date_pic_max.strftime('%d/%m/%Y')} - Family outing? First birthday?"
+                tr.t("nice_day_event", date=date_pic_max.strftime("%d/%m/%Y"))
             )
 
     # Détection de séries de photos
@@ -325,9 +317,11 @@ def detect_special_moments(
                 date_debut = dates_pics[i - 1]
                 date_fin = dates_pics[i]
                 special_insights.append(
-                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
-                    if tr.language == "fr"
-                    else f"🏖️ Intensive period {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacation or event?"
+                    tr.t(
+                        "intensive_period",
+                        start=date_debut.strftime("%d/%m"),
+                        end=date_fin.strftime("%d/%m"),
+                    )
                 )
                 break
 
@@ -362,15 +356,21 @@ def generate_temporal_comparisons(
                 evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
                 if evolution > INSIGHTS_THRESHOLDS["evolution_significant"]:
                     comparisons.append(
-                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
-                        if tr.language == "fr"
-                        else f"📈 Growing evolution: +{evolution:.0f}% between {premier_nom} and {dernier_nom}"
+                        tr.t(
+                            "evolution_increasing",
+                            evolution=f"{evolution:.0f}",
+                            premier=premier_nom,
+                            dernier=dernier_nom,
+                        )
                     )
                 elif evolution < INSIGHTS_THRESHOLDS["evolution_decrease"]:
                     comparisons.append(
-                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
-                        if tr.language == "fr"
-                        else f"📉 Evolution: {evolution:.0f}% between {premier_nom} and {dernier_nom}"
+                        tr.t(
+                            "evolution_change",
+                            evolution=f"{evolution:.0f}",
+                            premier=premier_nom,
+                            dernier=dernier_nom,
+                        )
                     )
 
         # Comparaison des 2 mois les plus contrastés
@@ -440,16 +440,13 @@ def generate_insights(
     tr: Translator = None,
 ) -> list[str]:
     """Génère les messages d'insights contextuels."""
+    if tr is None:
+        tr = Translator("fr")
+
     insights = []
 
     if df.empty:
-        if tr:
-            return [tr.t("analyze_first")]
-        return ["Aucune photo analysée pour le moment 📸"]
-
-    # Protection contre tr None
-    if not tr:
-        tr = Translator("fr")
+        return [tr.t("analyze_first")]
 
     # Messages encourageants adaptés au type
     if is_both(type_fichiers):
@@ -476,19 +473,14 @@ def generate_insights(
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
         has_photos = includes_photos(type_fichiers)
-        if tr.language == "fr":
-            type_nom = "photos" if has_photos else "vidéos"
-        else:
-            type_nom = "photos" if has_photos else "videos"
+        type_nom = tr.t("photos_unit") if has_photos else tr.t("videos_unit")
         type_emoji = "📸" if has_photos else "🎬"
 
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(tr.t("magnificent_collection", total=total, type=type_nom))
         elif total > INSIGHTS_THRESHOLDS["medium_collection"]:
             insights.append(
-                f"{type_emoji} Belle collection de {total} {type_nom}!"
-                if tr.language == "fr"
-                else f"{type_emoji} Nice collection of {total} {type_nom}!"
+                tr.t("nice_collection", emoji=type_emoji, total=total, type=type_nom)
             )
 
     # Analyse des mois les plus photographiés
@@ -514,10 +506,10 @@ def generate_insights(
     photos_par_jour_semaine = df.groupby("jour_semaine").size()
     if not photos_par_jour_semaine.empty:
         jour_favori = photos_par_jour_semaine.idxmax()
-        if jour_favori in ["Saturday", "Sunday"]:
-            insights.append(tr.t("capture_weekends"))
-        elif jour_favori == "Sunday":
+        if jour_favori == "Sunday":
             insights.append(tr.t("sunday_champion"))
+        elif jour_favori == "Saturday":
+            insights.append(tr.t("capture_weekends"))
 
     # Record de photos en une journée
     if metrics["jour_record"] >= INSIGHTS_THRESHOLDS["burst_mode_threshold"]:
@@ -576,7 +568,7 @@ def generate_insights(
         insights.append(tr.t("yearly_projection", count=int(projection_annuelle)))
 
     # Détection de moments spéciaux
-    special_moments = detect_special_moments(df, metrics["jour_record"], tr)
+    special_moments = detect_special_moments(df, tr)
     insights.extend(special_moments)
 
     # Comparaisons temporelles
@@ -599,18 +591,10 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title=(
-            "🦖 Évolution des photos par mois d'âge"
-            if tr.language == "fr"
-            else "🦖 Photo evolution by age in months"
-        ),
+        title=tr.t("chart_bar_title"),
         labels={
-            "age_mois": (
-                "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)"
-            ),
-            "nb_photos": (
-                "Nombre de photos" if tr.language == "fr" else "Number of photos"
-            ),
+            "age_mois": tr.t("chart_age_trex_label"),
+            "nb_photos": tr.t("chart_photo_count_label"),
         },
         color="nb_photos",
         color_continuous_scale=BAR_CHART_GRADIENT,
@@ -622,11 +606,11 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig_barres.update_xaxes(
-        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)",
+        title=tr.t("chart_baby_age_label"),
         gridcolor=COLORS["primary"],
     )
     fig_barres.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        title=tr.t("chart_photo_count_label"),
         gridcolor=COLORS["primary"],
     )
     charts["barres"] = fig_barres
@@ -641,16 +625,10 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title=(
-            "🦖 Timeline : Activité hebdomadaire"
-            if tr.language == "fr"
-            else "🦖 Timeline: Weekly activity"
-        ),
+        title=tr.t("chart_timeline_title"),
         labels={
-            "semaine_annee": "Semaine" if tr.language == "fr" else "Week",
-            "nb_photos": (
-                "Nombre de photos" if tr.language == "fr" else "Number of photos"
-            ),
+            "semaine_annee": tr.t("chart_week_label"),
+            "nb_photos": tr.t("chart_photo_count_label"),
         },
         color_discrete_sequence=[COLORS["chart_purple"]],
     )
@@ -661,11 +639,11 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     )
     fig_timeline.update_xaxes(
         tickangle=CHART_CONFIG["tick_angle"],
-        title="Semaine" if tr.language == "fr" else "Week",
+        title=tr.t("chart_week_label"),
         gridcolor=COLORS["primary"],
     )
     fig_timeline.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        title=tr.t("chart_photo_count_label"),
         gridcolor=COLORS["primary"],
     )
     fig_timeline.update_traces(
@@ -729,12 +707,8 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         )
     )
     fig_heatmap.update_layout(
-        title=(
-            "🦖 Heatmap : Jours favoris"
-            if tr.language == "fr"
-            else "🦖 Heatmap: Favorite days"
-        ),
-        xaxis_title="Jour de la semaine" if tr.language == "fr" else "Day of the week",
+        title=tr.t("chart_heatmap_title"),
+        xaxis_title=tr.t("chart_day_of_week_label"),
         yaxis_title="",
         height=CHART_CONFIG["height_heatmap"],
         font=dict(family="Poppins, sans-serif", color=COLORS["text_dark"]),
