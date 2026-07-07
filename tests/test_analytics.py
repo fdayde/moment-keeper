@@ -19,6 +19,7 @@ from moment_keeper.analytics import (
     get_photos_by_mode,
     get_random_photos_for_month,
     get_timeline_photos,
+    photos_grouped_by_age,
 )
 from moment_keeper.config import (
     ALL_MONTHS_SENTINEL,
@@ -279,6 +280,40 @@ def test_get_photos_by_mode_unknown_falls_back_to_random(
         gallery_data_organized, organiseur, "mode-inconnu", ALL_MONTHS_SENTINEL, 2
     )
     assert len(r) == 2
+
+
+# ---------- Time-lapse (photos_grouped_by_age) ----------
+
+
+def test_photos_grouped_by_age_groups_correctly(organiseur):
+    """Les photos test 2024 (naissance 06-01) couvrent 3 ages : 1, 3, 5 mois."""
+    gallery = get_gallery_data(organiseur)
+    groups = photos_grouped_by_age(gallery, organiseur)
+
+    # 2 photos de juillet → age 1 mois
+    assert 1 in groups
+    assert len(groups[1]) == 2
+    # 1 photo de septembre → age 3 mois
+    assert 3 in groups
+    assert len(groups[3]) == 1
+    # 1 photo de novembre → age 5 mois
+    assert 5 in groups
+    assert len(groups[5]) == 1
+
+
+def test_photos_grouped_by_age_empty_when_no_photos(tmp_path):
+    """Galerie vide → dict vide."""
+    from moment_keeper.organizer import OrganisateurPhotos
+
+    (tmp_path / "photos").mkdir()
+    org = OrganisateurPhotos(
+        dossier_racine=tmp_path,
+        sous_dossier_photos="photos",
+        date_naissance=datetime(2024, 1, 1),
+        type_fichiers=FILE_TYPES["photos_only"],
+    )
+    gallery = get_gallery_data(org)
+    assert photos_grouped_by_age(gallery, org) == {}
 
 
 # ---------- Caption + insights + signature ----------

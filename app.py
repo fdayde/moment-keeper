@@ -21,6 +21,7 @@ from src.moment_keeper.analytics import (
     get_photo_caption_with_age,
     get_photo_data_cached,
     get_photos_by_mode,
+    photos_grouped_by_age,
 )
 from src.moment_keeper.config import (
     ALL_MONTHS_SENTINEL,
@@ -1184,6 +1185,7 @@ def main():
                         tr.t("mode_chronological"),
                         tr.t("mode_highlights"),
                         tr.t("mode_timeline"),
+                        tr.t("mode_timelapse"),
                     ]
 
                     view_mode = st.selectbox(
@@ -1268,27 +1270,78 @@ def main():
                     else:
                         st.info(tr.t("photos_found", count=month_photos))
 
-                # Stabiliser la sélection en session_state : sinon les modes
-                # aléatoire/highlights/timeline retirent au sort à chaque rerun
-                # (notamment quand on clique ▶ Lire sur une vidéo), ce qui peut
-                # faire disparaître l'élément cliqué et générer des 500
-                # MediaFileStorageError sur les anciennes URLs.
-                refresh_counter = st.session_state.get("gallery_refresh_counter", 0)
-                selection_key = (
-                    f"gallery_sel::{view_mode}::{selected_month}::"
-                    f"{num_photos}::{refresh_counter}"
-                )
-                if selection_key in st.session_state:
-                    selected_photos = st.session_state[selection_key]
+                # Mode Time-lapse : slider d'âge + une grande photo médiane du mois
+                if view_mode == tr.t("mode_timelapse"):
+                    photos_par_age = photos_grouped_by_age(gallery_data, organiseur)
+                    if not photos_par_age:
+                        st.warning(tr.t("no_photos_month"))
+                    else:
+                        ages_dispo = sorted(photos_par_age.keys())
+                        selected_age = st.select_slider(
+                            tr.t("age_slider_label"),
+                            options=ages_dispo,
+                            value=ages_dispo[0],
+                            format_func=lambda a: tr.t("age_months", age=a),
+                        )
+
+                        # Choisir une photo "médiane par date" pour ce mois
+                        candidates = sorted(
+                            photos_par_age[selected_age],
+                            key=lambda p: organiseur.extraire_date(p) or datetime.min,
+                        )
+                        photo = candidates[len(candidates) // 2]
+
+                        try:
+                            if organiseur.get_file_type(photo) == "video":
+                                st.video(str(photo))
+                            else:
+                                image = get_image_with_correct_orientation(
+                                    str(photo), max_size=(900, 900)
+                                )
+                                buffered = BytesIO()
+                                image.save(buffered, format="JPEG", quality=90)
+                                img_str = base64.b64encode(buffered.getvalue()).decode()
+                                st.markdown(
+                                    f'<div style="text-align:center; margin: 1rem 0;">'
+                                    f'<img src="data:image/jpeg;base64,{img_str}" '
+                                    f'style="max-width:100%; max-height:600px; '
+                                    f"border-radius:12px; "
+                                    f'box-shadow:0 4px 20px rgba(0,0,0,0.15);" />'
+                                    f"</div>",
+                                    unsafe_allow_html=True,
+                                )
+                            caption_html = get_photo_caption_with_age(
+                                photo, organiseur, tr
+                            )
+                            st.markdown(caption_html, unsafe_allow_html=True)
+                        except Exception as e:
+                            st.error(
+                                f"Erreur lors du chargement de {photo.name}: {str(e)}"
+                            )
+                    # Stop ici pour ne pas exécuter la grille classique
+                    selected_photos = None
                 else:
-                    selected_photos = get_photos_by_mode(
-                        gallery_data,
-                        organiseur,
-                        view_mode,
-                        selected_month,
-                        num_photos,
+                    # Stabiliser la sélection en session_state : sinon les modes
+                    # aléatoire/highlights/timeline retirent au sort à chaque rerun
+                    # (notamment quand on clique ▶ Lire sur une vidéo), ce qui peut
+                    # faire disparaître l'élément cliqué et générer des 500
+                    # MediaFileStorageError sur les anciennes URLs.
+                    refresh_counter = st.session_state.get("gallery_refresh_counter", 0)
+                    selection_key = (
+                        f"gallery_sel::{view_mode}::{selected_month}::"
+                        f"{num_photos}::{refresh_counter}"
                     )
-                    st.session_state[selection_key] = selected_photos
+                    if selection_key in st.session_state:
+                        selected_photos = st.session_state[selection_key]
+                    else:
+                        selected_photos = get_photos_by_mode(
+                            gallery_data,
+                            organiseur,
+                            view_mode,
+                            selected_month,
+                            num_photos,
+                        )
+                        st.session_state[selection_key] = selected_photos
 
                 if selected_photos:
                     # Afficher les photos in une grille
@@ -1371,7 +1424,8 @@ def main():
                             "<div style='margin-bottom: 1rem;'></div>",
                             unsafe_allow_html=True,
                         )
-                else:
+                elif view_mode != tr.t("mode_timelapse"):
+                    # Pas de warning en mode time-lapse (rendu inline plus haut)
                     st.warning(tr.t("no_photos_month"))
 
     # 🦖 Footer T-Rex avec personnalité

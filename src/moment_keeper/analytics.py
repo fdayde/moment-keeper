@@ -773,6 +773,24 @@ def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
     return gallery_data
 
 
+def photos_grouped_by_age(
+    gallery_data: dict[str, list[Path]], organiseur: OrganisateurPhotos
+) -> dict[int, list[Path]]:
+    """Groupe les photos par âge en mois (utilisé par le mode time-lapse).
+
+    Retourne dict[age_mois → liste de photos]. Les fichiers sans date
+    extractible sont ignorés.
+    """
+    groups: dict[int, list[Path]] = {}
+    for photos in gallery_data.values():
+        for photo in photos:
+            date_photo = organiseur.extraire_date(photo)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                age = organiseur.calculer_age_mois(date_photo)
+                groups.setdefault(age, []).append(photo)
+    return groups
+
+
 def get_photos_by_mode(
     gallery_data: dict[str, list[Path]],
     organiseur: OrganisateurPhotos,
