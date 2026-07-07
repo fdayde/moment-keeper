@@ -26,6 +26,7 @@ from src.moment_keeper.analytics import (
 from src.moment_keeper.config import (
     ALL_MONTHS_SENTINEL,
     FILE_TYPES,
+    GALLERY_MODES,
     GITHUB_REPO,
     MAX_FILES_EXPANDER,
     MAX_FILES_PREVIEW,
@@ -1179,19 +1180,13 @@ def main():
                     )
 
                 with col2:
-                    # Sélecteur de mode d'affichage
-                    view_modes = [
-                        tr.t("mode_random"),
-                        tr.t("mode_chronological"),
-                        tr.t("mode_highlights"),
-                        tr.t("mode_timeline"),
-                        tr.t("mode_timelapse"),
-                    ]
-
+                    # Sélecteur de mode d'affichage (clés internes stables,
+                    # libellés traduits via format_func)
                     view_mode = st.selectbox(
                         tr.t("view_mode"),
-                        view_modes,
+                        GALLERY_MODES,
                         index=0,
+                        format_func=lambda m: tr.t(f"mode_{m}"),
                         help=tr.t("view_mode_help"),
                     )
 
@@ -1227,7 +1222,7 @@ def main():
                         st.rerun()
 
                 # Afficher le nombre de photos trouvées
-                if view_mode == tr.t("mode_timeline"):
+                if view_mode == "timeline":
                     # Pour le mode timeline, afficher le nombre de mois disponibles
                     monthly_folders = {
                         k: v
@@ -1271,7 +1266,7 @@ def main():
                         st.info(tr.t("photos_found", count=month_photos))
 
                 # Mode Time-lapse : slider d'âge + une grande photo médiane du mois
-                if view_mode == tr.t("mode_timelapse"):
+                if view_mode == "timelapse":
                     photos_par_age = photos_grouped_by_age(gallery_data, organiseur)
                     if not photos_par_age:
                         st.warning(tr.t("no_photos_month"))
@@ -1424,7 +1419,7 @@ def main():
                             "<div style='margin-bottom: 1rem;'></div>",
                             unsafe_allow_html=True,
                         )
-                elif view_mode != tr.t("mode_timelapse"):
+                elif view_mode != "timelapse":
                     # Pas de warning en mode time-lapse (rendu inline plus haut)
                     st.warning(tr.t("no_photos_month"))
 

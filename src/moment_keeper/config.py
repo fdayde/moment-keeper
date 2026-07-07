@@ -39,6 +39,9 @@ MONTH_FOLDER_PATTERN = "{start}-{end}months"
 ALL_MONTHS_SENTINEL = "__all_months__"
 UNSORTED_SENTINEL = "__unsorted__"
 
+# Clés internes des modes d'affichage de la galerie (stables, indépendantes de la langue)
+GALLERY_MODES = ["random", "chronological", "highlights", "timeline", "timelapse"]
+
 # Configuration de l'interface
 PAGE_CONFIG = {
     "page_title": "🦖 MomentKeeper",

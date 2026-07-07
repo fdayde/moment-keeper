@@ -241,14 +241,14 @@ def test_get_timeline_photos_from_unsorted(organiseur):
 def test_get_photos_by_mode_dispatches(gallery_data_organized, organiseur):
     # Random
     r = get_photos_by_mode(
-        gallery_data_organized, organiseur, "🎲 Aléatoire", ALL_MONTHS_SENTINEL, 3
+        gallery_data_organized, organiseur, "random", ALL_MONTHS_SENTINEL, 3
     )
     assert len(r) == 3
     # Chronological
     c = get_photos_by_mode(
         gallery_data_organized,
         organiseur,
-        "⏰ Chronological",
+        "chronological",
         ALL_MONTHS_SENTINEL,
         2,
     )
@@ -257,7 +257,7 @@ def test_get_photos_by_mode_dispatches(gallery_data_organized, organiseur):
     h = get_photos_by_mode(
         gallery_data_organized,
         organiseur,
-        "📸 Highlights",
+        "highlights",
         ALL_MONTHS_SENTINEL,
         2,
     )
@@ -266,7 +266,7 @@ def test_get_photos_by_mode_dispatches(gallery_data_organized, organiseur):
     t = get_photos_by_mode(
         gallery_data_organized,
         organiseur,
-        "📈 Timeline croissance",
+        "timeline",
         ALL_MONTHS_SENTINEL,
         6,
     )

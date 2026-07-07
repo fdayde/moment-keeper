@@ -798,18 +798,25 @@ def get_photos_by_mode(
     selected_month: str,
     num_photos: int = 6,
 ) -> list[Path]:
-    """Obtient les photos selon le mode sélectionné."""
-    if mode in ("🎲 Aléatoire", "🎲 Random"):
+    """Obtient les photos selon le mode sélectionné.
+
+    Args:
+        mode: clé interne du mode ("random", "chronological", "highlights"
+            ou "timeline", cf. config.GALLERY_MODES). Toute clé inconnue
+            retombe sur le mode aléatoire. Le mode "timelapse" n'est pas
+            géré ici (rendu directement dans app.py).
+    """
+    if mode == "random":
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
-    elif mode in ("⏰ Chronologique", "⏰ Chronological"):
+    elif mode == "chronological":
         return get_chronological_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode in ("📸 Moments forts", "📸 Highlights"):
+    elif mode == "highlights":
         return get_highlight_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode in ("📈 Timeline croissance", "📈 Growth timeline"):
+    elif mode == "timeline":
         return get_timeline_photos(gallery_data, organiseur, num_photos)
     else:
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
