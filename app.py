@@ -21,7 +21,7 @@ from src.moment_keeper.analytics import (
     get_photo_caption_with_age,
     get_photo_data_cached,
     get_photos_by_mode,
-    photos_grouped_by_age,
+    photos_grouped_by_age_cached,
 )
 from src.moment_keeper.config import (
     ALL_MONTHS_SENTINEL,
@@ -154,6 +154,27 @@ def save_configuration(config_manager: ConfigManager):
         )
 
     config_manager.save_config(config)
+
+
+def _invalidate_gallery_state() -> None:
+    """Invalide la sélection de galerie en session.
+
+    À appeler après tout déplacement de fichiers sur disque (organisation,
+    reset) ou sur demande explicite de rafraîchissement : incrémente le
+    compteur de refresh (les prochaines clés ``gallery_sel::*`` seront donc
+    différentes) et supprime les clés ``gallery_sel::*`` et ``play_video::*``
+    devenues obsolètes.
+
+    Les caches de données (``get_gallery_data_cached``, etc.) s'invalident
+    déjà tout seuls via les mtimes des dossiers : pas besoin de
+    ``st.cache_data.clear()`` ici.
+    """
+    st.session_state["gallery_refresh_counter"] = (
+        st.session_state.get("gallery_refresh_counter", 0) + 1
+    )
+    for k in list(st.session_state.keys()):
+        if k.startswith("gallery_sel::") or k.startswith("play_video::"):
+            del st.session_state[k]
 
 
 def main():
@@ -465,6 +486,7 @@ def main():
             nb_fichiers, erreurs = st.session_state.pop("reset_result")
             if nb_fichiers > 0:
                 st.success(tr.t("files_reset", count=nb_fichiers))
+                _invalidate_gallery_state()
             if erreurs:
                 st.error(tr.t("errors_encountered"))
                 for erreur in erreurs:
@@ -861,6 +883,7 @@ def main():
                         nb_fichiers, erreurs = organiseur.organiser()
 
                     if nb_fichiers > 0:
+                        _invalidate_gallery_state()
                         if is_both(type_fichiers):
                             type_text = tr.t("files_unit")
                         elif includes_photos(type_fichiers):
@@ -903,17 +926,22 @@ def main():
 
                 with col1:
                     if is_both(type_fichiers):
+                        pct_photos = (
+                            metrics["total_photos"] / metrics["total_fichiers"] * 100
+                            if metrics["total_fichiers"] > 0
+                            else None
+                        )
                         st.metric(
                             "📸 Photos" if tr.language == "fr" else "📸 Photos",
                             metrics["total_photos"],
                             delta=(
-                                f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% du total"
-                                if tr.language == "fr"
-                                else (
-                                    f"{metrics['total_photos'] / metrics['total_fichiers'] * 100:.0f}% of total"
-                                    if metrics["total_fichiers"] > 0
-                                    else None
+                                (
+                                    f"{pct_photos:.0f}% du total"
+                                    if tr.language == "fr"
+                                    else f"{pct_photos:.0f}% of total"
                                 )
+                                if pct_photos is not None
+                                else None
                             ),
                         )
                     else:
@@ -943,17 +971,22 @@ def main():
 
                 with col2:
                     if is_both(type_fichiers):
+                        pct_videos = (
+                            metrics["total_videos"] / metrics["total_fichiers"] * 100
+                            if metrics["total_fichiers"] > 0
+                            else None
+                        )
                         st.metric(
                             "🎬 Vidéos" if tr.language == "fr" else "🎬 Videos",
                             metrics["total_videos"],
                             delta=(
-                                f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% du total"
-                                if tr.language == "fr"
-                                else (
-                                    f"{metrics['total_videos'] / metrics['total_fichiers'] * 100:.0f}% of total"
-                                    if metrics["total_fichiers"] > 0
-                                    else None
+                                (
+                                    f"{pct_videos:.0f}% du total"
+                                    if tr.language == "fr"
+                                    else f"{pct_videos:.0f}% of total"
                                 )
+                                if pct_videos is not None
+                                else None
                             ),
                         )
                     else:
@@ -1149,37 +1182,11 @@ def main():
             if not gallery_data:
                 st.info(tr.t("no_photos_month"))
             else:
-                # Contrôles de l'interface
-                col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+                # Contrôles de l'interface (le mode est rendu en premier : il
+                # détermine si les contrôles mois/nombre ont un sens)
+                col_mode, col_month, col_num, col_refresh = st.columns([2, 2, 1, 1])
 
-                with col1:
-                    # Trier les mois disponibles (sentinelle interne + dossiers triés)
-                    months_available = [ALL_MONTHS_SENTINEL] + sorted(
-                        gallery_data.keys(), key=extract_month_number
-                    )
-
-                    def _format_month(m):
-                        if m == ALL_MONTHS_SENTINEL:
-                            return tr.t("all_months")
-                        if m == UNSORTED_SENTINEL:
-                            return tr.t("unsorted_label")
-                        match = _MONTH_FOLDER_RE.match(m)
-                        if match:
-                            return tr.t(
-                                "month_pattern",
-                                start=match.group(1),
-                                end=match.group(2),
-                            )
-                        return m
-
-                    selected_month = st.selectbox(
-                        tr.t("select_month"),
-                        months_available,
-                        index=0,
-                        format_func=_format_month,
-                    )
-
-                with col2:
+                with col_mode:
                     # Sélecteur de mode d'affichage (clés internes stables,
                     # libellés traduits via format_func)
                     view_mode = st.selectbox(
@@ -1190,35 +1197,60 @@ def main():
                         help=tr.t("view_mode_help"),
                     )
 
-                with col3:
-                    # Max basé sur le nombre de médias disponibles, capé à 50
-                    # (au-delà, la galerie devient trop lourde à rendre)
-                    total_available = sum(
-                        len(photos) for photos in gallery_data.values()
-                    )
-                    max_photos = max(6, min(50, total_available))
+                if view_mode != "timelapse":
+                    with col_month:
+                        # Trier les mois disponibles (sentinelle interne + dossiers triés)
+                        months_available = [ALL_MONTHS_SENTINEL] + sorted(
+                            gallery_data.keys(), key=extract_month_number
+                        )
 
-                    num_photos = st.slider(
-                        tr.t("photos_to_show"),
-                        min_value=1,
-                        max_value=max_photos,
-                        value=min(6, max_photos),
-                        step=1,
-                    )
+                        def _format_month(m):
+                            if m == ALL_MONTHS_SENTINEL:
+                                return tr.t("all_months")
+                            if m == UNSORTED_SENTINEL:
+                                return tr.t("unsorted_label")
+                            match = _MONTH_FOLDER_RE.match(m)
+                            if match:
+                                return tr.t(
+                                    "month_pattern",
+                                    start=match.group(1),
+                                    end=match.group(2),
+                                )
+                            return m
 
-                with col4:
+                        selected_month = st.selectbox(
+                            tr.t("select_month"),
+                            months_available,
+                            index=0,
+                            format_func=_format_month,
+                        )
+
+                    with col_num:
+                        # Max basé sur le nombre de médias disponibles, capé à 50
+                        # (au-delà, la galerie devient trop lourde à rendre)
+                        total_available = sum(
+                            len(photos) for photos in gallery_data.values()
+                        )
+                        max_photos = max(6, min(50, total_available))
+
+                        num_photos = st.slider(
+                            tr.t("photos_to_show"),
+                            min_value=1,
+                            max_value=max_photos,
+                            value=min(6, max_photos),
+                            step=1,
+                        )
+                else:
+                    # Mois et nombre de photos n'ont pas de sens en time-lapse :
+                    # une seule photo médiane par âge est choisie automatiquement.
+                    selected_month = ALL_MONTHS_SENTINEL
+                    num_photos = 6
+
+                with col_refresh:
                     if st.button(tr.t("refresh_gallery"), type="secondary"):
                         # Bust les caches @st.cache_data pour relire le disque
                         st.cache_data.clear()
-                        # Incrémenter le compteur invalide la sélection en session
-                        # (sinon, en mode aléatoire, on retomberait sur la même)
-                        st.session_state["gallery_refresh_counter"] = (
-                            st.session_state.get("gallery_refresh_counter", 0) + 1
-                        )
-                        # Replier toutes les vidéos qui étaient en cours de lecture
-                        for k in list(st.session_state.keys()):
-                            if k.startswith("play_video::"):
-                                del st.session_state[k]
+                        _invalidate_gallery_state()
                         st.rerun()
 
                 # Afficher le nombre de photos trouvées
@@ -1240,6 +1272,23 @@ def main():
                         message = tr.t(
                             "months_growth_available_no_name",
                             count=len(monthly_folders),
+                        )
+                        st.info(f"📈 {message}")
+                elif view_mode == "timelapse":
+                    # Pour le mode time-lapse, afficher le nombre d'âges disponibles
+                    # (photos_par_age est réutilisé plus bas pour le rendu)
+                    photos_par_age = photos_grouped_by_age_cached(organiseur)
+                    if baby_name.strip():
+                        message = tr.t(
+                            "months_growth_available",
+                            count=len(photos_par_age),
+                            name=baby_name.strip(),
+                        )
+                        st.info(f"📈 {message}")
+                    else:
+                        message = tr.t(
+                            "months_growth_available_no_name",
+                            count=len(photos_par_age),
                         )
                         st.info(f"📈 {message}")
                 elif selected_month == ALL_MONTHS_SENTINEL:
@@ -1267,7 +1316,6 @@ def main():
 
                 # Mode Time-lapse : slider d'âge + une grande photo médiane du mois
                 if view_mode == "timelapse":
-                    photos_par_age = photos_grouped_by_age(gallery_data, organiseur)
                     if not photos_par_age:
                         st.warning(tr.t("no_photos_month"))
                     else:
@@ -1280,10 +1328,9 @@ def main():
                         )
 
                         # Choisir une photo "médiane par date" pour ce mois
-                        candidates = sorted(
-                            photos_par_age[selected_age],
-                            key=lambda p: organiseur.extraire_date(p) or datetime.min,
-                        )
+                        # (candidates est déjà trié par date croissante par
+                        # photos_grouped_by_age_cached, pas besoin de re-trier ici)
+                        candidates = photos_par_age[selected_age]
                         photo = candidates[len(candidates) // 2]
 
                         try:

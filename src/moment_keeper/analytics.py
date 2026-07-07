@@ -94,6 +94,20 @@ def get_gallery_data_cached(
     return _get_gallery_data_cached(organiseur, _cache_signature(organiseur))
 
 
+@st.cache_data(show_spinner=False)
+def _photos_grouped_by_age_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> dict[int, list[Path]]:
+    return photos_grouped_by_age(get_gallery_data(_organiseur), _organiseur)
+
+
+def photos_grouped_by_age_cached(
+    organiseur: OrganisateurPhotos,
+) -> dict[int, list[Path]]:
+    """Version cachée de photos_grouped_by_age, invalidée par changement de mtime."""
+    return _photos_grouped_by_age_cached(organiseur, _cache_signature(organiseur))
+
+
 def _process_folder_for_data(
     dossier: Path, organiseur: OrganisateurPhotos, photos_data: list
 ) -> None:
@@ -778,17 +792,21 @@ def photos_grouped_by_age(
 ) -> dict[int, list[Path]]:
     """Groupe les photos par âge en mois (utilisé par le mode time-lapse).
 
-    Retourne dict[age_mois → liste de photos]. Les fichiers sans date
-    extractible sont ignorés.
+    Retourne dict[age_mois → liste de photos triées par date croissante].
+    Le tri est fait une seule fois ici pour éviter de le refaire à chaque
+    rerun côté UI. Les fichiers sans date extractible sont ignorés.
     """
-    groups: dict[int, list[Path]] = {}
+    groups: dict[int, list[tuple[datetime, Path]]] = {}
     for photos in gallery_data.values():
         for photo in photos:
             date_photo = organiseur.extraire_date(photo)
             if date_photo and date_photo >= organiseur.date_naissance:
                 age = organiseur.calculer_age_mois(date_photo)
-                groups.setdefault(age, []).append(photo)
-    return groups
+                groups.setdefault(age, []).append((date_photo, photo))
+    return {
+        age: [photo for _, photo in sorted(dated_photos, key=lambda x: x[0])]
+        for age, dated_photos in groups.items()
+    }
 
 
 def get_photos_by_mode(

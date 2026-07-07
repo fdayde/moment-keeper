@@ -300,6 +300,11 @@ def test_photos_grouped_by_age_groups_correctly(organiseur):
     assert 5 in groups
     assert len(groups[5]) == 1
 
+    # Chaque liste retournée est triée par date croissante
+    for photos in groups.values():
+        dates = [organiseur.extraire_date(p) for p in photos]
+        assert dates == sorted(dates)
+
 
 def test_photos_grouped_by_age_empty_when_no_photos(tmp_path):
     """Galerie vide → dict vide."""
