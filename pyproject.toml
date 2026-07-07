@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "moment-keeper"
 version = "1.1.0"
 description = "Automatic (Baby) Photo Organizer - Organize precious moments chronologically"
-authors = [{name = "Your Name", email = "your.email@example.com"}]
+authors = [{name = "florentdayde", email = "florentdayde489@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -27,16 +27,6 @@ dev = [
 
 [project.scripts]
 moment-keeper = "moment_keeper.cli:main"
-
-[tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311', 'py312']
-
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
 
 [tool.ruff]
 line-length = 88

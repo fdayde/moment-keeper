@@ -75,6 +75,12 @@ venv.bak/
 *.swo
 *~
 
+# Claude Code local settings
+.claude/settings.local.json
+
+# Stray temp files from interrupted edits
+*.tmp.*
+
 # OS
 .DS_Store
 Thumbs.db

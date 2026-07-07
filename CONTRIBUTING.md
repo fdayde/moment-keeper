@@ -34,22 +34,22 @@ Thank you for your interest in contributing!
 
 ```bash
 # Install dev dependencies
-pip install -r requirements-dev.txt
+uv sync --extra dev
 
 # Setup pre-commit hooks (required)
-pre-commit install
+uv run pre-commit install
 
 # Run all checks
-pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # Ensure your code is properly formatted
-black src/
-isort src/
+uv run ruff format src/
+uv run ruff check src/
 ```
 
 ### 📋 Pull Request Checklist
 
-- [ ] Code follows project style (Black, isort, PEP8)
+- [ ] Code follows project style (ruff, PEP8)
 - [ ] Functions have clear docstrings
 - [ ] No code duplication (DRY principle)
 - [ ] Changes are focused and minimal (KISS principle)

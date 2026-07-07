@@ -26,16 +26,17 @@ moment-keeper/
 │   ├── config.py               # Configuration centralisée
 │   ├── config_manager.py       # Persistance de la configuration
 │   ├── theme.py                # Thème et styles UI
-│   └── translations.py         # Support multilingue
+│   ├── translations.py         # Support multilingue
+│   ├── logger.py               # Logging centralisé
+│   ├── utils.py                # Utilitaires partagés
+│   └── cli.py                  # Lanceur CLI Streamlit
 ├── app.py                      # Interface Streamlit
 ├── notebooks/                  # Notebooks Jupyter
 │   └── classement_photos.ipynb
 ├── tests/                      # Tests unitaires
 ├── docs/                       # Documentation
-├── requirements.txt            # Dépendances production
-├── requirements-dev.txt        # Dépendances développement
-├── pyproject.toml             # Configuration du projet
-└── .gitignore                 # Exclusions Git
+├── pyproject.toml              # Configuration du projet et dépendances (uv)
+└── .gitignore                  # Exclusions Git
 ```
 
 ### Architecture Logique
@@ -78,7 +79,8 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
 
 ### `ConfigManager` (config_manager.py)
 - Sauvegarde automatique de la configuration
-- Stockage dans `~/.momentkeeper/momentkeeper_config.json`
+- Stockage dans l'emplacement système approprié : Windows `%APPDATA%/momentkeeper/`, macOS `~/Library/Application Support/momentkeeper/`, Linux `~/.config/momentkeeper/`
+- En développement, une config locale dans `data/user-config/` est prioritaire (sauf en exécutable packagé)
 - Chargement au démarrage de l'application
 - Gestion des conversions de dates pour JSON
 
@@ -121,13 +123,11 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
 ## 🛠️ Configuration Technique
 
 ### Dépendances
-- **Production** : `streamlit>=1.28.0`
-- **Développement** : `black`, `isort`, `ruff`, `pytest`
+- **Production** : `streamlit`, `pandas`, `plotly`, `Pillow`, `pillow-heif`
+- **Développement** : `pytest`, `pytest-cov`, `ruff`, `pre-commit`
 
 ### Outils de Qualité
-- **black** : Formatage du code
-- **isort** : Tri des imports
-- **ruff** : Linting rapide
+- **ruff** : Linting et formatage (la règle `I` couvre le tri des imports)
 - **pytest** : Tests unitaires
 - **pre-commit** : Hooks automatiques avant commit
 
@@ -196,23 +196,25 @@ def __init__(self, dossier_racine: Path, sous_dossier_photos: str, date_naissanc
 
 ```bash
 # Installation
-pip install -r requirements-dev.txt
+uv sync --extra dev
 
 # Configuration pre-commit (recommandé)
-pre-commit install
-
-# Formatage manuel
-black src tests
-isort src tests
+uv run pre-commit install
 
 # Linting manuel
-ruff check src tests
+uv run ruff check src tests app.py
+
+# Formatage manuel
+uv run ruff format src tests app.py
+
+# Tests
+uv run pytest
 
 # Vérification pre-commit
-pre-commit run --all-files
+uv run pre-commit run --all-files
 
 # Interface web
-streamlit run app.py
+uv run streamlit run app.py
 ```
 
 ## 📝 Notes pour Claude
