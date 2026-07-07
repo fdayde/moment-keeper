@@ -4,42 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "moment-keeper"
-version = "0.1.0"
+version = "1.1.0"
 description = "Automatic (Baby) Photo Organizer - Organize precious moments chronologically"
-authors = [{name = "Your Name", email = "your.email@example.com"}]
+authors = [{name = "florentdayde", email = "florentdayde489@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "streamlit>=1.28.0,<2.0.0",
     "pandas>=2.0.0,<3.0.0",
     "plotly>=5.15.0,<7.0.0",
+    "Pillow>=10.0.0,<12.0.0",
+    "pillow-heif>=0.13.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "ruff>=0.1.0",
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
+    "pytest>=7.4.0,<9.0.0",
+    "pytest-cov>=4.1.0,<6.0.0",
+    "ruff>=0.8.0,<1.0.0",
+    "pre-commit>=3.6.0,<5.0.0",
 ]
 
 [project.scripts]
 moment-keeper = "moment_keeper.cli:main"
 
-[tool.black]
-line-length = 88
-target-version = ['py39', 'py310', 'py311', 'py312']
-
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-
 [tool.ruff]
 line-length = 88
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -49,10 +42,11 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
-ignore = ["E501", "E722", "C408"]  # Ignore temporarily for initial commit
+ignore = ["E501", "E722", "C408"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"notebooks/*.ipynb" = ["E402"]  # Allow imports not at top in notebooks
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

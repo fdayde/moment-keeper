@@ -3,7 +3,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Linting: ruff](https://img.shields.io/badge/linting-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 
 🦖🍼 **Automatic (Baby) Photo & Video Organizer** - Organize precious moments chronologically with intelligent automation.
 
@@ -87,7 +87,25 @@ project-folder/           (root directory)
 
 ## 🚀 Quick Start
 
-### Create a virtual environment
+### Option 1: With UV (Recommended) ⚡
+
+[UV](https://docs.astral.sh/uv/) is a fast Python package manager that handles virtual environments and dependencies automatically.
+
+```bash
+# Install UV (if not already installed)
+# See: https://docs.astral.sh/uv/getting-started/installation/
+
+# Install the project and dependencies
+uv sync
+
+# Run the Streamlit interface
+uv run streamlit run app.py
+
+# Or use the CLI launcher
+uv run moment-keeper
+```
+
+### Option 2: Traditional Setup
 
 ```bash
 # Windows
@@ -97,18 +115,36 @@ venv\Scripts\Activate.ps1
 # Linux/MacOS
 python -m venv venv
 source venv/bin/activate
-```
 
-### Install and run
-
-```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install -e ".[dev]"
 
 # Run the Streamlit web interface
 streamlit run app.py
 ```
 
+
+## 🔒 Privacy & Data Storage
+
+**Your data never leaves your computer:**
+- ✅ All photos and videos stay on your local drive
+- ✅ No internet connection required
+- ✅ No data sent to external servers
+- ✅ Configuration stored locally in your user directory
+
+### Configuration Location
+
+Your settings (baby's name, birth date, folder paths) are stored in:
+
+- **Windows**: `%APPDATA%\momentkeeper\momentkeeper_config.json`
+- **macOS**: `~/Library/Application Support/momentkeeper/momentkeeper_config.json`
+- **Linux**: `~/.config/momentkeeper/momentkeeper_config.json`
+
+This follows OS-standard locations and ensures:
+- ✅ Settings persist between sessions
+- ✅ No configuration in the project repository
+- ✅ Multi-user support on shared computers
+- ✅ Easy backup/restore of preferences
 
 ## 🛡️ Safety Features
 
@@ -117,6 +153,7 @@ streamlit run app.py
 - **Calendar-Accurate Age Calculation**: Proper month-based age calculation
 - **Error Recovery**: Graceful handling of edge cases and file conflicts
 - **Rollback Capability**: Complete reset to original state
+- **Path Security**: Protection against path traversal attacks
 
 
 ## 💡 Use Cases
@@ -147,8 +184,8 @@ streamlit run app.py
 
 ### Known Limitations
 - Filename pattern must include `YYYYMMDD_description` format
-- Date extraction from filenames only (EXIF support planned for v2.0)
-- Requires Python 3.9+ and dependencies listed in requirements.txt
+- Date extraction from filename (`YYYYMMDD_*`) with EXIF fallback for photos (videos: filename only)
+- Requires Python 3.9+ and dependencies listed in pyproject.toml
 
 > 💡 **Benchmark results** based on real testing with the included benchmark scripts in `/scripts/`
 
@@ -157,23 +194,22 @@ streamlit run app.py
 ### Running Tests
 ```bash
 # Install development dependencies
-pip install -r requirements-dev.txt
+uv sync --extra dev
 
 # Install pre-commit hooks (recommended)
-pre-commit install
-
-# Run code formatting manually
-black src tests
-isort src tests
+uv run pre-commit install
 
 # Run linting manually
-ruff check src tests
+uv run ruff check src tests app.py
+
+# Run formatting manually
+uv run ruff format src tests app.py
 
 # Run all pre-commit hooks manually
-pre-commit run --all-files
+uv run pre-commit run --all-files
 
-# Run tests (when implemented)
-pytest
+# Run tests
+uv run pytest
 ```
 
 ### Project Structure
@@ -190,7 +226,7 @@ moment-keeper/
 ├── app.py                   # Streamlit web interface
 ├── notebooks/               # Jupyter notebooks
 ├── tests/                   # Unit tests
-└── requirements*.txt        # Dependencies
+└── pyproject.toml / uv.lock # Dependencies
 ```
 
 ## 🤝 Contributing

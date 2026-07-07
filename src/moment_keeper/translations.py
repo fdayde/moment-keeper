@@ -1,5 +1,9 @@
 """Module de traductions pour MomentKeeper."""
 
+from .logger import setup_logger
+
+logger = setup_logger(__name__)
+
 TRANSLATIONS = {
     "fr": {
         # App principale
@@ -17,6 +21,7 @@ TRANSLATIONS = {
         "browse_subfolder": "Parcourir sous-dossier",
         "baby_name": "🦖 Prénom du bébé",
         "baby_name_placeholder": "Lucas, Emma, Noah...",
+        "baby_name_help": "Optionnel : permet de personnaliser l'affichage",
         "birth_date": "🦖 Date de naissance",
         "file_types": "📹 Type de fichiers",
         "photos": "📸 Photos",
@@ -24,6 +29,11 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Veuillez sélectionner au moins un type de fichier",
         "reset_button": "🔄 Réinitialiser",
         "reset_help": "Remet tous les fichiers dans le dossier source",
+        "confirm_reset": "Confirmer",
+        "confirm_reset_help": "Déplace les fichiers des dossiers mensuels vers le dossier source",
+        "reset_dialog_title": "🔄 Réinitialiser ?",
+        "reset_dialog_body": "Cette action déplace tous les fichiers des dossiers mensuels vers le dossier source.",
+        "cancel": "Annuler",
         # Tabs
         "tab_home": "🏠 Accueil",
         "tab_simulation": "🔍 Simulation",
@@ -40,6 +50,12 @@ TRANSLATIONS = {
         "birth_date_configured": "Date de naissance configurée : ",
         "ignored_files_count": "Nombre de fichiers ignorés : ",
         "warnings": "⚠️ Avertissements:",
+        "analysis_error": "Erreur lors de l'analyse : {error}",
+        "check_folders_format": "Vérifiez que les dossiers existent et contiennent des photos au bon format (YYYYMMDD_*.jpg)",
+        "photos_section_label": "📸 **Photos:**",
+        "videos_section_label": "🎬 **Vidéos:**",
+        "and_more_photos": "... et {count} autres photos",
+        "and_more_videos": "... et {count} autres vidéos",
         # Organisation
         "organization_title": "🗂️ <strong>Organisation réelle</strong><br>Temps de passer à l'action !",
         "organization_warning": "🦖 Attention petits bras ! Cette action déplacera réellement vos fichiers.",
@@ -59,12 +75,18 @@ TRANSLATIONS = {
         "daily_record": "🏆 Record quotidien",
         "average_rhythm": "📈 Rythme",
         "longest_gap": "⏱️ Plus long silence",
+        "metric_months_count": "{count} mois",
+        "metric_photos_count": "{count} photos",
+        "metric_per_month": "{count}/mois",
+        "metric_days_count": "{count} jours",
+        "pct_of_total": "{pct}% du total",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Découvertes sur vos habitudes photo !",
         # Galerie
         "gallery_title": "🖼️ <strong>Galerie</strong><br>Explorez vos souvenirs de 🦖 par mois !",
         "select_month": "📅 Sélectionner le mois",
         "all_months": "Tous les mois",
+        "unsorted_label": "Photos non triées",
         "photos_to_show": "📸 Nombre de photos à afficher",
         "refresh_gallery": "🔄 Nouvelles photos",
         "no_photos_month": "Aucune photo trouvée pour ce mois",
@@ -74,19 +96,25 @@ TRANSLATIONS = {
         "months_growth_available_no_name": "{count} mois de croissance disponibles",
         "month_pattern": "{start}-{end} mois",
         "view_mode": "👁️ Mode d'affichage",
-        "view_mode_help": "🎲 Aléatoire: Sélection aléatoire de photos\n⏰ Chronologique: Du plus récent au plus ancien\n📸 Moments forts: Photos des jours les plus actifs\n📈 Timeline croissance: Une photo par mois pour voir l'évolution",
+        "view_mode_help": "🎲 Aléatoire: Sélection aléatoire de photos\n⏰ Chronologique: Du plus récent au plus ancien\n📸 Moments forts: Photos des jours les plus actifs\n📈 Timeline croissance: Une photo par mois en grille\n🎞️ Time-lapse: Une grande photo + slider d'âge pour voir bébé grandir",
         "mode_random": "🎲 Aléatoire",
         "mode_chronological": "⏰ Chronologique",
         "mode_highlights": "📸 Moments forts",
         "mode_timeline": "📈 Timeline croissance",
+        "mode_timelapse": "🎞️ Time-lapse",
+        "age_slider_label": "🦖 Âge du bébé",
         "age_months": "{age} mois",
         "age_days": "{age} jours",
+        "error_loading_file": "Erreur lors du chargement de {name}: {error}",
         "searching_data": "🦖 Fouille dans vos données...",
         "discoveries": "### 🎯 Découvertes",
         "analyze_first": "Analysez d'abord vos photos pour voir les insights!",
         # Messages d'erreur
         "folder_not_exist": "❌ Le dossier photos '{folder}' n'existe pas dans {root}",
         "root_not_exist": "❌ Le dossier principal spécifié n'existe pas",
+        "root_not_exist_path": "❌ Le dossier racine n'existe pas : {path}",
+        "source_not_exist_path": "❌ Le dossier source n'existe pas : {path}",
+        "path_validation_error": "❌ Erreur lors de la validation des chemins : {error}",
         "configure_root": "👈 Configurez le dossier principal dans la barre latérale",
         "folder_must_be_in_root": "Le dossier sélectionné doit être dans le dossier principal",
         "select_root_first": "Sélectionnez d'abord le dossier principal",
@@ -107,7 +135,6 @@ TRANSLATIONS = {
         "welcome_step_5": "5️⃣ Consultez Insights pour des analyses personnalisées de vos habitudes",
         # Footer
         "footer_love": "Créé avec ❤️ pour un 🦖 aux petits bras mais au grand cœur",
-        "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"Du Chaos à la Chronologie, une photo à la fois"',
         "footer_new_tagline": "Fait avec ❤️ pour organiser les souvenirs qui comptent",
         # Messages dynamiques
@@ -135,15 +162,22 @@ TRANSLATIONS = {
         # Insights - messages d'analyse
         "magnificent_collection_mixed": "🎉 Magnifique collection de {photos} 📸 photos et {videos} 🎬 vidéos!",
         "magnificent_collection": "🎉 Magnifique collection de {total} {type}!",
+        "nice_collection": "{emoji} Belle collection de {total} {type}!",
         "record_period": "🏆 Période record : {start}-{end} mois ({month}) avec {count} photos!",
         "burst_mode_activated": "📸 Mode rafale activé ! Record : {count} photos le {date}!",
         "productive_day": "📷 Journée productive : {count} photos le {date}!",
         "longest_silence": "⚠️ Plus long silence : {days} jours entre le {start} et le {end}",
+        "special_events_detected": "🎉 {count} événements spéciaux détectés ({dates})",
+        "major_event": "🎊 Événement majeur le {date} - Premières vacances ? Visite famille ?",
+        "nice_day_event": "🎈 Belle journée le {date} - Sortie familiale ? Premier anniversaire ?",
+        "intensive_period": "🏖️ Période intensive {start} - {end} - Vacances ou événement ?",
         "think_recent_photos": "💡 Pensez à prendre quelques photos récentes!",
         "very_active_month": "🔥 Très actif ce mois-ci!",
         "contrast_months": "📊 Contraste : {max_month} vs {min_month} = {ratio}x plus de photos",
         "intense_weekend": "🎯 Weekend intense : {ratio}x plus de photos par jour le weekend",
         "active_weekdays": "💼 Semaine active : {ratio}x plus de photos par jour en semaine",
+        "evolution_increasing": "📈 Évolution croissante : +{evolution}% entre {premier} et {dernier}",
+        "evolution_change": "📉 Évolution : {evolution}% entre {premier} et {dernier}",
         "prefer_photos": "📸 Vous préférez clairement les photos aux vidéos!",
         "true_videographer": "🎬 Un vrai vidéaste ! Vous capturez surtout en vidéo",
         "perfect_balance": "⚖️ Équilibre parfait entre photos et vidéos!",
@@ -152,6 +186,15 @@ TRANSLATIONS = {
         "yearly_projection": "📈 À ce rythme, vous aurez ~{count} photos par an!",
         "trend_increasing": "📈 Tendance récente : Vous photographiez de plus en plus votre 🦖",
         "trend_decreasing": "📉 Tendance récente : Moins de photos - normal quand 🦖 grandit!",
+        # Analytics - Graphiques
+        "chart_bar_title": "🦖 Évolution des photos par mois d'âge",
+        "chart_age_trex_label": "Âge du T-Rex (mois)",
+        "chart_photo_count_label": "Nombre de photos",
+        "chart_baby_age_label": "Âge du bébé (mois)",
+        "chart_timeline_title": "🦖 Timeline : Activité hebdomadaire",
+        "chart_week_label": "Semaine",
+        "chart_heatmap_title": "🦖 Heatmap : Jours favoris",
+        "chart_day_of_week_label": "Jour de la semaine",
         # Analytics - Alertes
         "temporal_alerts": "⚠️ Alertes temporelles",
         "gap_alert": "Gap de {days} jours : du {start} au {end}",
@@ -175,11 +218,13 @@ TRANSLATIONS = {
         "errors_encountered": "❌ Erreurs rencontrées:",
         "select_file_type": "❌ Veuillez sélectionner au moins un type de fichier (Photos et/ou Vidéos)",
         "configure_settings_first": "ℹ️ Configurez d'abord les paramètres dans la barre latérale pour utiliser cette fonctionnalité",
+        "config_needed_short": "👈 Configurez d'abord la sidebar (détails sur l'onglet Accueil)",
         "files_reset": "✅ {count} fichiers remis dans le dossier photos",
         "load_test_config": "Charger la démo",
         "load_test_config_help": "Charge une configuration de test avec des photos d'exemple",
         "test_config_loaded": "✅ Configuration de test chargée avec succès !",
         "test_config_not_found": "❌ Configuration de test introuvable",
+        "reload_page_message": "🔄 Rechargez la page (F5 ou Ctrl+R) pour appliquer tous les changements.",
         "load_saved_config": "Charger ma config",
         "load_saved_config_help": "Recharge votre dernière configuration sauvegardée",
         "saved_config_loaded": "✅ Configuration personnelle chargée avec succès !",
@@ -189,6 +234,8 @@ TRANSLATIONS = {
         "folder_selection_timeout": "Le sélecteur de dossier ne répond pas",
         "folder_selection_cancelled": "Sélection annulée",
         "folder_selection_tip": "Vous pouvez taper directement le chemin du dossier dans le champ texte",
+        "opening_folder_dialog": "🦖 Ouverture du sélecteur de dossier... (peut être lent pour les dossiers chargés)",
+        "play_video": "▶ Lire",
     },
     "en": {
         # App principale
@@ -206,6 +253,7 @@ TRANSLATIONS = {
         "browse_subfolder": "Browse subfolder",
         "baby_name": "🦖 Baby's name",
         "baby_name_placeholder": "Lucas, Emma, Noah...",
+        "baby_name_help": "Optional: personalizes the display",
         "birth_date": "🦖 Birth date",
         "file_types": "📹 File types",
         "photos": "📸 Photos",
@@ -213,6 +261,11 @@ TRANSLATIONS = {
         "no_type_selected": "⚠️ Please select at least one file type",
         "reset_button": "🔄 Reset",
         "reset_help": "Puts all files back in the source folder",
+        "confirm_reset": "Confirm",
+        "confirm_reset_help": "Moves files from monthly folders back to the source folder",
+        "reset_dialog_title": "🔄 Reset ?",
+        "reset_dialog_body": "This will move all files from monthly folders back to the source folder.",
+        "cancel": "Cancel",
         # Tabs
         "tab_home": "🏠 Home",
         "tab_simulation": "🔍 Simulation",
@@ -229,6 +282,12 @@ TRANSLATIONS = {
         "birth_date_configured": "Configured birth date: ",
         "ignored_files_count": "Number of ignored files: ",
         "warnings": "⚠️ Warnings:",
+        "analysis_error": "Error during analysis: {error}",
+        "check_folders_format": "Check that the folders exist and contain photos in the correct format (YYYYMMDD_*.jpg)",
+        "photos_section_label": "📸 **Photos:**",
+        "videos_section_label": "🎬 **Videos:**",
+        "and_more_photos": "... and {count} more photos",
+        "and_more_videos": "... and {count} more videos",
         # Organisation
         "organization_title": "🗂️ <strong>Actual organization</strong><br>Time to take action!",
         "organization_warning": "🦖 Watch out tiny arms! This action will actually move your files.",
@@ -248,12 +307,18 @@ TRANSLATIONS = {
         "daily_record": "🏆 Daily record",
         "average_rhythm": "📈 Rhythm",
         "longest_gap": "⏱️ Longest gap",
+        "metric_months_count": "{count} months",
+        "metric_photos_count": "{count} photos",
+        "metric_per_month": "{count}/month",
+        "metric_days_count": "{count} days",
+        "pct_of_total": "{pct}% of total",
         # Insights
         "insights_title": "🦖 <strong>Insights</strong><br>Discoveries about your photo habits!",
         # Galerie
         "gallery_title": "🖼️ <strong>Gallery</strong><br>Explore your 🦖 memories by month!",
         "select_month": "📅 Select month",
         "all_months": "All months",
+        "unsorted_label": "Unsorted photos",
         "photos_to_show": "📸 Number of photos to display",
         "refresh_gallery": "🔄 New photos",
         "no_photos_month": "No photos found for this month",
@@ -263,19 +328,25 @@ TRANSLATIONS = {
         "months_growth_available_no_name": "{count} months of growth available",
         "month_pattern": "{start}-{end} months",
         "view_mode": "👁️ View mode",
-        "view_mode_help": "🎲 Random: Random selection of photos\n⏰ Chronological: From newest to oldest\n📸 Highlights: Photos from most active days\n📈 Growth timeline: One photo per month to see evolution",
+        "view_mode_help": "🎲 Random: Random selection of photos\n⏰ Chronological: From newest to oldest\n📸 Highlights: Photos from most active days\n📈 Growth timeline: One photo per month in a grid\n🎞️ Time-lapse: One large photo + age slider to watch baby grow",
         "mode_random": "🎲 Random",
         "mode_chronological": "⏰ Chronological",
         "mode_highlights": "📸 Highlights",
         "mode_timeline": "📈 Growth timeline",
+        "mode_timelapse": "🎞️ Time-lapse",
+        "age_slider_label": "🦖 Baby's age",
         "age_months": "{age} months",
         "age_days": "{age} days",
+        "error_loading_file": "Error loading {name}: {error}",
         "searching_data": "🦖 Digging through your data...",
         "discoveries": "### 🎯 Discoveries",
         "analyze_first": "Analyze your photos first to see insights!",
         # Messages d'erreur
         "folder_not_exist": "❌ The photos folder '{folder}' doesn't exist in {root}",
         "root_not_exist": "❌ The specified main folder doesn't exist",
+        "root_not_exist_path": "❌ The root folder doesn't exist: {path}",
+        "source_not_exist_path": "❌ The source folder doesn't exist: {path}",
+        "path_validation_error": "❌ Error validating paths: {error}",
         "configure_root": "👈 Configure the main folder in the sidebar",
         "folder_must_be_in_root": "The selected folder must be in the main folder",
         "select_root_first": "Select the main folder first",
@@ -296,7 +367,6 @@ TRANSLATIONS = {
         "welcome_step_5": "5️⃣ Check Insights for personalized analysis of your habits",
         # Footer
         "footer_love": "Created with ❤️ for a 🦖 with tiny arms but a big heart",
-        "footer_version": "🦖 MomentKeeper v1.0",
         "footer_tagline": '"From Chaos to Chronology, one photo at a time"',
         "footer_new_tagline": "Made with ❤️ to organize the memories that matter",
         # Messages dynamiques
@@ -324,15 +394,22 @@ TRANSLATIONS = {
         # Insights - analysis messages
         "magnificent_collection_mixed": "🎉 Magnificent collection of {photos} 📸 photos and {videos} 🎬 videos!",
         "magnificent_collection": "🎉 Magnificent collection of {total} {type}!",
+        "nice_collection": "{emoji} Nice collection of {total} {type}!",
         "record_period": "🏆 Record period: {start}-{end} months ({month}) with {count} photos!",
         "burst_mode_activated": "📸 Burst mode activated! Record: {count} photos on {date}!",
         "productive_day": "📷 Productive day: {count} photos on {date}!",
         "longest_silence": "⚠️ Longest silence: {days} days between {start} and {end}",
+        "special_events_detected": "🎉 {count} special events detected ({dates})",
+        "major_event": "🎊 Major event on {date} - First vacation? Family visit?",
+        "nice_day_event": "🎈 Great day on {date} - Family outing? First birthday?",
+        "intensive_period": "🏖️ Intensive period {start} - {end} - Vacation or event?",
         "think_recent_photos": "💡 Think about taking some recent photos!",
         "very_active_month": "🔥 Very active this month!",
         "contrast_months": "📊 Contrast: {max_month} vs {min_month} = {ratio}x more photos",
         "intense_weekend": "🎯 Intense weekend: {ratio}x more photos per day on weekends",
         "active_weekdays": "💼 Active weekdays: {ratio}x more photos per day on weekdays",
+        "evolution_increasing": "📈 Growing evolution: +{evolution}% between {premier} and {dernier}",
+        "evolution_change": "📉 Evolution: {evolution}% between {premier} and {dernier}",
         "prefer_photos": "📸 You clearly prefer photos to videos!",
         "true_videographer": "🎬 A true videographer! You mostly capture in video",
         "perfect_balance": "⚖️ Perfect balance between photos and videos!",
@@ -341,6 +418,15 @@ TRANSLATIONS = {
         "yearly_projection": "📈 At this rate, you'll have ~{count} photos per year!",
         "trend_increasing": "📈 Recent trend: You're photographing your 🦖 more and more",
         "trend_decreasing": "📉 Recent trend: Fewer photos - normal as 🦖 grows!",
+        # Analytics - Charts
+        "chart_bar_title": "🦖 Photo evolution by age in months",
+        "chart_age_trex_label": "T-Rex age (months)",
+        "chart_photo_count_label": "Number of photos",
+        "chart_baby_age_label": "Baby age (months)",
+        "chart_timeline_title": "🦖 Timeline: Weekly activity",
+        "chart_week_label": "Week",
+        "chart_heatmap_title": "🦖 Heatmap: Favorite days",
+        "chart_day_of_week_label": "Day of the week",
         # Analytics - Alerts
         "temporal_alerts": "⚠️ Temporal alerts",
         "gap_alert": "Gap of {days} days: from {start} to {end}",
@@ -364,11 +450,13 @@ TRANSLATIONS = {
         "errors_encountered": "❌ Errors encountered:",
         "select_file_type": "❌ Please select at least one file type (Photos and/or Videos)",
         "configure_settings_first": "ℹ️ First configure the settings in the sidebar to use this feature",
+        "config_needed_short": "👈 Configure the sidebar first (details on the Home tab)",
         "files_reset": "✅ {count} files put back in the photos folder",
         "load_test_config": "Load demo",
         "load_test_config_help": "Load a test configuration with sample photos",
         "test_config_loaded": "✅ Test configuration loaded successfully!",
         "test_config_not_found": "❌ Test configuration not found",
+        "reload_page_message": "🔄 Reload the page (F5 or Ctrl+R) to apply all changes.",
         "load_saved_config": "Load my config",
         "load_saved_config_help": "Reload your last saved configuration",
         "saved_config_loaded": "✅ Personal configuration loaded successfully!",
@@ -378,6 +466,8 @@ TRANSLATIONS = {
         "folder_selection_timeout": "Folder selector not responding",
         "folder_selection_cancelled": "Selection cancelled",
         "folder_selection_tip": "You can type the folder path directly in the text field",
+        "opening_folder_dialog": "🦖 Opening folder selector... (may be slow on heavy folders)",
+        "play_video": "▶ Play",
     },
 }
 
@@ -411,15 +501,27 @@ class Translator:
         Returns:
             Texte traduit
         """
-        text = self.translations.get(self.language, {}).get(key, key)
+        lang_dict = self.translations.get(self.language, {})
+        if key not in lang_dict:
+            logger.warning(
+                "Clé de traduction manquante pour la langue '%s' : %r",
+                self.language,
+                key,
+            )
+            text = key
+        else:
+            text = lang_dict[key]
 
-        # Si des paramètres sont fournis, formater le texte
         if kwargs:
             try:
                 text = text.format(**kwargs)
-            except KeyError:
-                # Si une clé manque, retourner le texte sans formatage
-                pass
+            except KeyError as e:
+                logger.warning(
+                    "Paramètre de format manquant pour la clé %r (langue %s) : %s",
+                    key,
+                    self.language,
+                    e,
+                )
 
         return text
 

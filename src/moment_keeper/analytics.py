@@ -10,43 +10,143 @@ import plotly.graph_objects as go
 import streamlit as st
 from PIL import Image, ImageOps
 
-from .config import CHART_CONFIG, INSIGHTS_THRESHOLDS
+from .config import (
+    ALL_MONTHS_SENTINEL,
+    CHART_CONFIG,
+    INSIGHTS_THRESHOLDS,
+    UNSORTED_SENTINEL,
+    includes_photos,
+    includes_videos,
+    is_both,
+)
+from .logger import setup_logger
 from .organizer import OrganisateurPhotos
 from .theme import BAR_CHART_GRADIENT, COLORS, HEATMAP_COLORSCALE
 from .translations import Translator
+from .utils import extract_month_number
+
+logger = setup_logger(__name__)
+
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:
+    logger.warning(
+        "pillow-heif non installé : les fichiers .heic ne pourront pas être ouverts."
+    )
+
+
+def _cache_signature(organiseur: OrganisateurPhotos) -> tuple:
+    """Calcule une signature pour invalider le cache quand les dossiers/params changent.
+
+    Inclut : params organiseur + mtime de la racine et de ses sous-dossiers
+    directs. Une nouvelle photo ajoutée dans un dossier change son mtime.
+    """
+    racine = organiseur.dossier_racine
+    sigs: list = [
+        (
+            "__params__",
+            str(racine),
+            str(organiseur.dossier_source),
+            organiseur.date_naissance.isoformat(),
+            tuple(sorted(organiseur.extensions_actives)),
+            organiseur.type_fichiers,
+        )
+    ]
+    if racine.exists():
+        try:
+            sigs.append(("__racine_mtime__", racine.stat().st_mtime))
+        except OSError:
+            pass
+        for d in sorted(racine.iterdir()):
+            if d.is_dir():
+                try:
+                    sigs.append((d.name, d.stat().st_mtime))
+                except OSError:
+                    pass
+    return tuple(sigs)
+
+
+@st.cache_data(show_spinner=False)
+def _extract_photo_data_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> pd.DataFrame:
+    return extract_photo_data(_organiseur)
+
+
+def get_photo_data_cached(organiseur: OrganisateurPhotos) -> pd.DataFrame:
+    """Version cachée d'extract_photo_data, invalidée par changement de mtime."""
+    return _extract_photo_data_cached(organiseur, _cache_signature(organiseur))
+
+
+@st.cache_data(show_spinner=False)
+def _get_gallery_data_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> dict[str, list[Path]]:
+    return get_gallery_data(_organiseur)
+
+
+def get_gallery_data_cached(
+    organiseur: OrganisateurPhotos,
+) -> dict[str, list[Path]]:
+    """Version cachée de get_gallery_data, invalidée par changement de mtime."""
+    return _get_gallery_data_cached(organiseur, _cache_signature(organiseur))
+
+
+@st.cache_data(show_spinner=False)
+def _photos_grouped_by_age_cached(
+    _organiseur: OrganisateurPhotos, signature: tuple
+) -> dict[int, list[Path]]:
+    return photos_grouped_by_age(get_gallery_data(_organiseur), _organiseur)
+
+
+def photos_grouped_by_age_cached(
+    organiseur: OrganisateurPhotos,
+) -> dict[int, list[Path]]:
+    """Version cachée de photos_grouped_by_age, invalidée par changement de mtime."""
+    return _photos_grouped_by_age_cached(organiseur, _cache_signature(organiseur))
+
+
+def _process_folder_for_data(
+    dossier: Path, organiseur: OrganisateurPhotos, photos_data: list
+) -> None:
+    """Ajoute à photos_data les fichiers d'un dossier qui matchent les critères."""
+    for fichier in dossier.iterdir():
+        if (
+            fichier.is_file()
+            and fichier.suffix.lower() in organiseur.extensions_actives
+        ):
+            date_photo = organiseur.extraire_date(fichier)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                age_mois = organiseur.calculer_age_mois(date_photo)
+                photos_data.append(
+                    {
+                        "fichier": fichier.name,
+                        "type": organiseur.get_file_type(fichier),
+                        "date": date_photo,
+                        "age_mois": age_mois,
+                        "dossier": dossier.name,
+                        "jour_semaine": date_photo.strftime("%A"),
+                        "semaine": date_photo.isocalendar()[1],
+                        "annee": date_photo.year,
+                    }
+                )
 
 
 def extract_photo_data(organiseur: OrganisateurPhotos) -> pd.DataFrame:
     """Extrait les données des photos pour l'analyse."""
     photos_data = []
 
-    # Parcourir tous les dossiers du projet (source + dossiers mensuels)
+    # Source folder (peut être racine ou un sous-dossier)
+    if organiseur.dossier_source.exists():
+        _process_folder_for_data(organiseur.dossier_source, organiseur, photos_data)
+
+    # Dossiers mensuels au niveau de la racine (on saute le source pour éviter doublons)
+    source_resolved = organiseur.dossier_source.resolve()
     for dossier in organiseur.dossier_racine.iterdir():
-        if dossier.is_dir():
-            for fichier in dossier.iterdir():
-                if (
-                    fichier.is_file()
-                    and fichier.suffix.lower() in organiseur.extensions_actives
-                ):
-                    # Réutiliser la méthode existante pour extraire la date
-                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
-
-                    if date_photo and date_photo >= organiseur.date_naissance:
-                        # Réutiliser la méthode existante pour calculer l'âge
-                        age_mois = organiseur.calculer_age_mois(date_photo)
-
-                        photos_data.append(
-                            {
-                                "fichier": fichier.name,
-                                "type": organiseur.get_file_type(fichier),
-                                "date": date_photo,
-                                "age_mois": age_mois,
-                                "dossier": dossier.name,
-                                "jour_semaine": date_photo.strftime("%A"),
-                                "semaine": date_photo.isocalendar()[1],
-                                "annee": date_photo.year,
-                            }
-                        )
+        if dossier.is_dir() and dossier.resolve() != source_resolved:
+            _process_folder_for_data(dossier, organiseur, photos_data)
 
     return pd.DataFrame(photos_data)
 
@@ -65,18 +165,14 @@ def calculate_metrics(df: pd.DataFrame, type_fichiers: str = None) -> dict:
         }
 
     # Métriques de base avec distinction photo/vidéo si nécessaire
-    if type_fichiers == "📸🎬 Photos et Vidéos" and "type" in df.columns:
+    if is_both(type_fichiers) and "type" in df.columns:
         total_photos = len(df[df["type"] == "photo"])
         total_videos = len(df[df["type"] == "video"])
         total_fichiers = total_photos + total_videos
     else:
         total_fichiers = len(df)
-        total_photos = (
-            total_fichiers if type_fichiers and "Photos" in type_fichiers else 0
-        )
-        total_videos = (
-            total_fichiers if type_fichiers and "Vidéos" in type_fichiers else 0
-        )
+        total_photos = total_fichiers if includes_photos(type_fichiers) else 0
+        total_videos = total_fichiers if includes_videos(type_fichiers) else 0
 
     periode_couverte = df["age_mois"].max() + 1 if not df.empty else 0
     moyenne_par_mois = total_fichiers / periode_couverte if periode_couverte > 0 else 0
@@ -170,9 +266,7 @@ def age_to_month_name(
     return mois_noms[mois_cible.month - 1]
 
 
-def detect_special_moments(
-    df: pd.DataFrame, jour_record_existant: int, tr: Translator
-) -> list[str]:
+def detect_special_moments(df: pd.DataFrame, tr: Translator) -> list[str]:
     """Détecte les moments spéciaux basés sur les pics de photos."""
     special_insights = []
 
@@ -197,9 +291,7 @@ def detect_special_moments(
             dates_str += "..."
 
         special_insights.append(
-            f"🎉 {len(pics)} événements spéciaux détectés ({dates_str})"
-            if tr.language == "fr"
-            else f"🎉 {len(pics)} special events detected ({dates_str})"
+            tr.t("special_events_detected", count=len(pics), dates=dates_str)
         )
 
         # Suggestions d'événements selon les pics
@@ -208,15 +300,11 @@ def detect_special_moments(
 
         if pic_max >= INSIGHTS_THRESHOLDS["major_event_threshold"]:
             special_insights.append(
-                f"🎊 Événement majeur le {date_pic_max.strftime('%d/%m/%Y')} - Premières vacances ? Visite famille ?"
-                if tr.language == "fr"
-                else f"🎊 Major event on {date_pic_max.strftime('%d/%m/%Y')} - First vacation? Family visit?"
+                tr.t("major_event", date=date_pic_max.strftime("%d/%m/%Y"))
             )
         elif pic_max >= INSIGHTS_THRESHOLDS["nice_event_threshold"]:
             special_insights.append(
-                f"🎈 Belle journée le {date_pic_max.strftime('%d/%m/%Y')} - Sortie familiale ? Premier anniversaire ?"
-                if tr.language == "fr"
-                else f"🎈 Great day on {date_pic_max.strftime('%d/%m/%Y')} - Family outing? First birthday?"
+                tr.t("nice_day_event", date=date_pic_max.strftime("%d/%m/%Y"))
             )
 
     # Détection de séries de photos
@@ -229,9 +317,11 @@ def detect_special_moments(
                 date_debut = dates_pics[i - 1]
                 date_fin = dates_pics[i]
                 special_insights.append(
-                    f"🏖️ Période intensive {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacances ou événement ?"
-                    if tr.language == "fr"
-                    else f"🏖️ Intensive period {date_debut.strftime('%d/%m')} - {date_fin.strftime('%d/%m')} - Vacation or event?"
+                    tr.t(
+                        "intensive_period",
+                        start=date_debut.strftime("%d/%m"),
+                        end=date_fin.strftime("%d/%m"),
+                    )
                 )
                 break
 
@@ -266,15 +356,21 @@ def generate_temporal_comparisons(
                 evolution = ((photos_dernier - photos_premier) / photos_premier) * 100
                 if evolution > INSIGHTS_THRESHOLDS["evolution_significant"]:
                     comparisons.append(
-                        f"📈 Évolution croissante : +{evolution:.0f}% entre {premier_nom} et {dernier_nom}"
-                        if tr.language == "fr"
-                        else f"📈 Growing evolution: +{evolution:.0f}% between {premier_nom} and {dernier_nom}"
+                        tr.t(
+                            "evolution_increasing",
+                            evolution=f"{evolution:.0f}",
+                            premier=premier_nom,
+                            dernier=dernier_nom,
+                        )
                     )
                 elif evolution < INSIGHTS_THRESHOLDS["evolution_decrease"]:
                     comparisons.append(
-                        f"📉 Évolution : {evolution:.0f}% entre {premier_nom} et {dernier_nom}"
-                        if tr.language == "fr"
-                        else f"📉 Evolution: {evolution:.0f}% between {premier_nom} and {dernier_nom}"
+                        tr.t(
+                            "evolution_change",
+                            evolution=f"{evolution:.0f}",
+                            premier=premier_nom,
+                            dernier=dernier_nom,
+                        )
                     )
 
         # Comparaison des 2 mois les plus contrastés
@@ -317,7 +413,7 @@ def generate_temporal_comparisons(
                 )
             elif multiplicateur <= INSIGHTS_THRESHOLDS["weekend_intensity_low"]:
                 comparisons.append(
-                    tr.t("active_weekdays", ratio=f"{1/multiplicateur:.1f}")
+                    tr.t("active_weekdays", ratio=f"{1 / multiplicateur:.1f}")
                 )
 
     # 3. Tendance sur les derniers mois
@@ -344,19 +440,16 @@ def generate_insights(
     tr: Translator = None,
 ) -> list[str]:
     """Génère les messages d'insights contextuels."""
+    if tr is None:
+        tr = Translator("fr")
+
     insights = []
 
     if df.empty:
-        if tr:
-            return [tr.t("analyze_first")]
-        return ["Aucune photo analysée pour le moment 📸"]
-
-    # Protection contre tr None
-    if not tr:
-        tr = Translator("fr")
+        return [tr.t("analyze_first")]
 
     # Messages encourageants adaptés au type
-    if type_fichiers == "📸🎬 Photos et Vidéos":
+    if is_both(type_fichiers):
         total = metrics.get("total_fichiers", 0)
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(
@@ -379,23 +472,15 @@ def generate_insights(
     else:
         # Messages pour un seul type
         total = metrics.get("total_fichiers", metrics.get("total_photos", 0))
-        if tr.language == "fr":
-            type_nom = (
-                "photos" if type_fichiers and "Photos" in type_fichiers else "vidéos"
-            )
-        else:
-            type_nom = (
-                "photos" if type_fichiers and "Photos" in type_fichiers else "videos"
-            )
-        type_emoji = "📸" if type_fichiers and "Photos" in type_fichiers else "🎬"
+        has_photos = includes_photos(type_fichiers)
+        type_nom = tr.t("photos_unit") if has_photos else tr.t("videos_unit")
+        type_emoji = "📸" if has_photos else "🎬"
 
         if total > INSIGHTS_THRESHOLDS["large_collection"]:
             insights.append(tr.t("magnificent_collection", total=total, type=type_nom))
         elif total > INSIGHTS_THRESHOLDS["medium_collection"]:
             insights.append(
-                f"{type_emoji} Belle collection de {total} {type_nom}!"
-                if tr.language == "fr"
-                else f"{type_emoji} Nice collection of {total} {type_nom}!"
+                tr.t("nice_collection", emoji=type_emoji, total=total, type=type_nom)
             )
 
     # Analyse des mois les plus photographiés
@@ -421,10 +506,10 @@ def generate_insights(
     photos_par_jour_semaine = df.groupby("jour_semaine").size()
     if not photos_par_jour_semaine.empty:
         jour_favori = photos_par_jour_semaine.idxmax()
-        if jour_favori in ["Saturday", "Sunday"]:
-            insights.append(tr.t("capture_weekends"))
-        elif jour_favori == "Sunday":
+        if jour_favori == "Sunday":
             insights.append(tr.t("sunday_champion"))
+        elif jour_favori == "Saturday":
+            insights.append(tr.t("capture_weekends"))
 
     # Record de photos en une journée
     if metrics["jour_record"] >= INSIGHTS_THRESHOLDS["burst_mode_threshold"]:
@@ -483,7 +568,7 @@ def generate_insights(
         insights.append(tr.t("yearly_projection", count=int(projection_annuelle)))
 
     # Détection de moments spéciaux
-    special_moments = detect_special_moments(df, metrics["jour_record"], tr)
+    special_moments = detect_special_moments(df, tr)
     insights.extend(special_moments)
 
     # Comparaisons temporelles
@@ -506,18 +591,10 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         photos_par_mois,
         x="age_mois",
         y="nb_photos",
-        title=(
-            "🦖 Évolution des photos par mois d'âge"
-            if tr.language == "fr"
-            else "🦖 Photo evolution by age in months"
-        ),
+        title=tr.t("chart_bar_title"),
         labels={
-            "age_mois": (
-                "Âge du T-Rex (mois)" if tr.language == "fr" else "T-Rex age (months)"
-            ),
-            "nb_photos": (
-                "Nombre de photos" if tr.language == "fr" else "Number of photos"
-            ),
+            "age_mois": tr.t("chart_age_trex_label"),
+            "nb_photos": tr.t("chart_photo_count_label"),
         },
         color="nb_photos",
         color_continuous_scale=BAR_CHART_GRADIENT,
@@ -529,11 +606,11 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         paper_bgcolor="rgba(0,0,0,0)",
     )
     fig_barres.update_xaxes(
-        title="Âge du bébé (mois)" if tr.language == "fr" else "Baby age (months)",
+        title=tr.t("chart_baby_age_label"),
         gridcolor=COLORS["primary"],
     )
     fig_barres.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        title=tr.t("chart_photo_count_label"),
         gridcolor=COLORS["primary"],
     )
     charts["barres"] = fig_barres
@@ -548,16 +625,10 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         photos_par_semaine,
         x="semaine_annee",
         y="nb_photos",
-        title=(
-            "🦖 Timeline : Activité hebdomadaire"
-            if tr.language == "fr"
-            else "🦖 Timeline: Weekly activity"
-        ),
+        title=tr.t("chart_timeline_title"),
         labels={
-            "semaine_annee": "Semaine" if tr.language == "fr" else "Week",
-            "nb_photos": (
-                "Nombre de photos" if tr.language == "fr" else "Number of photos"
-            ),
+            "semaine_annee": tr.t("chart_week_label"),
+            "nb_photos": tr.t("chart_photo_count_label"),
         },
         color_discrete_sequence=[COLORS["chart_purple"]],
     )
@@ -568,11 +639,11 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     )
     fig_timeline.update_xaxes(
         tickangle=CHART_CONFIG["tick_angle"],
-        title="Semaine" if tr.language == "fr" else "Week",
+        title=tr.t("chart_week_label"),
         gridcolor=COLORS["primary"],
     )
     fig_timeline.update_yaxes(
-        title="Nombre de photos" if tr.language == "fr" else "Number of photos",
+        title=tr.t("chart_photo_count_label"),
         gridcolor=COLORS["primary"],
     )
     fig_timeline.update_traces(
@@ -636,12 +707,8 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
         )
     )
     fig_heatmap.update_layout(
-        title=(
-            "🦖 Heatmap : Jours favoris"
-            if tr.language == "fr"
-            else "🦖 Heatmap: Favorite days"
-        ),
-        xaxis_title="Jour de la semaine" if tr.language == "fr" else "Day of the week",
+        title=tr.t("chart_heatmap_title"),
+        xaxis_title=tr.t("chart_day_of_week_label"),
         yaxis_title="",
         height=CHART_CONFIG["height_heatmap"],
         font=dict(family="Poppins, sans-serif", color=COLORS["text_dark"]),
@@ -653,36 +720,67 @@ def create_charts(df: pd.DataFrame, tr: Translator) -> dict:
     return charts
 
 
+def _collect_gallery_photos(
+    dossier: Path, organiseur: OrganisateurPhotos
+) -> list[Path]:
+    """Retourne les fichiers media valides d'un dossier (extensions actives + date >= naissance).
+
+    Inclut photos ET vidéos quand le mode actif les contient. Le rendu côté UI
+    distingue ensuite via get_file_type().
+    """
+    photos = []
+    for fichier in dossier.iterdir():
+        if (
+            fichier.is_file()
+            and fichier.suffix.lower() in organiseur.extensions_actives
+        ):
+            date_photo = organiseur.extraire_date(fichier)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                photos.append(fichier)
+    return photos
+
+
 def get_gallery_data(organiseur: OrganisateurPhotos) -> dict[str, list[Path]]:
     """Obtient les photos organisées par mois pour la galerie."""
-    gallery_data = {}
+    gallery_data: dict[str, list[Path]] = {}
 
-    # Parcourir tous les dossiers du projet
+    # Source folder (peut être racine ou un sous-dossier) → sentinelle "non triées"
+    if organiseur.dossier_source.exists():
+        photos = _collect_gallery_photos(organiseur.dossier_source, organiseur)
+        if photos:
+            gallery_data[UNSORTED_SENTINEL] = photos
+
+    # Dossiers mensuels au niveau de la racine (on saute le source pour éviter doublons)
+    source_resolved = organiseur.dossier_source.resolve()
     for dossier in organiseur.dossier_racine.iterdir():
-        if dossier.is_dir():
-            photos = []
-            for fichier in dossier.iterdir():
-                if (
-                    fichier.is_file()
-                    and fichier.suffix.lower() in organiseur.extensions_actives
-                    and organiseur.get_file_type(fichier)
-                    == "photo"  # Seulement les photos pour la galerie
-                ):
-                    # Vérifier que c'est une photo avec une date valide
-                    date_photo = organiseur.extraire_date_nom_fichier(fichier.name)
-                    if date_photo and date_photo >= organiseur.date_naissance:
-                        photos.append(fichier)
-
+        if dossier.is_dir() and dossier.resolve() != source_resolved:
+            photos = _collect_gallery_photos(dossier, organiseur)
             if photos:
-                # Utiliser le nom du dossier comme clé, ou calculer l'âge pour le dossier source
-                if dossier.name == organiseur.dossier_source.name:
-                    # Photos non organisées dans le dossier source
-                    gallery_data["Photos non triées"] = photos
-                else:
-                    # Photos déjà organisées dans les dossiers mensuels
-                    gallery_data[dossier.name] = photos
+                gallery_data[dossier.name] = photos
 
     return gallery_data
+
+
+def photos_grouped_by_age(
+    gallery_data: dict[str, list[Path]], organiseur: OrganisateurPhotos
+) -> dict[int, list[Path]]:
+    """Groupe les photos par âge en mois (utilisé par le mode time-lapse).
+
+    Retourne dict[age_mois → liste de photos triées par date croissante].
+    Le tri est fait une seule fois ici pour éviter de le refaire à chaque
+    rerun côté UI. Les fichiers sans date extractible sont ignorés.
+    """
+    groups: dict[int, list[tuple[datetime, Path]]] = {}
+    for photos in gallery_data.values():
+        for photo in photos:
+            date_photo = organiseur.extraire_date(photo)
+            if date_photo and date_photo >= organiseur.date_naissance:
+                age = organiseur.calculer_age_mois(date_photo)
+                groups.setdefault(age, []).append((date_photo, photo))
+    return {
+        age: [photo for _, photo in sorted(dated_photos, key=lambda x: x[0])]
+        for age, dated_photos in groups.items()
+    }
 
 
 def get_photos_by_mode(
@@ -692,18 +790,25 @@ def get_photos_by_mode(
     selected_month: str,
     num_photos: int = 6,
 ) -> list[Path]:
-    """Obtient les photos selon le mode sélectionné."""
-    if mode == "🎲 Aléatoire" or mode == "🎲 Random":
+    """Obtient les photos selon le mode sélectionné.
+
+    Args:
+        mode: clé interne du mode ("random", "chronological", "highlights"
+            ou "timeline", cf. config.GALLERY_MODES). Toute clé inconnue
+            retombe sur le mode aléatoire. Le mode "timelapse" n'est pas
+            géré ici (rendu directement dans app.py).
+    """
+    if mode == "random":
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
-    elif mode == "⏰ Chronologique" or mode == "⏰ Chronological":
+    elif mode == "chronological":
         return get_chronological_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode == "📸 Moments forts" or mode == "📸 Highlights":
+    elif mode == "highlights":
         return get_highlight_photos(
             gallery_data, organiseur, selected_month, num_photos
         )
-    elif mode == "📈 Timeline croissance" or mode == "📈 Growth timeline":
+    elif mode == "timeline":
         return get_timeline_photos(gallery_data, organiseur, num_photos)
     else:
         return get_random_photos_for_month(gallery_data, selected_month, num_photos)
@@ -713,7 +818,7 @@ def get_random_photos_for_month(
     gallery_data: dict[str, list[Path]], selected_month: str, num_photos: int = 6
 ) -> list[Path]:
     """Obtient un échantillon aléatoire de photos pour un mois donné."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Mélanger toutes les photos de tous les mois
         all_photos = []
         for photos in gallery_data.values():
@@ -735,12 +840,12 @@ def get_chronological_photos(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient les photos triées chronologiquement (plus récent → plus ancien)."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Collecter toutes les photos avec leur date
         all_photos_with_dates = []
         for photos in gallery_data.values():
             for photo in photos:
-                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                date_photo = organiseur.extraire_date(photo)
                 if date_photo:
                     all_photos_with_dates.append((photo, date_photo))
 
@@ -752,7 +857,7 @@ def get_chronological_photos(
     photos = gallery_data.get(selected_month, [])
     photos_with_dates = []
     for photo in photos:
-        date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+        date_photo = organiseur.extraire_date(photo)
         if date_photo:
             photos_with_dates.append((photo, date_photo))
 
@@ -768,12 +873,12 @@ def get_highlight_photos(
     num_photos: int = 6,
 ) -> list[Path]:
     """Obtient les photos des journées avec le plus de photos (moments forts)."""
-    if selected_month == "Tous les mois":
+    if selected_month == ALL_MONTHS_SENTINEL:
         # Collecter toutes les photos avec leur date
         all_photos_with_dates = []
         for photos in gallery_data.values():
             for photo in photos:
-                date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+                date_photo = organiseur.extraire_date(photo)
                 if date_photo:
                     all_photos_with_dates.append((photo, date_photo.date()))
     else:
@@ -781,7 +886,7 @@ def get_highlight_photos(
         photos = gallery_data.get(selected_month, [])
         all_photos_with_dates = []
         for photo in photos:
-            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            date_photo = organiseur.extraire_date(photo)
             if date_photo:
                 all_photos_with_dates.append((photo, date_photo.date()))
 
@@ -817,18 +922,11 @@ def get_timeline_photos(
     """Obtient une photo aléatoire par mois pour montrer la timeline de croissance."""
     # D'abord essayer avec les dossiers mensuels organisés
     monthly_folders = {
-        k: v for k, v in gallery_data.items() if k != "Photos non triées" and "-" in k
+        k: v for k, v in gallery_data.items() if k != UNSORTED_SENTINEL and "-" in k
     }
 
     if monthly_folders:
         # Si on a des dossiers mensuels, utiliser la logique existante
-        # Fonction pour extraire le nombre du début du nom de dossier
-        def extract_month_number(folder_name):
-            try:
-                return int(folder_name.split("-")[0])
-            except:
-                return 999
-
         # Trier les mois par ordre chronologique
         sorted_months = sorted(monthly_folders.keys(), key=extract_month_number)
 
@@ -842,13 +940,13 @@ def get_timeline_photos(
         return timeline_photos
 
     # Si pas de dossiers mensuels, créer une timeline à partir des photos non triées
-    elif "Photos non triées" in gallery_data:
-        all_photos = gallery_data["Photos non triées"]
+    elif UNSORTED_SENTINEL in gallery_data:
+        all_photos = gallery_data[UNSORTED_SENTINEL]
 
         # Grouper les photos par mois d'âge
         photos_by_month = {}
         for photo in all_photos:
-            date_photo = organiseur.extraire_date_nom_fichier(photo.name)
+            date_photo = organiseur.extraire_date(photo)
             if date_photo:
                 age_mois = organiseur.calculer_age_mois(date_photo)
                 if age_mois not in photos_by_month:
@@ -871,7 +969,7 @@ def get_photo_caption_with_age(
 ) -> str:
     """Génère une légende de photo avec badge d'âge."""
     # Extraire la date de la photo
-    date_photo = organiseur.extraire_date_nom_fichier(photo_path.name)
+    date_photo = organiseur.extraire_date(photo_path)
 
     if not date_photo or date_photo < organiseur.date_naissance:
         return photo_path.name
@@ -899,26 +997,35 @@ def get_photo_caption_with_age(
 
 
 @st.cache_data
-def get_image_with_correct_orientation(image_path: str) -> Image.Image:
+def get_image_with_correct_orientation(
+    image_path: str, max_size: tuple[int, int] = None
+) -> Image.Image:
     """
-    Charge une image en appliquant automatiquement la rotation EXIF.
+    Charge une image, applique la rotation EXIF, et optionnellement un thumbnail.
+
+    Le résultat est mis en cache. Si max_size est fourni, l'image est réduite
+    in-place via PIL.Image.thumbnail (préserve le ratio).
 
     Args:
         image_path: Chemin vers l'image
+        max_size: (width, height) max pour le thumbnail, ou None pour pleine taille
 
     Returns:
-        Image PIL avec l'orientation corrigée
+        Image PIL (en mode RGB) prête pour la galerie
     """
     try:
-        # Ouvrir l'image
         image = Image.open(image_path)
-
-        # Appliquer la rotation EXIF automatiquement
-        # ImageOps.exif_transpose gère tous les cas d'orientation EXIF
         image = ImageOps.exif_transpose(image)
-
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        if max_size is not None:
+            image.thumbnail(max_size)
         return image
     except Exception as e:
-        # En cas d'erreur, retourner l'image sans transformation
-        print(f"Erreur lors du chargement de l'image {image_path}: {e}")
-        return Image.open(image_path)
+        logger.warning(f"Erreur lors du chargement de l'image {image_path}: {e}")
+        fallback = Image.open(image_path)
+        if fallback.mode != "RGB":
+            fallback = fallback.convert("RGB")
+        if max_size is not None:
+            fallback.thumbnail(max_size)
+        return fallback
